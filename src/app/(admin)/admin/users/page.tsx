@@ -22,13 +22,30 @@ import {
   Clock,
   LogOut,
   RefreshCw,
-  MoreVertical
+  MoreVertical,
+  Lock,
+  Unlock,
+  Bell,
+  PlusCircle,
+  XCircle,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  Package,
+  History,
+  KeyIcon,
+  ChevronDown,
+  X
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
+import { useConfirm } from "@/hooks/use-confirm";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
+import { createPortal } from "react-dom";
+import { downloadCsv } from "@/lib/download-csv";
 
 type UserItem = {
   id: string;
@@ -36,8 +53,11 @@ type UserItem = {
   email: string;
   role: string;
   createdAt: string;
+  lockedAt: string | null;
   _count: {
     orders: number;
+    apiKeys: number;
+    creditBuckets: number;
   };
   totalCredits: string;
 };
@@ -46,9 +66,19 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [me, setMe] = useState<{ id: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const { toast, showToast, clearToast } = useToast();
+  const { confirmState, isConfirming, askConfirm, closeConfirm, handleConfirm } = useConfirm();
+
+  // Modal states
+  const [detailUser, setDetailUser] = useState<any | null>(null);
+  const [manageUser, setManageUser] = useState<UserItem | null>(null);
+  const [grantUser, setGrantUser] = useState<UserItem | null>(null);
+  const [notifyUser, setNotifyUser] = useState<UserItem | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<{ id: string, top: number, right: number } | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -63,6 +93,17 @@ export default function AdminUsersPage() {
     }
   };
 
+  const fetchUserDetail = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`);
+      const result = await res.json();
+      if (result.success) setDetailUser(result.data);
+      else showToast(result.error?.message || "Không thể tải chi tiết.", "error");
+    } catch (error) {
+      showToast("Lỗi kết nối.", "error");
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetch("/api/profile").then(res => res.json()).then(data => {
@@ -70,33 +111,135 @@ export default function AdminUsersPage() {
     });
   }, []);
 
-  const handleUpdateRole = async (userId: string, currentRole: string) => {
+  const handleExportCsv = async () => {
+    try {
+      setIsExporting(true);
+      const params = new URLSearchParams();
+      if (search) params.set("q", search);
+      if (roleFilter !== "ALL") params.set("role", roleFilter);
+      
+      const res = await downloadCsv(
+        `/api/admin/users/export?${params.toString()}`,
+        `tzoshop-users-${format(new Date(), "yyyy-MM-dd")}.csv`
+      );
+      
+      showToast("Đã xuất CSV thành công.", "success");
+    } catch (error) {
+      showToast("Không thể xuất CSV.", "error");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleUpdateRole = async (userId: string, newRole: string) => {
     if (me?.id === userId) {
       showToast("Bạn không thể tự thay đổi quyền của chính mình.", "error");
       return;
     }
 
-    const newRole = currentRole === "ADMIN" ? "USER" : "ADMIN";
-    const confirmMsg = `Bạn có chắc chắn muốn đổi vai trò của người dùng này sang ${newRole}?`;
-    if (!window.confirm(confirmMsg)) return;
+    askConfirm({
+      title: newRole === "ADMIN" ? "Xác nhận thay đổi vai trò" : "Hạ quyền người dùng?",
+      description: newRole === "ADMIN" 
+        ? "Bạn có chắc chắn muốn đổi vai trò của người dùng này sang ADMIN? Người dùng sẽ có quyền truy cập toàn bộ khu vực quản trị."
+        : "Bạn có chắc chắn muốn đổi vai trò của người dùng này về USER?",
+      confirmLabel: "Xác nhận đổi",
+      type: newRole === "ADMIN" ? "primary" : "warning",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users/${userId}/role`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role: newRole })
+          });
+          const result = await res.json();
+          if (result.success) {
+            showToast("Đã cập nhật quyền người dùng.", "success");
+            setManageUser(null);
+            fetchUsers();
+          } else {
+            showToast(result.message || "Cập nhật thất bại.", "error");
+          }
+        } catch (error) {
+          showToast("Lỗi hệ thống.", "error");
+        }
+      }
+    });
+  };
 
+  const handleUpdateStatus = async (userId: string, action: "LOCK" | "UNLOCK") => {
+    if (me?.id === userId) {
+      showToast("Bạn không thể tự khóa tài khoản của chính mình.", "error");
+      return;
+    }
+
+    askConfirm({
+      title: action === "LOCK" ? "Khóa tài khoản người dùng?" : "Mở khóa tài khoản?",
+      description: action === "LOCK"
+        ? "Người dùng sẽ không thể đăng nhập hoặc sử dụng API cho đến khi được mở khóa lại."
+        : "Người dùng sẽ có thể đăng nhập và sử dụng API trở lại.",
+      confirmLabel: action === "LOCK" ? "Khóa tài khoản" : "Mở khóa",
+      type: action === "LOCK" ? "danger" : "primary",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users/${userId}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action })
+          });
+          const result = await res.json();
+          if (result.success) {
+            showToast(result.message, "success");
+            setManageUser(null);
+            fetchUsers();
+          } else {
+            showToast(result.message, "error");
+          }
+        } catch (error) {
+          showToast("Lỗi hệ thống.", "error");
+        }
+      }
+    });
+  };
+
+  const handleGrantCredits = async (userId: string, data: any) => {
     try {
-      const res = await fetch("/api/admin/users", {
-        method: "PATCH",
+      const res = await fetch(`/api/admin/users/${userId}/grant-credits`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, role: newRole })
+        body: JSON.stringify(data)
       });
       const result = await res.json();
       if (result.success) {
-        showToast("Cập nhật vai trò thành công.", "success");
+        showToast("Đã cấp credits thành công.", "success");
+        setGrantUser(null);
         fetchUsers();
       } else {
-        showToast(result.error?.message || "Cập nhật thất bại.", "error");
+        showToast(result.message, "error");
       }
     } catch (error) {
       showToast("Lỗi hệ thống.", "error");
     }
   };
+
+  const handleSendNotification = async (userId: string, data: any) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (result.success) {
+        showToast("Đã gửi thông báo.", "success");
+        setNotifyUser(null);
+      } else {
+        showToast(result.message, "error");
+      }
+    } catch (error) {
+      showToast("Lỗi hệ thống.", "error");
+    }
+  };
+
 
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -139,9 +282,7 @@ export default function AdminUsersPage() {
               className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-12 pr-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
             />
           </div>
-          <div className="flex h-12 items-center px-6 rounded-2xl border border-slate-100 bg-slate-50/50 text-sm font-black text-slate-400">
-             Chế độ: Chỉ hiển thị Khách hàng
-          </div>
+
           <button 
             onClick={fetchUsers}
             className="flex items-center justify-center h-12 w-12 rounded-2xl border border-slate-200 bg-white text-slate-400 hover:text-emerald-600 transition-all active:scale-95"
@@ -155,8 +296,18 @@ export default function AdminUsersPage() {
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang hiển thị</p>
               <p className="text-sm font-black text-slate-900">{filteredUsers.length} khách hàng</p>
            </div>
-           <button className="flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-sm font-black text-white hover:bg-black transition-all shadow-lg shadow-slate-200">
-              Xuất CSV
+           <button 
+             onClick={handleExportCsv}
+             disabled={isExporting || filteredUsers.length === 0}
+             className="flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-sm font-black text-white hover:bg-black transition-all shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+              {isExporting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Đang xuất...
+                </>
+              ) : (
+                "Xuất CSV"
+              )}
            </button>
         </div>
       </div>
@@ -202,12 +353,13 @@ export default function AdminUsersPage() {
                           {user.name[0].toUpperCase()}
                         </Link>
                         <div>
-                          <Link 
-                            href={`/admin/users/${user.id}`}
-                            className="text-sm font-black text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer"
+                          <button 
+                            onClick={() => { fetchUserDetail(user.id); }}
+                            className="text-sm font-black text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer text-left"
                           >
                             {user.name} {me?.id === user.id && <span className="text-[10px] font-black text-emerald-600 ml-1.5 uppercase tracking-tighter bg-emerald-50 px-1.5 py-0.5 rounded-md">BẠN</span>}
-                          </Link>
+                            {user.lockedAt && <span className="text-[10px] font-black text-rose-600 ml-1.5 uppercase tracking-tighter bg-rose-50 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1"><Lock className="h-2.5 w-2.5" /> KHÓA</span>}
+                          </button>
                           <div className="flex items-center gap-1.5 mt-0.5">
                              <Mail className="h-3.5 w-3.5 text-slate-300" />
                              <span className="text-[11px] font-bold text-slate-400">{user.email}</span>
@@ -252,26 +404,94 @@ export default function AdminUsersPage() {
                        </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <div className="flex justify-end gap-2.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                        <Link 
-                          href={`/admin/users/${user.id}`}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all"
-                          title="Xem chi tiết"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
-                        <button 
-                          onClick={() => handleUpdateRole(user.id, user.role)}
-                          disabled={me?.id === user.id}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all disabled:opacity-0 disabled:cursor-not-allowed"
-                          title="Đổi vai trò"
-                        >
-                          <ShieldAlert className="h-4 w-4" />
-                        </button>
-                        <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-black shadow-lg shadow-slate-200 transition-all">
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
+                       <div className="flex justify-end gap-2.5 opacity-40 group-hover:opacity-100 transition-opacity relative">
+                         <button 
+                           onClick={() => { fetchUserDetail(user.id); }}
+                           className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all"
+                           title="Xem chi tiết"
+                         >
+                           <ChevronRight className="h-4 w-4" />
+                         </button>
+                         <button 
+                           onClick={() => setManageUser(user)}
+                           disabled={me?.id === user.id}
+                           className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all disabled:opacity-0 disabled:cursor-not-allowed"
+                           title="Quản lý tài khoản"
+                         >
+                           <Shield className="h-4 w-4" />
+                         </button>
+                         
+                         <button 
+                            onClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setMenuAnchor({ id: user.id, top: rect.bottom + window.scrollY, right: window.innerWidth - rect.right - window.scrollX });
+                            }}
+                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-black shadow-lg shadow-slate-200 transition-all"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+
+                          {menuAnchor?.id === user.id && createPortal(
+                            <>
+                              <div className="fixed inset-0 z-[9998]" onClick={() => setMenuAnchor(null)} />
+                              <div 
+                                style={{ 
+                                  position: 'absolute', 
+                                  top: `${menuAnchor.top + 8}px`, 
+                                  right: `${menuAnchor.right}px`,
+                                }}
+                                className="z-[9999] w-56 rounded-2xl bg-white border border-slate-200 p-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
+                              >
+                                 <button onClick={() => { setMenuAnchor(null); fetchUserDetail(user.id); }} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black text-slate-700 hover:bg-slate-50">
+                                    <User className="h-4 w-4 text-slate-400" /> Xem chi tiết
+                                 </button>
+                                 <Link href={`/admin/orders?userId=${user.id}`} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black text-slate-700 hover:bg-slate-50">
+                                    <Package className="h-4 w-4 text-slate-400" /> Xem đơn hàng
+                                 </Link>
+                                 <Link href={`/admin/api-keys?userId=${user.id}`} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black text-slate-700 hover:bg-slate-50">
+                                    <KeyIcon className="h-4 w-4 text-slate-400" /> Xem API Keys
+                                 </Link>
+                                 <Link href={`/admin/usage?userId=${user.id}`} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black text-slate-700 hover:bg-slate-50">
+                                    <History className="h-4 w-4 text-slate-400" /> Xem Usage
+                                 </Link>
+                                 <div className="my-1 border-t border-slate-100" />
+                                 <button 
+                                    onClick={() => { setMenuAnchor(null); setGrantUser(user); }}
+                                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black text-emerald-600 hover:bg-emerald-50"
+                                 >
+                                    <PlusCircle className="h-4 w-4" /> Cấp credits thủ công
+                                 </button>
+                                 <button 
+                                    onClick={() => { setMenuAnchor(null); setNotifyUser(user); }}
+                                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black text-blue-600 hover:bg-blue-50"
+                                 >
+                                    <Bell className="h-4 w-4" /> Gửi thông báo
+                                 </button>
+                                 <div className="my-1 border-t border-slate-100" />
+                                 {me?.id !== user.id && (
+                                   <>
+                                     {user.lockedAt ? (
+                                       <button 
+                                          onClick={() => { setMenuAnchor(null); handleUpdateStatus(user.id, "UNLOCK"); }}
+                                          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black text-amber-600 hover:bg-amber-50"
+                                       >
+                                          <Unlock className="h-4 w-4" /> Mở khóa tài khoản
+                                       </button>
+                                     ) : (
+                                       <button 
+                                          onClick={() => { setMenuAnchor(null); handleUpdateStatus(user.id, "LOCK"); }}
+                                          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black text-rose-600 hover:bg-rose-50"
+                                       >
+                                          <Lock className="h-4 w-4" /> Khóa tài khoản
+                                       </button>
+                                     )}
+                                   </>
+                                 )}
+                              </div>
+                            </>,
+                            document.body
+                          )}
+                       </div>
                     </td>
                   </tr>
                 ))
@@ -288,6 +508,335 @@ export default function AdminUsersPage() {
           onClose={clearToast}
         />
       )}
+
+      {/* Modals */}
+      {detailUser && (
+        <UserDetailModal 
+          user={detailUser} 
+          onClose={() => setDetailUser(null)} 
+        />
+      )}
+
+      {manageUser && (
+        <AccountManagementModal 
+          user={manageUser} 
+          onClose={() => setManageUser(null)}
+          onUpdateRole={handleUpdateRole}
+          onUpdateStatus={handleUpdateStatus}
+        />
+      )}
+
+      {grantUser && (
+        <GrantCreditsModal 
+          user={grantUser} 
+          onClose={() => setGrantUser(null)}
+          onConfirm={handleGrantCredits}
+        />
+      )}
+
+      {notifyUser && (
+        <NotifyUserModal 
+          user={notifyUser} 
+          onClose={() => setNotifyUser(null)}
+          onConfirm={handleSendNotification}
+        />
+      )}
+
+      {confirmState && (
+        <ConfirmDialog
+          open={!!confirmState}
+          title={confirmState.title}
+          description={confirmState.description}
+          confirmLabel={confirmState.confirmLabel}
+          cancelLabel={confirmState.cancelLabel}
+          type={confirmState.type}
+          isLoading={isConfirming}
+          onConfirm={handleConfirm}
+          onCancel={closeConfirm}
+        />
+      )}
     </div>
+  );
+}
+
+// --- Sub-components (Modals) ---
+
+function Modal({ title, onClose, children }: { title: string, onClose: () => void, children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[40px] bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
+        <div className="flex items-center justify-between p-8 border-b border-slate-100 shrink-0">
+          <h3 className="text-2xl font-black text-slate-900">{title}</h3>
+          <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-colors">
+            <X className="h-6 w-6 text-slate-400" />
+          </button>
+        </div>
+        <div className="p-8 overflow-y-auto">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) {
+  return (
+    <Modal title="Chi tiết khách hàng" onClose={onClose}>
+      <div className="space-y-8">
+        {/* Basic Info */}
+        <div className="flex items-center gap-6">
+           <div className="h-20 w-20 flex items-center justify-center rounded-[32px] bg-slate-100 text-3xl font-black text-slate-900 uppercase">
+              {user.name[0]}
+           </div>
+           <div>
+              <h4 className="text-2xl font-black text-slate-900">{user.name}</h4>
+              <p className="text-slate-500 font-bold">{user.email}</p>
+              <div className="flex items-center gap-3 mt-2">
+                 <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ring-1 ${user.role === 'ADMIN' ? 'bg-blue-50 text-blue-600 ring-blue-500/10' : 'bg-slate-50 text-slate-500 ring-slate-200'}`}>
+                    {user.role === 'ADMIN' && <ShieldCheck className="h-3 w-3" />}
+                    {user.role}
+                 </span>
+                 {user.lockedAt && (
+                   <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-rose-600 ring-1 ring-rose-500/10">
+                      <Lock className="h-3 w-3" /> Tài khoản đã khóa
+                   </span>
+                 )}
+              </div>
+           </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid gap-4 sm:grid-cols-3">
+           <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Tổng Credits</p>
+              <p className="text-2xl font-black text-slate-900">{new Intl.NumberFormat('vi-VN').format(Number(user.creditBuckets.reduce((sum: number, b: any) => sum + Number(b.creditsRemaining), 0)))}</p>
+           </div>
+           <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Đã sử dụng</p>
+              <p className="text-2xl font-black text-emerald-600">{new Intl.NumberFormat('vi-VN').format(Math.abs(Number(user.totalCreditsUsed)))}</p>
+           </div>
+           <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Gói hoạt động</p>
+              <p className="text-2xl font-black text-blue-600">{user.activeBucketsCount}</p>
+           </div>
+        </div>
+
+        <div className="space-y-4">
+           <div className="flex items-center gap-2 text-base font-black text-slate-900 border-b border-slate-100 pb-3">
+              <Package className="h-5 w-5" /> Đơn hàng gần nhất
+           </div>
+           {user.orders.length > 0 ? (
+              <div className="space-y-3">
+                 {user.orders.map((order: any) => (
+                   <div key={order.id} className="flex items-center justify-between p-5 rounded-[24px] bg-white border border-slate-100 shadow-sm">
+                      <div>
+                         <p className="text-sm font-black text-slate-900">{order.product.name}</p>
+                         <p className="text-xs font-bold text-slate-400">{format(new Date(order.createdAt), "dd/MM/yyyy HH:mm")}</p>
+                      </div>
+                      <span className={`text-[11px] font-black uppercase px-3 py-1.5 rounded-xl ${order.status === 'PAID' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
+                         {order.status}
+                      </span>
+                   </div>
+                 ))}
+              </div>
+           ) : (
+              <p className="text-sm font-bold text-slate-400 italic px-2">Chưa có đơn hàng nào.</p>
+           )}
+        </div>
+
+        <div className="space-y-4">
+           <div className="flex items-center gap-2 text-base font-black text-slate-900 border-b border-slate-100 pb-3">
+              <KeyIcon className="h-5 w-5" /> Danh sách API Keys ({user.apiKeys.length})
+           </div>
+           <div className="flex flex-col gap-3">
+              {user.apiKeys.map((key: any) => (
+                <div key={key.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-[24px] bg-slate-50 border border-slate-100 gap-3 group/key hover:border-emerald-200 transition-all">
+                   <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-slate-400 group-hover/key:text-emerald-500 shadow-sm transition-colors">
+                         <KeyIcon className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-black text-slate-700">{key.name}</span>
+                   </div>
+                   <span className="font-mono text-xs font-bold text-slate-400 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm group-hover/key:border-emerald-100 transition-all">
+                      {key.displayKey}
+                   </span>
+                </div>
+              ))}
+              {user.apiKeys.length === 0 && (
+                <p className="text-sm font-bold text-slate-400 italic px-2">Người dùng chưa tạo API key nào.</p>
+              )}
+           </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function AccountManagementModal({ user, onClose, onUpdateRole, onUpdateStatus }: { user: UserItem, onClose: () => void, onUpdateRole: any, onUpdateStatus: any }) {
+  return (
+    <Modal title="Quản lý tài khoản" onClose={onClose}>
+      <div className="space-y-6">
+        <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
+           <h4 className="text-sm font-black text-slate-900 mb-2">Thay đổi vai trò</h4>
+           <p className="text-xs font-bold text-slate-500 mb-6">User: Quyền người dùng thông thường. Admin: Toàn quyền quản trị hệ thống.</p>
+           
+           <div className="flex gap-4">
+              <button 
+                onClick={() => onUpdateRole(user.id, "USER")}
+                className={`flex-1 rounded-2xl py-4 text-sm font-black transition-all ${user.role === 'USER' ? 'bg-white border-2 border-slate-900 text-slate-900' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+              >
+                USER
+              </button>
+              <button 
+                onClick={() => onUpdateRole(user.id, "ADMIN")}
+                className={`flex-1 rounded-2xl py-4 text-sm font-black transition-all ${user.role === 'ADMIN' ? 'bg-white border-2 border-blue-600 text-blue-600' : 'bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600'}`}
+              >
+                ADMIN
+              </button>
+           </div>
+           {user.role === 'ADMIN' && (
+             <div className="mt-4 flex items-center gap-2 p-4 rounded-2xl bg-amber-50 text-amber-700 border border-amber-100">
+                <AlertTriangle className="h-4 w-4" />
+                <p className="text-[10px] font-bold">Cảnh báo: Hạ quyền ADMIN sẽ giới hạn truy cập của người dùng này.</p>
+             </div>
+           )}
+        </div>
+
+        <div className="p-6 rounded-[32px] bg-rose-50 border border-rose-100">
+           <h4 className="text-sm font-black text-rose-900 mb-2">Trạng thái tài khoản</h4>
+           <p className="text-xs font-bold text-rose-600 mb-6">Khi bị khóa, người dùng không thể đăng nhập hoặc sử dụng API.</p>
+           
+           {user.lockedAt ? (
+             <button 
+               onClick={() => onUpdateStatus(user.id, "UNLOCK")}
+               className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white border border-rose-200 py-4 text-sm font-black text-emerald-600 hover:bg-emerald-50 transition-all"
+             >
+               <Unlock className="h-4 w-4" /> Mở khóa tài khoản
+             </button>
+           ) : (
+             <button 
+               onClick={() => onUpdateStatus(user.id, "LOCK")}
+               className="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-600 py-4 text-sm font-black text-white hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
+             >
+               <Lock className="h-4 w-4" /> Khóa tài khoản ngay lập tức
+             </button>
+           )}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function GrantCreditsModal({ user, onClose, onConfirm }: { user: UserItem, onClose: () => void, onConfirm: any }) {
+  const [credits, setCredits] = useState(100000);
+  const [days, setDays] = useState(30);
+  const [note, setNote] = useState("");
+
+  return (
+    <Modal title="Cấp Credits thủ công" onClose={onClose}>
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+           <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-900 text-white font-black text-xs">
+              {user.name[0]}
+           </div>
+           <div>
+              <p className="text-sm font-black text-slate-900">{user.name}</p>
+              <p className="text-[10px] font-bold text-slate-400">{user.email}</p>
+           </div>
+        </div>
+
+        <div className="space-y-2">
+           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Số Credits cấp</label>
+           <input 
+             type="number"
+             value={credits}
+             onChange={(e) => setCredits(Number(e.target.value))}
+             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-xl font-black text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+           />
+        </div>
+
+        <div className="space-y-2">
+           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Thời hạn (Ngày)</label>
+           <input 
+             type="number"
+             value={days}
+             onChange={(e) => setDays(Number(e.target.value))}
+             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-black text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+           />
+        </div>
+
+        <div className="space-y-2">
+           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ghi chú lý do</label>
+           <textarea 
+             value={note}
+             onChange={(e) => setNote(e.target.value)}
+             placeholder="Ví dụ: Tặng quà tri ân, đền bù lỗi hệ thống..."
+             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all min-h-[100px]"
+           />
+        </div>
+
+        <button 
+          onClick={() => onConfirm(user.id, { credits, durationDays: days, note })}
+          className="w-full h-16 flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-white font-black text-lg hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100"
+        >
+          <PlusCircle className="h-5 w-5" /> Xác nhận cấp Credits
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function NotifyUserModal({ user, onClose, onConfirm }: { user: UserItem, onClose: () => void, onConfirm: any }) {
+  const [title, setTitle] = useState("Thông báo từ TzoShop");
+  const [message, setMessage] = useState("");
+  const [type, setType] = useState("INFO");
+
+  return (
+    <Modal title="Gửi thông báo cá nhân" onClose={onClose}>
+      <div className="space-y-6">
+        <div className="space-y-2">
+           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tiêu đề</label>
+           <input 
+             type="text"
+             value={title}
+             onChange={(e) => setTitle(e.target.value)}
+             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-black text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+           />
+        </div>
+
+        <div className="space-y-2">
+           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Loại thông báo</label>
+           <div className="grid grid-cols-4 gap-2">
+              {["INFO", "SUCCESS", "WARNING", "ERROR"].map((t) => (
+                <button 
+                  key={t}
+                  onClick={() => setType(t)}
+                  className={`rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all ${type === t ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                >
+                  {t}
+                </button>
+              ))}
+           </div>
+        </div>
+
+        <div className="space-y-2">
+           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nội dung</label>
+           <textarea 
+             value={message}
+             onChange={(e) => setMessage(e.target.value)}
+             placeholder="Nhập nội dung thông báo..."
+             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all min-h-[150px]"
+           />
+        </div>
+
+        <button 
+          onClick={() => onConfirm(user.id, { title, message, type })}
+          className="w-full h-16 flex items-center justify-center gap-2 rounded-2xl bg-blue-600 text-white font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-100"
+        >
+          <Bell className="h-5 w-5" /> Gửi thông báo ngay
+        </button>
+      </div>
+    </Modal>
   );
 }

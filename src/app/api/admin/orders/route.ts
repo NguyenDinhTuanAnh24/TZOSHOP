@@ -10,11 +10,25 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status") || undefined;
+    const email = searchParams.get("email") || undefined;
+    const startDate = searchParams.get("startDate") || undefined;
+    const endDate = searchParams.get("endDate") || undefined;
+
+    const where: any = {};
+    if (status && status !== "ALL") where.status = status;
+    if (email) {
+      where.user = {
+        email: { contains: email, mode: 'insensitive' }
+      };
+    }
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
 
     const orders = await prisma.order.findMany({
-      where: {
-        status: status as any,
-      },
+      where,
       orderBy: {
         createdAt: "desc",
       },
@@ -34,9 +48,31 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Check if credits are granted for each order
+    const orderIds = orders.map(o => o.id);
+    const ledgers = await prisma.creditLedger.findMany({
+      where: {
+        referenceId: { in: orderIds },
+        type: "PURCHASE"
+      },
+      select: {
+        referenceId: true,
+        creditBucketId: true
+      }
+    });
+
+    const ledgerMap = new Map(ledgers.map(l => [l.referenceId, l]));
+
+    const ordersWithGrantStatus = orders.map(order => ({
+      ...order,
+      payosOrderCode: order.payosOrderCode?.toString(),
+      isCreditsGranted: ledgerMap.has(order.id),
+      creditBucketId: ledgerMap.get(order.id)?.creditBucketId
+    }));
+
     return NextResponse.json({
       success: true,
-      data: orders
+      data: ordersWithGrantStatus
     });
 
   } catch (error) {

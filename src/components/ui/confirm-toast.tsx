@@ -4,39 +4,42 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, Info } from "lucide-react";
 
-type ConfirmToastType = "danger" | "warning" | "info";
+type ConfirmDialogType = "danger" | "warning" | "info" | "primary";
 
-type ConfirmToastProps = {
+type ConfirmDialogProps = {
   open: boolean;
   title: string;
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  type?: ConfirmToastType;
+  type?: ConfirmDialogType;
   isLoading?: boolean;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 };
 
-const iconStyles: Record<ConfirmToastType, string> = {
+const iconStyles: Record<ConfirmDialogType, string> = {
   danger: "bg-rose-50 text-rose-600 ring-rose-100",
   warning: "bg-amber-50 text-amber-600 ring-amber-100",
   info: "bg-sky-50 text-sky-600 ring-sky-100",
+  primary: "bg-blue-50 text-blue-600 ring-blue-100",
 };
 
-const confirmButtonStyles: Record<ConfirmToastType, string> = {
+const confirmButtonStyles: Record<ConfirmDialogType, string> = {
   danger: "bg-rose-600 hover:bg-rose-700",
   warning: "bg-amber-600 hover:bg-amber-700",
   info: "bg-sky-600 hover:bg-sky-700",
+  primary: "bg-blue-600 hover:bg-blue-700",
 };
 
-const Icons: Record<ConfirmToastType, any> = {
+const Icons: Record<ConfirmDialogType, any> = {
   danger: AlertTriangle,
   warning: AlertTriangle,
   info: Info,
+  primary: Info,
 };
 
-export function ConfirmToast({
+export function ConfirmDialog({
   open,
   title,
   description,
@@ -46,7 +49,7 @@ export function ConfirmToast({
   isLoading = false,
   onConfirm,
   onCancel,
-}: ConfirmToastProps) {
+}: ConfirmDialogProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

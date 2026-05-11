@@ -12,45 +12,51 @@ export async function GET(
   try {
     await requireAdminUser();
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            orders: true,
-            apiKeys: true,
-            creditBuckets: true,
-            usageLogs: true,
-            supportTickets: true,
+    const [user, totalCreditsUsed] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: {
+              orders: true,
+              apiKeys: true,
+              creditBuckets: true,
+              usageLogs: true,
+              supportTickets: true,
+            }
+          },
+          creditBuckets: {
+            include: {
+              product: {
+                select: {
+                  name: true,
+                  tier: true,
+                }
+              }
+            },
+            orderBy: { createdAt: "desc" }
+          },
+          apiKeys: {
+            orderBy: { createdAt: "desc" }
+          },
+          orders: {
+            include: {
+              product: {
+                select: {
+                  name: true
+                }
+              }
+            },
+            orderBy: { createdAt: "desc" },
+            take: 10
           }
-        },
-        creditBuckets: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                tier: true,
-              }
-            }
-          },
-          orderBy: { createdAt: "desc" }
-        },
-        apiKeys: {
-          orderBy: { createdAt: "desc" }
-        },
-        orders: {
-          include: {
-            product: {
-              select: {
-                name: true
-              }
-            }
-          },
-          orderBy: { createdAt: "desc" },
-          take: 10
         }
-      }
-    });
+      }),
+      prisma.creditLedger.aggregate({
+        where: { userId: id, type: "USAGE" },
+        _sum: { amount: true }
+      })
+    ]);
 
     if (!user) {
       return NextResponse.json(
@@ -59,17 +65,19 @@ export async function GET(
       );
     }
 
+    const activeBucketsCount = user.creditBuckets.filter(b => b.isActive && new Date(b.expiresAt) > new Date()).length;
+
     // Mask API Keys for security
     const data = {
       ...user,
+      totalCreditsUsed: (totalCreditsUsed._sum.amount || BigInt(0)).toString(),
+      activeBucketsCount,
       apiKeys: user.apiKeys.map(key => ({
         ...key,
-        // Chỉ hiển thị prefix, che phần còn lại
         displayKey: `${key.keyPrefix}********************`,
-        encryptedKey: undefined, // Không bao giờ gửi về client
+        encryptedKey: undefined,
         keyHash: undefined
       })),
-      // Convert BigInt to String
       creditBuckets: user.creditBuckets.map(bucket => ({
         ...bucket,
         creditsTotal: bucket.creditsTotal.toString(),

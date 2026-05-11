@@ -22,15 +22,16 @@ import {
 import { AppIcon } from "@/components/ui/icon";
 import { formatVnd } from "@/lib/format";
 import Link from "next/link";
+import { AdminAlertsBlock } from "@/components/admin/admin-alerts-block";
 
 type AdminStats = {
-  users: number;
-  revenue: number;
+  totalUsers: number;
+  revenueVnd: number;
   pendingOrders: number;
-  paidOrdersCount: number;
-  creditsSold: string;
-  apiKeysCount: number;
   openTickets: number;
+  creditsSold: string;
+  creditsGranted: string;
+  activeApiKeys: number;
   activeModels: number;
   activeProviders: number;
 };
@@ -101,10 +102,18 @@ export default function AdminOverviewPage() {
     );
   }
 
+  // Logic hiển thị Credits Sold vs Credits Granted
+  const sold = Number(stats?.creditsSold || 0);
+  const granted = Number(stats?.creditsGranted || 0);
+  
+  const creditsLabel = (sold === 0 && granted > 0) ? "Credits đã cấp" : "Credits đã bán";
+  const creditsValue = (sold === 0 && granted > 0) ? granted : sold;
+  const creditsDesc = (sold === 0 && granted > 0) ? "Tổng credits trong hệ thống" : "Tổng credits nạp qua đơn hàng";
+
   const statCards = [
     {
       label: "Tổng người dùng",
-      value: (stats?.users || 0).toLocaleString(),
+      value: (stats?.totalUsers || 0).toLocaleString(),
       desc: "Người dùng đăng ký",
       icon: Users,
       color: "text-blue-600",
@@ -112,8 +121,8 @@ export default function AdminOverviewPage() {
     },
     {
       label: "Doanh thu",
-      value: formatVnd(stats?.revenue || 0),
-      desc: "Tổng doanh thu đã thanh toán",
+      value: formatVnd(stats?.revenueVnd || 0),
+      desc: "Tổng doanh thu PAID",
       icon: DollarSign,
       color: "text-emerald-600",
       bg: "bg-emerald-50"
@@ -121,7 +130,7 @@ export default function AdminOverviewPage() {
     {
       label: "Đơn chờ nạp",
       value: stats?.pendingOrders || 0,
-      desc: "Chờ xác nhận nạp tiền",
+      desc: "Đơn hàng PENDING",
       icon: ShoppingCart,
       color: "text-amber-600",
       bg: "bg-amber-50"
@@ -135,16 +144,16 @@ export default function AdminOverviewPage() {
       bg: "bg-rose-50"
     },
     {
-      label: "Credits đã bán",
-      value: Number(stats?.creditsSold || 0).toLocaleString(),
-      desc: "Tổng credits nạp hệ thống",
+      label: creditsLabel,
+      value: creditsValue.toLocaleString(),
+      desc: creditsDesc,
       icon: Zap,
       color: "text-indigo-600",
       bg: "bg-indigo-50"
     },
     {
       label: "API Keys",
-      value: stats?.apiKeysCount || 0,
+      value: stats?.activeApiKeys || 0,
       desc: "Key đang hoạt động",
       icon: Key,
       color: "text-slate-600",
@@ -161,7 +170,7 @@ export default function AdminOverviewPage() {
     {
       label: "Providers",
       value: stats?.activeProviders || 0,
-      desc: "Nhà cung cấp đang kết nối",
+      desc: "Nhà cung cấp hoạt động",
       icon: Server,
       color: "text-teal-600",
       bg: "bg-teal-50"
@@ -205,6 +214,8 @@ export default function AdminOverviewPage() {
           </div>
         ))}
       </div>
+
+      <AdminAlertsBlock />
 
       {/* Lists Grid */}
       <div className="grid gap-8 lg:grid-cols-2">

@@ -26,7 +26,7 @@ import { AppIcon } from "@/components/ui/icon";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useConfirm } from "@/hooks/use-confirm";
-import { ConfirmToast } from "@/components/ui/confirm-toast";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -440,7 +440,7 @@ export default function AdminProvidersPage() {
       )}
 
       {confirmState && (
-        <ConfirmToast
+        <ConfirmDialog
           open={!!confirmState}
           title={confirmState.title}
           description={confirmState.description}

@@ -53,6 +53,13 @@ type OrderDetail = {
     durationDays: number;
     tier: string;
   };
+  creditBucket: {
+    id: string;
+    creditsTotal: string;
+    creditsRemaining: string;
+    isActive: boolean;
+    expiresAt: string;
+  } | null;
 };
 
 export default function AdminOrderDetailPage({ params }: { params: { id: string } }) {
@@ -120,6 +127,26 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!order) return;
+    if (!window.confirm("Bạn có chắc chắn muốn HỦY đơn hàng này?")) return;
+
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id, status: "CANCELLED" }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        showToast("Đã hủy đơn hàng.", "success");
+        fetchOrder();
+      }
+    } catch (error) {
+      showToast("Không thể hủy đơn hàng.", "error");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -140,6 +167,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
   }
 
   const sectionCard = "rounded-[40px] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-xl hover:shadow-slate-200/50";
+
 
   const statusConfig: Record<string, { label: string, color: string, bg: string, icon: any }> = {
     PAID: { label: "Đã thanh toán", color: "text-emerald-600", bg: "bg-emerald-50", icon: CheckCircle2 },
@@ -187,17 +215,23 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
            {order.status === "PENDING" && (
              <>
                <button 
-                 onClick={handleVerifyPayment}
-                 className="flex items-center gap-2 rounded-full bg-slate-900 px-8 py-4 text-sm font-black text-white hover:bg-black transition-all shadow-xl shadow-slate-300 active:scale-95"
+                 onClick={handleCancelOrder}
+                 className="flex items-center gap-2 rounded-full bg-white border border-rose-200 px-6 py-4 text-sm font-black text-rose-600 hover:bg-rose-50 transition-all shadow-sm active:scale-95"
                >
-                 <Globe className="h-4 w-4" /> Check PayOS Status
+                 <XCircle className="h-4 w-4" /> Hủy đơn
                </button>
                <button 
-                 onClick={handleManualApprove}
-                 className="flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-4 text-sm font-black text-white hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 active:scale-95"
-               >
-                 <CheckCircle2 className="h-4 w-4" /> Duyệt thủ công
-               </button>
+                  onClick={handleVerifyPayment}
+                  className="flex items-center gap-2 rounded-full bg-slate-900 px-8 py-4 text-sm font-black text-white hover:bg-black transition-all shadow-xl shadow-slate-300 active:scale-95"
+                >
+                  <Globe className="h-4 w-4" /> Check PayOS Status
+                </button>
+                <button 
+                  onClick={handleManualApprove}
+                  className="flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-4 text-sm font-black text-white hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 active:scale-95"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Duyệt thủ công
+                </button>
              </>
            )}
            {order.status === "PAID" && (
@@ -214,6 +248,45 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
       <div className="grid gap-8 lg:grid-cols-3 items-start">
         {/* Left Column: Order & Product Info */}
         <div className="lg:col-span-2 space-y-8">
+           {/* Credit Bucket Info (If Granted) */}
+           {order.status === "PAID" && (
+             <section className={`${sectionCard} border-emerald-100 bg-emerald-50/30`}>
+                <div className="flex items-center justify-between mb-8">
+                   <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+                        <Zap className="h-5 w-5" />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900">Gói Credits đã kích hoạt</h3>
+                   </div>
+                   {order.creditBucket?.isActive ? (
+                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-700 ring-1 ring-emerald-500/20">Active</span>
+                   ) : (
+                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 ring-1 ring-slate-300">Inactive</span>
+                   )}
+                </div>
+                {order.creditBucket ? (
+                  <div className="grid gap-6 sm:grid-cols-3">
+                    <div className="p-5 rounded-[32px] bg-white border border-emerald-100 shadow-sm">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đã cấp</p>
+                       <p className="text-xl font-black text-slate-900">{new Intl.NumberFormat('vi-VN').format(Number(order.creditBucket.creditsTotal))}</p>
+                    </div>
+                    <div className="p-5 rounded-[32px] bg-white border border-emerald-100 shadow-sm">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Còn lại</p>
+                       <p className="text-xl font-black text-emerald-600">{new Intl.NumberFormat('vi-VN').format(Number(order.creditBucket.creditsRemaining))}</p>
+                    </div>
+                    <div className="p-5 rounded-[32px] bg-white border border-emerald-100 shadow-sm">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hết hạn</p>
+                       <p className="text-sm font-black text-slate-900">{format(new Date(order.creditBucket.expiresAt), "dd/MM/yyyy HH:mm")}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-6 rounded-[32px] bg-rose-50 border border-rose-100 text-rose-600">
+                    <AlertCircle className="h-5 w-5" />
+                    <p className="text-sm font-bold">Đơn đã PAID nhưng chưa thấy bản ghi CreditBucket. Vui lòng kiểm tra lại Ledger.</p>
+                  </div>
+                )}
+             </section>
+           )}
            <section className={sectionCard}>
               <div className="flex items-center gap-3 mb-8">
                  <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600">

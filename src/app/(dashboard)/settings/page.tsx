@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
-import { ConfirmToast } from "@/components/ui/confirm-toast";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useSession } from "next-auth/react";
 import { 
@@ -520,7 +520,7 @@ function SettingsContent() {
       )}
 
       {confirmState && (
-        <ConfirmToast
+        <ConfirmDialog
           open={!!confirmState}
           title={confirmState.title}
           description={confirmState.description}

@@ -53,7 +53,7 @@ const menuItems = [
 ];
 
 import { useConfirm } from "@/hooks/use-confirm";
-import { ConfirmToast } from "@/components/ui/confirm-toast";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
 
 export default function DashboardMobileNav() {
   const pathname = usePathname();
@@ -213,7 +213,7 @@ export default function DashboardMobileNav() {
       )}
 
       {confirmState && (
-        <ConfirmToast
+        <ConfirmDialog
           open={!!confirmState}
           title={confirmState.title}
           description={confirmState.description}

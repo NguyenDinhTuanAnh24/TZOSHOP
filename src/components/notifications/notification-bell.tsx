@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { 
   Bell, 
   CheckCheck, 
@@ -14,11 +14,14 @@ import {
   ChevronRight,
   CheckCircle2,
   XCircle,
-  KeyRound
+  KeyRound,
+  AlertCircle,
+  AlertTriangle
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 type Notification = {
   id: string;
@@ -28,99 +31,176 @@ type Notification = {
   href?: string | null;
   isRead: boolean;
   createdAt: string;
+  severity?: "WARNING" | "DANGER";
+  isAlert?: boolean; // true = realtime admin alert, not in DB
 };
 
 export function NotificationBell() {
+  const { data: session } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [isMarkingRead, setIsMarkingRead] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const hasMarkedRef = useRef(false); // Track if we already marked read for this open
   const router = useRouter();
 
-  const fetchNotifications = async () => {
+  // Fetch notifications (GET only — no mark read)
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications");
       const result = await res.json();
-      if (result.notifications) {
-        setNotifications(result.notifications);
-        setUnreadCount(result.unreadCount);
+      let allNotifications: Notification[] = (result.notifications || []).map((n: any) => ({
+        ...n,
+        isAlert: false,
+      }));
+      let dbUnread: number = result.unreadCount || 0;
+
+      // Admin: fetch realtime alerts (separate from DB notifications)
+      if ((session?.user as any)?.role === "ADMIN") {
+        try {
+          const alertRes = await fetch("/api/admin/alerts");
+          const alertData = await alertRes.json();
+          if (alertData.success && alertData.alerts?.length > 0) {
+            const mappedAlerts: Notification[] = alertData.alerts.slice(0, 10).map((a: any) => ({
+              ...a,
+              isRead: false,
+              isAlert: true, // Mark as realtime alert — not in DB, no mark-read
+            }));
+            allNotifications = [...mappedAlerts, ...allNotifications];
+          }
+        } catch (e) {
+          console.error("Failed to fetch admin alerts:", e);
+        }
       }
+
+      // Sort by createdAt descending
+      allNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      setNotifications(allNotifications);
+      // Only DB notifications count toward unreadCount badge
+      setUnreadCount(dbUnread);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
-  };
+  }, [session]);
 
+  // Initial fetch + polling
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchNotifications]);
 
+  // Close on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        hasMarkedRef.current = false; // Reset for next open
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-    if (!isOpen) {
-      fetchNotifications();
-    }
-  };
+  // Mark all DB notifications as read when dropdown opens
+  const markAllRead = useCallback(async () => {
+    if (isMarkingRead || hasMarkedRef.current) return;
+    if (unreadCount <= 0) return;
 
-  const handleMarkAllRead = async () => {
+    setIsMarkingRead(true);
+    hasMarkedRef.current = true;
+
     try {
-      const res = await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "read-all" })
-      });
-      if (res.ok) {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      const res = await fetch("/api/notifications/mark-read", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        // Update local state: mark all DB notifications as read
+        setNotifications(prev =>
+          prev.map(n => n.isAlert ? n : { ...n, isRead: true })
+        );
         setUnreadCount(0);
+      } else {
+        hasMarkedRef.current = false; // Allow retry
       }
     } catch (error) {
       console.error("Failed to mark all read:", error);
+      hasMarkedRef.current = false; // Allow retry
+    } finally {
+      setIsMarkingRead(false);
     }
-  };
+  }, [isMarkingRead, unreadCount]);
 
-  const handleReadNotification = async (id: string, href?: string | null) => {
-    try {
-      await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      
-      if (href) {
-        setIsOpen(false);
-        router.push(href);
+  // Toggle dropdown
+  const handleToggle = () => {
+    const willOpen = !isOpen;
+    setIsOpen(willOpen);
+
+    if (willOpen) {
+      // Refresh data when opening
+      fetchNotifications();
+      // Mark read after a short delay to let data load
+      if (unreadCount > 0) {
+        setTimeout(() => markAllRead(), 300);
       }
-    } catch (error) {
-      console.error("Failed to mark read:", error);
+    } else {
+      hasMarkedRef.current = false;
     }
   };
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      // User & Shared types
+  // Click on a notification
+  const handleClickNotification = (notif: Notification) => {
+    if (notif.href) {
+      setIsOpen(false);
+      hasMarkedRef.current = false;
+      router.push(notif.href);
+    }
+  };
+
+  const getIcon = (notif: Notification) => {
+    // Admin alerts use severity-based icons
+    if (notif.severity) {
+      if (notif.severity === "DANGER") return <AlertCircle className="h-4 w-4 text-rose-500" />;
+      return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+    }
+
+    switch (notif.type) {
       case "PAYMENT_SUCCESS": return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
       case "ORDER_CREATED": return <ShoppingCart className="h-4 w-4 text-blue-500" />;
       case "ORDER_CANCELLED": return <XCircle className="h-4 w-4 text-rose-500" />;
       case "API_KEY_CREATED": return <KeyRound className="h-4 w-4 text-indigo-500" />;
       case "SUPPORT_UPDATED": return <LifeBuoy className="h-4 w-4 text-amber-500" />;
       case "SYSTEM": return <Info className="h-4 w-4 text-slate-500" />;
-      
-      // Admin specific types
       case "ORDER_PAID": return <CreditCard className="h-4 w-4 text-emerald-500" />;
       case "SUPPORT_CREATED": return <LifeBuoy className="h-4 w-4 text-amber-500" />;
       case "USER_REGISTERED": return <UserPlus className="h-4 w-4 text-indigo-500" />;
-      
+      case "OUT_OF_CREDITS":
+      case "HIGH_FAILED_REQUESTS":
+        return <AlertCircle className="h-4 w-4 text-rose-500" />;
+      case "LOW_CREDITS":
+      case "EXPIRING_BUCKET":
+      case "EXPIRING_PLAN":
+      case "STALE_PENDING_ORDER":
+      case "MODEL_FAILED_SPIKE":
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
       default: return <Bell className="h-4 w-4 text-slate-400" />;
     }
+  };
+
+  const getBgColor = (notif: Notification) => {
+    if (notif.isRead) return "bg-white";
+    
+    // Check type for unread background colors
+    if (notif.severity === "DANGER" || notif.type === "OUT_OF_CREDITS") {
+      return "bg-rose-50/50";
+    }
+    
+    if (notif.severity === "WARNING" || notif.type === "LOW_CREDITS" || notif.type === "EXPIRING_PLAN" || notif.type === "EXPIRING_BUCKET") {
+      return "bg-amber-50/50";
+    }
+
+    return "bg-emerald-50/30"; // Default unread color
   };
 
   return (
@@ -135,7 +215,7 @@ export function NotificationBell() {
         <Bell className={`h-5 w-5 ${unreadCount > 0 && !isOpen ? 'animate-[bell-swing_2s_infinite_ease-in-out]' : ''}`} />
         {unreadCount > 0 && (
           <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-black text-white ring-4 ring-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
@@ -151,15 +231,6 @@ export function NotificationBell() {
                   {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Bạn đã đọc hết thông báo"}
                </p>
             </div>
-            {unreadCount > 0 && (
-              <button 
-                onClick={handleMarkAllRead}
-                className="flex items-center gap-1.5 rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-black text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
-              >
-                <CheckCheck className="h-3.5 w-3.5" />
-                Đánh dấu đã đọc
-              </button>
-            )}
           </div>
 
           {/* List */}
@@ -179,15 +250,13 @@ export function NotificationBell() {
                 {notifications.map((notif) => (
                   <button
                     key={notif.id}
-                    onClick={() => handleReadNotification(notif.id, notif.href)}
-                    className={`w-full flex gap-4 p-5 text-left transition-all hover:bg-slate-50/80 ${
-                      !notif.isRead ? "bg-emerald-50/30" : "bg-white"
-                    }`}
+                    onClick={() => handleClickNotification(notif)}
+                    className={`w-full flex gap-4 p-5 text-left transition-all hover:bg-slate-50/80 ${getBgColor(notif)}`}
                   >
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-slate-100 shadow-sm ${
                       !notif.isRead ? "bg-white" : "bg-slate-50"
                     }`}>
-                      {getIcon(notif.type)}
+                      {getIcon(notif)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1">
@@ -195,7 +264,11 @@ export function NotificationBell() {
                           {notif.title}
                         </h4>
                         {!notif.isRead && (
-                           <div className="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shadow-sm shadow-emerald-200 shrink-0" />
+                           <div className={`h-2 w-2 rounded-full mt-1.5 shadow-sm shrink-0 ${
+                             notif.type === "OUT_OF_CREDITS" || notif.severity === "DANGER" ? "bg-rose-500 shadow-rose-200" :
+                             notif.type === "LOW_CREDITS" || notif.type === "EXPIRING_PLAN" || notif.severity === "WARNING" ? "bg-amber-500 shadow-amber-200" :
+                             "bg-emerald-500 shadow-emerald-200"
+                           }`} />
                         )}
                       </div>
                       <p className={`text-xs leading-relaxed mb-2 line-clamp-2 ${notif.isRead ? "text-slate-400 font-medium" : "text-slate-500 font-bold"}`}>
@@ -219,7 +292,7 @@ export function NotificationBell() {
           {/* Footer */}
           <div className="border-t border-slate-100 p-4 bg-slate-50/50 text-center">
              <button 
-                onClick={() => setIsOpen(false)}
+                onClick={() => { setIsOpen(false); hasMarkedRef.current = false; }}
                 className="py-2 px-6 rounded-2xl text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-widest"
              >
                 Đóng cửa sổ

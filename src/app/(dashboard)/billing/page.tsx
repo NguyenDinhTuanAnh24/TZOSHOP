@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { ConfirmToast } from "@/components/ui/confirm-toast";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useToast } from "@/hooks/use-toast";
@@ -367,7 +367,7 @@ export default function BillingPage() {
       {/* Toast & Confirm */}
       {toast && <ToastMessage message={toast.message} type={toast.type} onClose={clearToast} />}
       {confirmState && (
-        <ConfirmToast
+        <ConfirmDialog
           open={!!confirmState}
           title={confirmState.title}
           description={confirmState.description}

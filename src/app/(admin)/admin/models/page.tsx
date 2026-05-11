@@ -27,7 +27,7 @@ import { AppIcon } from "@/components/ui/icon";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useConfirm } from "@/hooks/use-confirm";
-import { ConfirmToast } from "@/components/ui/confirm-toast";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
 import { Switch } from "@/components/ui/switch";
 
 type AiModel = {
@@ -571,7 +571,7 @@ export default function AdminModelsPage() {
       )}
 
       {confirmState && (
-        <ConfirmToast
+        <ConfirmDialog
           open={!!confirmState}
           title={confirmState.title}
           description={confirmState.description}

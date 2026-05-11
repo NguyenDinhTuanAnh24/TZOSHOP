@@ -11,12 +11,15 @@ export function calculateCreditsUsed(params: {
   inputRate: number;
   outputRate: number;
 }) {
-  const inputCredits = (params.promptTokens / 1000) * params.inputRate;
-  const outputCredits = (params.completionTokens / 1000) * params.outputRate;
+  const creditPerBag = Number(process.env.CREDIT_PER_BAG) || 4500;
+
+  const inputBags = (params.promptTokens / 1_000_000) * params.inputRate;
+  const outputBags = (params.completionTokens / 1_000_000) * params.outputRate;
   
-  // Làm tròn lên và tối thiểu là 1 credit nếu có sử dụng
-  const chargedCredits = Math.ceil(inputCredits + outputCredits);
-  return Math.max(chargedCredits, (params.promptTokens + params.completionTokens > 0) ? 1 : 0);
+  const totalBags = inputBags + outputBags;
+  const chargedCredits = Math.max(1, Math.ceil(totalBags * creditPerBag));
+
+  return chargedCredits;
 }
 
 type ConsumeCreditsParams = {

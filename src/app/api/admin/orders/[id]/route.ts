@@ -34,10 +34,26 @@ export async function GET(
       );
     }
 
+    // Find if credits were granted
+    const ledger = await prisma.creditLedger.findFirst({
+      where: {
+        referenceId: order.id,
+        type: "PURCHASE"
+      },
+      include: {
+        creditBucket: true
+      }
+    });
+
     // Convert BigInt to String
     const data = {
       ...order,
       payosOrderCode: order.payosOrderCode?.toString(),
+      creditBucket: ledger?.creditBucket ? {
+        ...ledger.creditBucket,
+        creditsTotal: ledger.creditBucket.creditsTotal.toString(),
+        creditsRemaining: ledger.creditBucket.creditsRemaining.toString(),
+      } : null,
     };
 
     const { createAuditLog } = await import("@/lib/server/audit-log");

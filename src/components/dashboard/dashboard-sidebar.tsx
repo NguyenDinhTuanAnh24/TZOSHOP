@@ -51,7 +51,7 @@ const menuItems = [
 ];
 
 import { useConfirm } from "@/hooks/use-confirm";
-import { ConfirmToast } from "@/components/ui/confirm-toast";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -131,7 +131,7 @@ export default function DashboardSidebar() {
       </div>
 
       {confirmState && (
-        <ConfirmToast
+        <ConfirmDialog
           open={!!confirmState}
           title={confirmState.title}
           description={confirmState.description}

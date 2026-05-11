@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, use } from "react";
 import Link from "next/link";
 import { 
   User, 
@@ -46,7 +46,8 @@ type UserDetail = {
   orders: any[];
 };
 
-export default function AdminUserDetailPage({ params }: { params: { id: string } }) {
+export default function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [user, setUser] = useState<UserDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast, showToast, clearToast } = useToast();
@@ -54,7 +55,7 @@ export default function AdminUserDetailPage({ params }: { params: { id: string }
   const fetchUser = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`/api/admin/users/${params.id}`);
+      const res = await fetch(`/api/admin/users/${id}`);
       const result = await res.json();
       if (result.success) {
         setUser(result.data);
@@ -66,7 +67,7 @@ export default function AdminUserDetailPage({ params }: { params: { id: string }
     } finally {
       setIsLoading(false);
     }
-  }, [params.id, showToast]);
+  }, [id, showToast]);
 
   useEffect(() => {
     fetchUser();

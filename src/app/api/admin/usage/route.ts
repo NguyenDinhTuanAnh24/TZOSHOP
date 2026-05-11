@@ -9,37 +9,95 @@ export async function GET(request: NextRequest) {
     const user = await requireAdminUser();
 
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId") || undefined;
-    const apiFamily = searchParams.get("apiFamily") || undefined;
+    const page = parseInt(searchParams.get("page") || "1");
+    const pageSize = parseInt(searchParams.get("pageSize") || "20");
+    const email = searchParams.get("email") || undefined;
+    const apiKeyName = searchParams.get("apiKey") || undefined;
+    const model = searchParams.get("model") || undefined;
+    const status = searchParams.get("status") || undefined;
+    const timeRange = searchParams.get("timeRange") || "all";
 
-    const usageLogs = await prisma.usageLog.findMany({
-      where: {
-        userId: userId,
-        apiFamily: apiFamily as any,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 100, // Lấy 100 log gần nhất
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-          }
-        },
-        apiKey: {
-          select: {
-            name: true,
-            keyPrefix: true,
-          }
+    const where: any = {};
+    if (status && status !== "ALL") where.status = status;
+    if (model) where.model = { contains: model, mode: 'insensitive' };
+    if (email) {
+      where.user = {
+        email: { contains: email, mode: 'insensitive' }
+      };
+    }
+    if (apiKeyName) {
+      where.apiKey = {
+        name: { contains: apiKeyName, mode: 'insensitive' }
+      };
+    }
+
+    if (timeRange !== "all") {
+      const now = new Date();
+      let startDate = new Date();
+      if (timeRange === "today") startDate.setHours(0, 0, 0, 0);
+      else if (timeRange === "7d") startDate.setDate(now.getDate() - 7);
+      else if (timeRange === "30d") startDate.setDate(now.getDate() - 30);
+      where.createdAt = { gte: startDate };
+    }
+
+    const [logs, totalCount, statsData] = await Promise.all([
+      prisma.usageLog.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: {
+          user: { select: { name: true, email: true } },
+          apiKey: { select: { name: true, keyPrefix: true } }
         }
-      }
+      }),
+      prisma.usageLog.count({ where }),
+      prisma.usageLog.aggregate({
+        where,
+        _sum: {
+          totalTokens: true,
+          creditsCharged: true,
+          inputTokens: true,
+          outputTokens: true,
+        },
+        _count: { id: true }
+      })
+    ]);
+
+    // Top models (separate query as aggregate doesn't support groupBy well in one go)
+    const topModels = await prisma.usageLog.groupBy({
+      by: ['model'],
+      where,
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 5
     });
+
+    const successCount = await prisma.usageLog.count({
+      where: { ...where, status: "SUCCESS" }
+    });
+
+    const stats = {
+      totalRequests: statsData._count.id,
+      successCount: successCount,
+      failedCount: statsData._count.id - successCount,
+      totalCredits: (statsData._sum.creditsCharged || BigInt(0)).toString(),
+      totalTokens: statsData._sum.totalTokens || 0,
+      totalInputTokens: statsData._sum.inputTokens || 0,
+      totalOutputTokens: statsData._sum.outputTokens || 0,
+      topModels: topModels.map(m => ({ model: m.model, count: m._count.id }))
+    };
 
     return NextResponse.json({
       success: true,
-      data: usageLogs
+      data: logs,
+      pagination: {
+        page,
+        pageSize,
+        totalCount,
+        totalPages: Math.ceil(totalCount / pageSize)
+      },
+      stats
     });
 
   } catch (error) {

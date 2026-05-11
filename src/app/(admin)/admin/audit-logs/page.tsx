@@ -136,7 +136,7 @@ export default function AuditLogsPage() {
               placeholder="Tìm theo admin, hành động, ID thực thể..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-12 pr-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-12 pr-4 py-3.5 text-base font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
             />
           </div>
           
@@ -144,7 +144,7 @@ export default function AuditLogsPage() {
             <select 
               value={filterEntity}
               onChange={(e) => setFilterEntity(e.target.value)}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-base font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
             >
               <option value="ALL">Tất cả thực thể</option>
               {entityTypes.map(e => <option key={e} value={e}>{e}</option>)}
@@ -153,7 +153,7 @@ export default function AuditLogsPage() {
             <select 
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-base font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
             >
               <option value="ALL">Tất cả hành động</option>
               {actions.map(a => <option key={a} value={a}>{a}</option>)}
@@ -168,12 +168,12 @@ export default function AuditLogsPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Thời gian</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Quản trị viên</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Hành động</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Thực thể</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Mã thực thể</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-right">Chi tiết</th>
+                <th className="px-8 py-6 text-[13px] font-black uppercase tracking-[0.15em] text-slate-400">Thời gian</th>
+                <th className="px-8 py-6 text-[13px] font-black uppercase tracking-[0.15em] text-slate-400">Quản trị viên</th>
+                <th className="px-8 py-6 text-[13px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Hành động</th>
+                <th className="px-8 py-6 text-[13px] font-black uppercase tracking-[0.15em] text-slate-400">Thực thể</th>
+                <th className="px-8 py-6 text-[13px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Mã thực thể</th>
+                <th className="px-8 py-6 text-[13px] font-black uppercase tracking-[0.15em] text-slate-400 text-right">Chi tiết</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -191,8 +191,8 @@ export default function AuditLogsPage() {
                   <tr key={log.id} className="group hover:bg-slate-50/30 transition-colors">
                     <td className="px-8 py-6 whitespace-nowrap">
                        <div className="flex flex-col">
-                          <span className="text-sm font-black text-slate-900">{format(new Date(log.createdAt), "HH:mm:ss", { locale: vi })}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                          <span className="text-base font-black text-slate-900">{format(new Date(log.createdAt), "HH:mm:ss", { locale: vi })}</span>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
                              {format(new Date(log.createdAt), "dd MMM, yyyy", { locale: vi })}
                           </span>
                        </div>
@@ -203,14 +203,14 @@ export default function AuditLogsPage() {
                              <User className="h-4 w-4" />
                           </div>
                           <div>
-                             <p className="text-sm font-black text-slate-900 leading-tight">{log.adminUser.name || "Administrator"}</p>
-                             <p className="text-[11px] font-bold text-slate-400">{log.adminUser.email}</p>
+                             <p className="text-base font-black text-slate-900 leading-tight">{log.adminUser.name || "Administrator"}</p>
+                             <p className="text-xs font-bold text-slate-400">{log.adminUser.email}</p>
                           </div>
                        </div>
                     </td>
                     <td className="px-8 py-6 text-center">
                         <div className="flex justify-center">
-                           <span className={`inline-flex rounded-lg px-2.5 py-1 text-[10px] font-black tracking-widest uppercase ring-1 ring-inset ${
+                           <span className={`inline-flex rounded-lg px-3 py-1.5 text-[12px] font-black tracking-widest uppercase ring-1 ring-inset ${
                              log.action.includes("CREATE") ? "bg-emerald-50 text-emerald-600 ring-emerald-500/10" :
                              log.action.includes("UPDATE") ? "bg-amber-50 text-amber-600 ring-amber-500/10" :
                              log.action.includes("DELETE") || log.action.includes("DISABLE") ? "bg-rose-50 text-rose-600 ring-rose-500/10" :
@@ -223,12 +223,12 @@ export default function AuditLogsPage() {
                     </td>
                     <td className="px-8 py-6">
                        <div className="flex items-center gap-2">
-                          <Layers className="h-3.5 w-3.5 text-slate-300" />
-                          <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">{log.entityType}</span>
+                          <Layers className="h-4 w-4 text-slate-300" />
+                          <span className="text-xs font-black text-slate-600 uppercase tracking-widest">{log.entityType}</span>
                        </div>
                     </td>
-                    <td className="px-8 py-6">
-                       <code className="text-[10px] font-mono font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 group-hover:bg-white transition-all">
+                    <td className="px-8 py-6 text-center">
+                       <code className="text-[12px] font-mono font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-md border border-slate-100 group-hover:bg-white transition-all inline-block">
                           {log.entityId}
                        </code>
                     </td>

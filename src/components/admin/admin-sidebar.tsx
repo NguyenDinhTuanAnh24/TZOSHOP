@@ -14,11 +14,12 @@ import {
   ScrollText, 
   LogOut, 
   ShieldCheck,
-  Activity
+  Activity,
+  BarChart3
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
 import { useConfirm } from "@/hooks/use-confirm";
-import { ConfirmToast } from "@/components/ui/confirm-toast";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
 import Image from "next/image";
 
 const menuGroups = [
@@ -26,6 +27,7 @@ const menuGroups = [
     title: "Tổng quan",
     items: [
       { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
+      { href: "/admin/revenue", label: "Doanh thu", icon: BarChart3 },
     ]
   },
   {
@@ -143,7 +145,7 @@ export default function AdminSidebar() {
       </div>
 
       {confirmState && (
-        <ConfirmToast
+        <ConfirmDialog
           open={!!confirmState}
           title={confirmState.title}
           description={confirmState.description}

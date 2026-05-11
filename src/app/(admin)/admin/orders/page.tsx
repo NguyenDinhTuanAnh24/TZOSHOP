@@ -39,6 +39,8 @@ type OrderItem = {
   status: string;
   createdAt: string;
   paidAt?: string;
+  isCreditsGranted: boolean;
+  creditBucketId?: string;
   user: {
     name: string;
     email: string;
@@ -52,18 +54,26 @@ type OrderItem = {
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Filters
   const [filterStatus, setFilterStatus] = useState("ALL");
-  const [filterFamily, setFilterFamily] = useState("ALL");
+  const [filterEmail, setFilterEmail] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
   const [search, setSearch] = useState("");
+  
   const { toast, showToast, clearToast } = useToast();
 
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const url = filterStatus === "ALL" 
-        ? "/api/admin/orders" 
-        : `/api/admin/orders?status=${filterStatus}`;
-      const res = await fetch(url);
+      const params = new URLSearchParams();
+      if (filterStatus !== "ALL") params.append("status", filterStatus);
+      if (filterEmail) params.append("email", filterEmail);
+      if (filterStartDate) params.append("startDate", filterStartDate);
+      if (filterEndDate) params.append("endDate", filterEndDate);
+      
+      const res = await fetch(`/api/admin/orders?${params.toString()}`);
       const result = await res.json();
       if (result.success) setOrders(result.data);
     } catch (error) {
@@ -75,10 +85,14 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, [filterStatus]);
+  }, [filterStatus, filterEmail, filterStartDate, filterEndDate]);
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-    if (!window.confirm(`Xác nhận đổi trạng thái đơn hàng sang ${newStatus}?`)) return;
+    const confirmMsg = newStatus === "CANCELLED" 
+      ? "Bạn có chắc muốn HỦY đơn hàng này?" 
+      : `Xác nhận đổi trạng thái đơn hàng sang ${newStatus}?`;
+      
+    if (!window.confirm(confirmMsg)) return;
 
     try {
       const res = await fetch("/api/admin/orders", {
@@ -130,13 +144,10 @@ export default function AdminOrdersPage() {
   };
 
   const filteredOrders = orders.filter(o => {
-    const matchesSearch = o.orderCode.toLowerCase().includes(search.toLowerCase()) || 
-                         o.user.email.toLowerCase().includes(search.toLowerCase());
-    const matchesFamily = filterFamily === "ALL" || o.product.apiFamily === filterFamily;
-    return matchesSearch && matchesFamily;
+    if (!search) return true;
+    return o.orderCode.toLowerCase().includes(search.toLowerCase()) || 
+           o.user.email.toLowerCase().includes(search.toLowerCase());
   });
-
-  const families = Array.from(new Set(orders.map(o => o.product.apiFamily)));
 
   return (
     <div className="space-y-8">
@@ -168,43 +179,67 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Filter & Search */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+      <div className="flex flex-col gap-6 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tìm kiếm mã đơn</label>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Nhập mã đơn..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Lọc theo Email</label>
             <input
               type="text"
-              placeholder="Mã đơn hàng hoặc email khách hàng..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-12 pr-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+              placeholder="Nhập email khách..."
+              value={filterEmail}
+              onChange={(e) => setFilterEmail(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
             />
           </div>
-          <select 
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none"
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="PENDING">PENDING</option>
-            <option value="PAID">PAID</option>
-            <option value="CANCELLED">CANCELLED</option>
-            <option value="EXPIRED">EXPIRED</option>
-          </select>
-          <select 
-            value={filterFamily}
-            onChange={(e) => setFilterFamily(e.target.value)}
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none"
-          >
-            <option value="ALL">Tất cả dòng AI</option>
-            {families.map(f => <option key={f} value={f}>{f}</option>)}
-          </select>
-        </div>
 
-        <button className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-black text-slate-700 hover:bg-slate-50 transition-all">
-          <Calendar className="h-4 w-4" /> 
-          Lọc thời gian
-        </button>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Trạng thái</label>
+            <select 
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none"
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="PENDING">PENDING (Chờ)</option>
+              <option value="PAID">PAID (Đã thanh toán)</option>
+              <option value="CANCELLED">CANCELLED (Đã hủy)</option>
+              <option value="EXPIRED">EXPIRED (Hết hạn)</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Khoảng ngày</label>
+            <div className="flex items-center gap-2">
+              <input 
+                type="date"
+                value={filterStartDate}
+                onChange={(e) => setFilterStartDate(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all"
+              />
+              <span className="text-slate-300">-</span>
+              <input 
+                type="date"
+                value={filterEndDate}
+                onChange={(e) => setFilterEndDate(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Orders Table */}
@@ -215,7 +250,7 @@ export default function AdminOrdersPage() {
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Mã đơn</th>
                 <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Khách hàng</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Gói / Family</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Gói mua</th>
                 <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Số tiền</th>
                 <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Trạng thái</th>
                 <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Thời gian</th>
@@ -270,8 +305,15 @@ export default function AdminOrdersPage() {
                        <p className="text-sm font-black text-slate-900">{formatVnd(order.amountVnd)}</p>
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <div className="flex justify-center">
+                       <div className="flex flex-col items-center gap-1.5">
                           {getStatusBadge(order.status)}
+                          {order.status === "PAID" && (
+                            order.isCreditsGranted ? (
+                              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Đã cấp Credits ✅</span>
+                            ) : (
+                              <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter">Chưa cấp Credits ⚠️</span>
+                            )
+                          )}
                        </div>
                     </td>
                     <td className="px-8 py-6">
@@ -282,42 +324,37 @@ export default function AdminOrdersPage() {
                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{format(new Date(order.createdAt), "HH:mm:ss")}</span>
                           </div>
                        </div>
-                       {order.paidAt && (
-                          <div className="mt-1.5 flex items-center gap-1.5 text-emerald-600">
-                             <CheckCircle2 className="h-3.5 w-3.5" />
-                             <span className="text-[10px] font-black uppercase tracking-tight">Paid at: {format(new Date(order.paidAt), "dd/MM HH:mm")}</span>
-                          </div>
-                       )}
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <div className="flex justify-end gap-2.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                        <Link 
-                          href={`/admin/orders/${order.id}`}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all"
-                          title="Xem chi tiết"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
+                      <div className="flex justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
                         {order.status === "PENDING" && (
                           <>
                             <button 
+                              onClick={() => handleUpdateStatus(order.id, "CANCELLED")}
+                              className="flex h-10 items-center gap-2 rounded-xl bg-white border border-rose-200 px-4 text-[10px] font-black text-rose-600 hover:bg-rose-50 transition-all shadow-sm"
+                            >
+                              <XCircle className="h-4 w-4" /> Hủy đơn
+                            </button>
+                            <button 
                               onClick={() => handleVerifyPayment(order.id)}
-                              className="flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-5 text-xs font-black text-white hover:bg-black transition-all shadow-lg shadow-slate-200"
-                              title="Kiểm tra trạng thái từ PayOS"
+                              className="flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-[10px] font-black text-white hover:bg-black transition-all shadow-lg shadow-slate-200"
                             >
                               <ExternalLink className="h-4 w-4" /> Check PayOS
                             </button>
                             <button 
                               onClick={() => handleUpdateStatus(order.id, "PAID")}
-                              className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-xs font-black text-white hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+                              className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-[10px] font-black text-white hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
                             >
                               <CheckCircle2 className="h-4 w-4" /> Duyệt
                             </button>
                           </>
                         )}
-                        <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all">
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
+                        <Link 
+                          href={`/admin/orders/${order.id}`}
+                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
                       </div>
                     </td>
                   </tr>

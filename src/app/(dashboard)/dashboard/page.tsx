@@ -339,7 +339,7 @@ export default function DashboardPage() {
                       {new Date(log.createdAt).toLocaleString("vi-VN")}
                     </p>
                   </div>
-                  <p className="text-sm font-black text-emerald-600">-{formatCredits(log.creditsCharged)}</p>
+                  <p className="text-sm font-black text-emerald-600">{formatCredits(log.creditsCharged)}</p>
                 </div>
               ))
             )}

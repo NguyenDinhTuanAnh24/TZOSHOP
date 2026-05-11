@@ -30,6 +30,7 @@ export function PricingCard({
   const { status } = useSession();
 
   const isContactPlan = 
+    priceVnd === 0 ||
     name.toLowerCase().includes("enterprise") || 
     name.toLowerCase().includes("custom") || 
     name.toLowerCase().includes("liên hệ");

@@ -158,7 +158,7 @@ export default function UsagePage() {
                 <AppIcon icon={Zap} className="h-4 w-4 text-emerald-600" />
               </div>
             </div>
-            <p className="text-3xl font-black text-emerald-600">-{new Intl.NumberFormat("vi-VN").format(stats.creditsUsed)}</p>
+            <p className="text-3xl font-black text-emerald-600">{new Intl.NumberFormat("vi-VN").format(stats.creditsUsed)}</p>
           </div>
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
@@ -298,7 +298,7 @@ export default function UsagePage() {
                       <div className="space-y-1">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credits</p>
                         <p className={`text-lg font-black ${log.creditsUsed > 0 ? "text-emerald-600" : "text-slate-400"}`}>
-                          -{new Intl.NumberFormat("vi-VN").format(log.creditsUsed)}
+                          {new Intl.NumberFormat("vi-VN").format(log.creditsUsed)}
                         </p>
                       </div>
                     </div>

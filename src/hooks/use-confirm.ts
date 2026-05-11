@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type ConfirmType = "danger" | "warning" | "info";
+type ConfirmType = "danger" | "warning" | "info" | "primary";
 
 type ConfirmState = {
   title: string;
