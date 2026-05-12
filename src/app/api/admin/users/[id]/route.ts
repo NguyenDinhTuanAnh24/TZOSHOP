@@ -65,7 +65,7 @@ export async function GET(
       );
     }
 
-    const activeBucketsCount = user.creditBuckets.filter(b => b.isActive && new Date(b.expiresAt) > new Date()).length;
+    const activeBucketsCount = user.creditBuckets.filter(b => b.isActive && (!b.expiresAt || new Date(b.expiresAt) > new Date())).length;
 
     // Mask API Keys for security
     const data = {

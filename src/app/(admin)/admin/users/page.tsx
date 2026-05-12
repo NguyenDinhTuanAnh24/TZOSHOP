@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Mail, 
-  Shield, 
+import {
+  Users,
+  Search,
+  Filter,
+  Mail,
+  Shield,
   UserCheck,
   Calendar,
   ChevronRight,
@@ -35,9 +35,17 @@ import {
   History,
   KeyIcon,
   ChevronDown,
-  X
+  Eye,
+  X,
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
+import { AppButton } from "@/components/ui/app-button";
+import { IconButton } from "@/components/ui/icon-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Modal } from "@/components/ui/modal";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -250,95 +258,85 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-6">
-           <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-slate-900 text-white shadow-xl shadow-slate-200 ring-4 ring-slate-50">
-              <Users className="h-8 w-8" />
-           </div>
-           <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Khách hàng</h1>
-              <p className="text-slate-500 font-bold mt-1">Theo dõi tài khoản khách hàng, đơn hàng và số dư credits.</p>
-           </div>
-        </div>
-        <div className="flex items-center gap-3">
-           <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-4 py-2 text-xs font-black text-blue-600 ring-1 ring-blue-500/10">
-              <ShieldCheck className="h-4 w-4" />
-              RBAC System
-           </span>
-        </div>
-      </div>
+      <PageHeader 
+        title="Khách hàng" 
+        description="Theo dõi tài khoản khách hàng, đơn hàng và số dư credits."
+        icon={<Users className="h-8 w-8" />}
+        actions={
+          <div className="flex items-center gap-3">
+             <StatusBadge status="RBAC System" variant="info" />
+          </div>
+        }
+      />
 
-      {/* Search & Filter Section */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Tìm theo tên hoặc email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-12 pr-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
-            />
+      <AppCard className="p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-1">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8a9690]" />
+              <input
+                type="text"
+                placeholder="Tìm theo tên hoặc email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={cn(ui.input, "pl-12")}
+              />
+            </div>
+
+            <IconButton 
+              onClick={fetchUsers}
+              isLoading={isLoading}
+              variant="outline"
+              title="Làm mới"
+              aria-label="Làm mới"
+            >
+              <RefreshCw className={cn("h-5 w-5 shrink-0", isLoading && "animate-spin")} />
+            </IconButton>
           </div>
 
-          <button 
-            onClick={fetchUsers}
-            className="flex items-center justify-center h-12 w-12 rounded-2xl border border-slate-200 bg-white text-slate-400 hover:text-emerald-600 transition-all active:scale-95"
-          >
-            <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-6">
+            <div className="hidden md:block text-right">
+              <p className={ui.label}>Đang hiển thị</p>
+              <p className="text-sm font-black text-[#0b0f0d]">{filteredUsers.length} khách hàng</p>
+            </div>
+            <AppButton 
+              variant="accent"
+              onClick={handleExportCsv}
+              disabled={isExporting || filteredUsers.length === 0}
+              isLoading={isExporting}
+            >
+              Xuất CSV
+            </AppButton>
+          </div>
         </div>
+      </AppCard>
 
-        <div className="flex items-center gap-4">
-           <div className="hidden md:block text-right">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang hiển thị</p>
-              <p className="text-sm font-black text-slate-900">{filteredUsers.length} khách hàng</p>
-           </div>
-           <button 
-             onClick={handleExportCsv}
-             disabled={isExporting || filteredUsers.length === 0}
-             className="flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-sm font-black text-white hover:bg-black transition-all shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-           >
-              {isExporting ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> Đang xuất...
-                </>
-              ) : (
-                "Xuất CSV"
-              )}
-           </button>
-        </div>
-      </div>
-
-      {/* Users Table */}
-      <div className="rounded-[40px] border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <AppCard className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Khách hàng</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Vai trò</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Đơn hàng</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Số dư Credits</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Ngày gia nhập</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-right">Thao tác</th>
+              <tr className="bg-[#fbfbf8] border-b border-[#edf1ee]">
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Khách hàng</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Vai trò</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Đơn hàng</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Số dư Credits</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Ngày gia nhập</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {isLoading ? (
                 <tr><td colSpan={6} className="py-24 text-center">
                    <div className="flex flex-col items-center gap-4">
-                    <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-                    <p className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">Đang đồng bộ dữ liệu...</p>
+                    <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#00d4a4] border-t-transparent" />
+                    <p className={cn(ui.label, "animate-pulse")}>Đang đồng bộ dữ liệu...</p>
                   </div>
                 </td></tr>
               ) : filteredUsers.length === 0 ? (
                 <tr><td colSpan={6} className="py-24 text-center">
                    <div className="flex flex-col items-center gap-2">
-                    <Users className="h-12 w-12 text-slate-200" />
-                    <p className="text-sm font-bold text-slate-400 italic">Không tìm thấy kết quả phù hợp.</p>
+                    <Users className="h-12 w-12 text-[#dfe5e1]" />
+                    <p className={cn(ui.pMuted, "italic")}>Không tìm thấy kết quả phù hợp.</p>
                   </div>
                 </td></tr>
               ) : (
@@ -355,14 +353,14 @@ export default function AdminUsersPage() {
                         <div>
                           <button 
                             onClick={() => { fetchUserDetail(user.id); }}
-                            className="text-sm font-black text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer text-left"
+                            className="text-sm font-black text-[#0b0f0d] hover:text-[#00d4a4] transition-colors cursor-pointer text-left"
                           >
-                            {user.name} {me?.id === user.id && <span className="text-[10px] font-black text-emerald-600 ml-1.5 uppercase tracking-tighter bg-emerald-50 px-1.5 py-0.5 rounded-md">BẠN</span>}
-                            {user.lockedAt && <span className="text-[10px] font-black text-rose-600 ml-1.5 uppercase tracking-tighter bg-rose-50 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1"><Lock className="h-2.5 w-2.5" /> KHÓA</span>}
+                            {user.name} {me?.id === user.id && <span className="text-[10px] font-black text-[#00d4a4] ml-1.5 uppercase tracking-tighter bg-[#e7fff7] px-1.5 py-0.5 rounded-md">BẠN</span>}
+                            {user.lockedAt && <span className="text-[10px] font-black text-red-600 ml-1.5 uppercase tracking-tighter bg-red-50 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1"><Lock className="h-2.5 w-2.5" /> KHÓA</span>}
                           </button>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                             <Mail className="h-3.5 w-3.5 text-slate-300" />
-                             <span className="text-[11px] font-bold text-slate-400">{user.email}</span>
+                             <Mail className="h-3.5 w-3.5 text-[#dfe5e1]" />
+                             <span className={cn(ui.pMuted, "text-[11px]")}>{user.email}</span>
                           </div>
                         </div>
                       </div>
@@ -370,66 +368,65 @@ export default function AdminUsersPage() {
                     <td className="px-8 py-6">
                        <div className="flex justify-center">
                           {user.role === "ADMIN" ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600 ring-1 ring-blue-500/10">
-                               <ShieldCheck className="h-3 w-3" />
-                               Admin
-                            </span>
+                            <StatusBadge status="Admin" variant="info" />
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 ring-1 ring-slate-200">
-                               User
-                            </span>
+                            <StatusBadge status="User" variant="neutral" />
                           )}
                        </div>
                     </td>
                     <td className="px-8 py-6 text-center">
                        <div className="inline-flex flex-col items-center">
-                          <span className="text-sm font-black text-slate-900">{user._count.orders}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Đơn hàng</span>
+                          <span className="text-sm font-black text-[#0b0f0d]">{user._count.orders}</span>
+                          <span className={ui.label}>Đơn hàng</span>
                        </div>
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <div className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5">
-                          <Wallet className="h-3.5 w-3.5 text-emerald-600" />
-                          <span className="text-xs font-black text-emerald-700">
+                       <div className="inline-flex items-center gap-1.5 rounded-xl bg-[#e7fff7] px-3 py-1.5 border border-[#00d4a4]/20">
+                          <Wallet className="h-3.5 w-3.5 text-[#00d4a4]" />
+                          <span className="text-xs font-black text-[#00d4a4]">
                              {new Intl.NumberFormat('vi-VN').format(Number(user.totalCredits))}
                           </span>
                        </div>
                     </td>
                     <td className="px-8 py-6">
-                       <div className="flex items-center gap-2 text-slate-400">
+                       <div className="flex items-center gap-2 text-[#8a9690]">
                           <Clock className="h-3.5 w-3.5" />
                           <span className="text-[12px] font-bold">
                              {format(new Date(user.createdAt), "dd/MM/yyyy", { locale: vi })}
                           </span>
                        </div>
                     </td>
-                    <td className="px-8 py-6 text-right">
-                       <div className="flex justify-end gap-2.5 opacity-40 group-hover:opacity-100 transition-opacity relative">
-                         <button 
-                           onClick={() => { fetchUserDetail(user.id); }}
-                           className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all"
-                           title="Xem chi tiết"
-                         >
-                           <ChevronRight className="h-4 w-4" />
-                         </button>
-                         <button 
-                           onClick={() => setManageUser(user)}
-                           disabled={me?.id === user.id}
-                           className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all disabled:opacity-0 disabled:cursor-not-allowed"
-                           title="Quản lý tài khoản"
-                         >
-                           <Shield className="h-4 w-4" />
-                         </button>
-                         
-                         <button 
-                            onClick={(e) => {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              setMenuAnchor({ id: user.id, top: rect.bottom + window.scrollY, right: window.innerWidth - rect.right - window.scrollX });
-                            }}
-                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-black shadow-lg shadow-slate-200 transition-all"
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex justify-end gap-2.5 relative">
+                          <IconButton 
+                            onClick={() => { fetchUserDetail(user.id); }}
+                            variant="outline"
+                            title="Xem chi tiết"
+                            aria-label="Xem chi tiết"
                           >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
+                            <Eye className="h-4 w-4" />
+                          </IconButton>
+                          <IconButton 
+                            onClick={() => setManageUser(user)}
+                            disabled={me?.id === user.id}
+                            variant="outline"
+                            title="Quản lý tài khoản"
+                            aria-label="Quản lý tài khoản"
+                          >
+                            <Shield className="h-4 w-4" />
+                          </IconButton>
+                          
+                          <IconButton 
+                             onClick={(e) => {
+                               const rect = e.currentTarget.getBoundingClientRect();
+                               setMenuAnchor({ id: user.id, top: rect.bottom + window.scrollY, right: window.innerWidth - rect.right - window.scrollX });
+                             }}
+                             variant="dark"
+                             title="Thao tác khác"
+                             aria-label="Thao tác khác"
+                           >
+                             <MoreVertical className="h-4 w-4" />
+                           </IconButton>
 
                           {menuAnchor?.id === user.id && createPortal(
                             <>
@@ -499,7 +496,7 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </AppCard>
 
       {toast && (
         <ToastMessage
@@ -561,46 +558,24 @@ export default function AdminUsersPage() {
 
 // --- Sub-components (Modals) ---
 
-function Modal({ title, onClose, children }: { title: string, onClose: () => void, children: React.ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[40px] bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
-        <div className="flex items-center justify-between p-8 border-b border-slate-100 shrink-0">
-          <h3 className="text-2xl font-black text-slate-900">{title}</h3>
-          <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-colors">
-            <X className="h-6 w-6 text-slate-400" />
-          </button>
-        </div>
-        <div className="p-8 overflow-y-auto">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) {
   return (
-    <Modal title="Chi tiết khách hàng" onClose={onClose}>
+    <Modal open={true} title="Chi tiết khách hàng" onClose={onClose}>
       <div className="space-y-8">
         {/* Basic Info */}
         <div className="flex items-center gap-6">
-           <div className="h-20 w-20 flex items-center justify-center rounded-[32px] bg-slate-100 text-3xl font-black text-slate-900 uppercase">
+           <div className="h-20 w-20 flex items-center justify-center rounded-[32px] bg-[#fbfbf8] border border-[#edf1ee] text-3xl font-black text-[#0b0f0d] uppercase">
               {user.name[0]}
            </div>
            <div>
-              <h4 className="text-2xl font-black text-slate-900">{user.name}</h4>
-              <p className="text-slate-500 font-bold">{user.email}</p>
-              <div className="flex items-center gap-3 mt-2">
-                 <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ring-1 ${user.role === 'ADMIN' ? 'bg-blue-50 text-blue-600 ring-blue-500/10' : 'bg-slate-50 text-slate-500 ring-slate-200'}`}>
-                    {user.role === 'ADMIN' && <ShieldCheck className="h-3 w-3" />}
-                    {user.role}
-                 </span>
+              <h4 className={ui.h3 + " text-2xl"}>{user.name}</h4>
+              <p className={ui.p + " font-bold"}>{user.email}</p>
+              <div className="flex items-center gap-3 mt-3">
+                 <StatusBadge status={user.role} variant={user.role === 'ADMIN' ? 'info' : 'neutral'} />
                  {user.lockedAt && (
-                   <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-rose-600 ring-1 ring-rose-500/10">
-                      <Lock className="h-3 w-3" /> Tài khoản đã khóa
-                   </span>
+                   <StatusBadge status="Tài khoản đã khóa" variant="danger" />
                  )}
               </div>
            </div>
@@ -608,63 +583,64 @@ function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) 
 
         {/* Stats Grid */}
         <div className="grid gap-4 sm:grid-cols-3">
-           <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Tổng Credits</p>
-              <p className="text-2xl font-black text-slate-900">{new Intl.NumberFormat('vi-VN').format(Number(user.creditBuckets.reduce((sum: number, b: any) => sum + Number(b.creditsRemaining), 0)))}</p>
-           </div>
-           <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Đã sử dụng</p>
-              <p className="text-2xl font-black text-emerald-600">{new Intl.NumberFormat('vi-VN').format(Math.abs(Number(user.totalCreditsUsed)))}</p>
-           </div>
-           <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Gói hoạt động</p>
+           <AppCard className="p-6 bg-[#fbfbf8]">
+              <p className={ui.label + " mb-2"}>Tổng Credits</p>
+              <p className="text-2xl font-black text-[#0b0f0d]">{new Intl.NumberFormat('vi-VN').format(Number(user.creditBuckets.reduce((sum: number, b: any) => sum + Number(b.creditsRemaining), 0)))}</p>
+           </AppCard>
+           <AppCard className="p-6 bg-[#fbfbf8]">
+              <p className={ui.label + " mb-2"}>Đã sử dụng</p>
+              <p className="text-2xl font-black text-[#00d4a4]">{new Intl.NumberFormat('vi-VN').format(Math.abs(Number(user.totalCreditsUsed)))}</p>
+           </AppCard>
+           <AppCard className="p-6 bg-[#fbfbf8]">
+              <p className={ui.label + " mb-2"}>Gói hoạt động</p>
               <p className="text-2xl font-black text-blue-600">{user.activeBucketsCount}</p>
-           </div>
+           </AppCard>
         </div>
 
         <div className="space-y-4">
-           <div className="flex items-center gap-2 text-base font-black text-slate-900 border-b border-slate-100 pb-3">
-              <Package className="h-5 w-5" /> Đơn hàng gần nhất
+           <div className="flex items-center gap-2 text-base font-black text-[#0b0f0d] border-b border-[#edf1ee] pb-3">
+              <Package className="h-5 w-5 text-[#00d4a4]" /> Đơn hàng gần nhất
            </div>
            {user.orders.length > 0 ? (
               <div className="space-y-3">
                  {user.orders.map((order: any) => (
-                   <div key={order.id} className="flex items-center justify-between p-5 rounded-[24px] bg-white border border-slate-100 shadow-sm">
+                   <AppCard key={order.id} className="flex items-center justify-between p-5 border-[#edf1ee] bg-white">
                       <div>
-                         <p className="text-sm font-black text-slate-900">{order.product.name}</p>
-                         <p className="text-xs font-bold text-slate-400">{format(new Date(order.createdAt), "dd/MM/yyyy HH:mm")}</p>
+                         <p className="text-sm font-black text-[#0b0f0d]">{order.product.name}</p>
+                         <p className={ui.pMuted}>{format(new Date(order.createdAt), "dd/MM/yyyy HH:mm")}</p>
                       </div>
-                      <span className={`text-[11px] font-black uppercase px-3 py-1.5 rounded-xl ${order.status === 'PAID' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
-                         {order.status}
-                      </span>
-                   </div>
+                      <StatusBadge 
+                        status={order.status === 'PAID' ? 'Đã thanh toán' : 'Chờ thanh toán'} 
+                        variant={order.status === 'PAID' ? 'success' : 'warning'} 
+                      />
+                   </AppCard>
                  ))}
               </div>
            ) : (
-              <p className="text-sm font-bold text-slate-400 italic px-2">Chưa có đơn hàng nào.</p>
+              <p className={cn(ui.pMuted, "italic px-2")}>Chưa có đơn hàng nào.</p>
            )}
         </div>
 
         <div className="space-y-4">
-           <div className="flex items-center gap-2 text-base font-black text-slate-900 border-b border-slate-100 pb-3">
-              <KeyIcon className="h-5 w-5" /> Danh sách API Keys ({user.apiKeys.length})
+           <div className="flex items-center gap-2 text-base font-black text-[#0b0f0d] border-b border-[#edf1ee] pb-3">
+              <KeyIcon className="h-5 w-5 text-[#00d4a4]" /> Danh sách API Keys ({user.apiKeys.length})
            </div>
            <div className="flex flex-col gap-3">
               {user.apiKeys.map((key: any) => (
-                <div key={key.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-[24px] bg-slate-50 border border-slate-100 gap-3 group/key hover:border-emerald-200 transition-all">
+                <div key={key.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-3xl bg-[#fbfbf8] border border-[#edf1ee] gap-3 group/key hover:border-[#00d4a4]/40 transition-all">
                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-slate-400 group-hover/key:text-emerald-500 shadow-sm transition-colors">
+                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-[#8a9690] group-hover/key:text-[#00d4a4] shadow-sm transition-colors border border-[#edf1ee]">
                          <KeyIcon className="h-4 w-4" />
                       </div>
-                      <span className="text-sm font-black text-slate-700">{key.name}</span>
+                      <span className="text-sm font-black text-[#47524d]">{key.name}</span>
                    </div>
-                   <span className="font-mono text-xs font-bold text-slate-400 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm group-hover/key:border-emerald-100 transition-all">
+                   <span className="font-mono text-xs font-bold text-[#8a9690] bg-white px-4 py-2 rounded-xl border border-[#edf1ee] shadow-sm group-hover/key:border-[#00d4a4]/20 transition-all">
                       {key.displayKey}
                    </span>
                 </div>
               ))}
               {user.apiKeys.length === 0 && (
-                <p className="text-sm font-bold text-slate-400 italic px-2">Người dùng chưa tạo API key nào.</p>
+                <p className={cn(ui.pMuted, "italic px-2")}>Người dùng chưa tạo API key nào.</p>
               )}
            </div>
         </div>
@@ -675,25 +651,27 @@ function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) 
 
 function AccountManagementModal({ user, onClose, onUpdateRole, onUpdateStatus }: { user: UserItem, onClose: () => void, onUpdateRole: any, onUpdateStatus: any }) {
   return (
-    <Modal title="Quản lý tài khoản" onClose={onClose}>
+    <Modal open={true} title="Quản lý tài khoản" onClose={onClose}>
       <div className="space-y-6">
-        <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100">
-           <h4 className="text-sm font-black text-slate-900 mb-2">Thay đổi vai trò</h4>
-           <p className="text-xs font-bold text-slate-500 mb-6">User: Quyền người dùng thông thường. Admin: Toàn quyền quản trị hệ thống.</p>
+        <AppCard className="p-6 bg-[#fbfbf8]">
+           <h4 className={ui.h3 + " text-base mb-2"}>Thay đổi vai trò</h4>
+           <p className={ui.pMuted + " mb-6"}>User: Quyền người dùng thông thường. Admin: Toàn quyền quản trị hệ thống.</p>
            
            <div className="flex gap-4">
-              <button 
+              <AppButton 
                 onClick={() => onUpdateRole(user.id, "USER")}
-                className={`flex-1 rounded-2xl py-4 text-sm font-black transition-all ${user.role === 'USER' ? 'bg-white border-2 border-slate-900 text-slate-900' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                variant={user.role === 'USER' ? 'accent' : 'secondary'}
+                className="flex-1 py-4"
               >
                 USER
-              </button>
-              <button 
+              </AppButton>
+              <AppButton 
                 onClick={() => onUpdateRole(user.id, "ADMIN")}
-                className={`flex-1 rounded-2xl py-4 text-sm font-black transition-all ${user.role === 'ADMIN' ? 'bg-white border-2 border-blue-600 text-blue-600' : 'bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600'}`}
+                variant={user.role === 'ADMIN' ? 'accent' : 'secondary'}
+                className="flex-1 py-4"
               >
                 ADMIN
-              </button>
+              </AppButton>
            </div>
            {user.role === 'ADMIN' && (
              <div className="mt-4 flex items-center gap-2 p-4 rounded-2xl bg-amber-50 text-amber-700 border border-amber-100">
@@ -701,28 +679,31 @@ function AccountManagementModal({ user, onClose, onUpdateRole, onUpdateStatus }:
                 <p className="text-[10px] font-bold">Cảnh báo: Hạ quyền ADMIN sẽ giới hạn truy cập của người dùng này.</p>
              </div>
            )}
-        </div>
+        </AppCard>
 
-        <div className="p-6 rounded-[32px] bg-rose-50 border border-rose-100">
-           <h4 className="text-sm font-black text-rose-900 mb-2">Trạng thái tài khoản</h4>
-           <p className="text-xs font-bold text-rose-600 mb-6">Khi bị khóa, người dùng không thể đăng nhập hoặc sử dụng API.</p>
+        <AppCard className="p-6 bg-red-50 border-red-100">
+           <h4 className={ui.h3 + " text-base text-red-900 mb-2"}>Trạng thái tài khoản</h4>
+           <p className={ui.pMuted + " text-red-600 mb-6"}>Khi bị khóa, người dùng không thể đăng nhập hoặc sử dụng API.</p>
            
            {user.lockedAt ? (
-             <button 
+             <AppButton 
                onClick={() => onUpdateStatus(user.id, "UNLOCK")}
-               className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white border border-rose-200 py-4 text-sm font-black text-emerald-600 hover:bg-emerald-50 transition-all"
+               variant="secondary"
+               className="w-full h-12 text-[#00d4a4] border-[#00d4a4]/20 bg-white hover:bg-emerald-50"
              >
-               <Unlock className="h-4 w-4" /> Mở khóa tài khoản
-             </button>
+               <Unlock className="h-4 w-4 mr-2" /> Mở khóa tài khoản
+             </AppButton>
            ) : (
-             <button 
+             <AppButton 
                onClick={() => onUpdateStatus(user.id, "LOCK")}
-               className="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-600 py-4 text-sm font-black text-white hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
+               variant="danger"
+               className="w-full h-12"
              >
-               <Lock className="h-4 w-4" /> Khóa tài khoản ngay lập tức
-             </button>
+               <Lock className="h-4 w-4 mr-2" />
+               Khóa tài khoản ngay lập tức
+             </AppButton>
            )}
-        </div>
+        </AppCard>
       </div>
     </Modal>
   );
@@ -734,54 +715,55 @@ function GrantCreditsModal({ user, onClose, onConfirm }: { user: UserItem, onClo
   const [note, setNote] = useState("");
 
   return (
-    <Modal title="Cấp Credits thủ công" onClose={onClose}>
+    <Modal open={true} title="Cấp Credits thủ công" onClose={onClose}>
       <div className="space-y-6">
-        <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-           <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-900 text-white font-black text-xs">
+        <AppCard className="flex items-center gap-4 p-4 border-[#edf1ee] bg-[#fbfbf8]">
+           <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#020c0a] text-[#00d4a4] font-black text-xs">
               {user.name[0]}
            </div>
            <div>
-              <p className="text-sm font-black text-slate-900">{user.name}</p>
-              <p className="text-[10px] font-bold text-slate-400">{user.email}</p>
+              <p className="text-sm font-black text-[#0b0f0d]">{user.name}</p>
+              <p className={ui.pMuted}>{user.email}</p>
            </div>
-        </div>
+        </AppCard>
 
         <div className="space-y-2">
-           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Số Credits cấp</label>
+           <label className={ui.label}>Số Credits cấp</label>
            <input 
              type="number"
              value={credits}
              onChange={(e) => setCredits(Number(e.target.value))}
-             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-xl font-black text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+             className={cn(ui.input, "text-xl")}
            />
         </div>
 
         <div className="space-y-2">
-           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Thời hạn (Ngày)</label>
+           <label className={ui.label}>Thời hạn (Ngày)</label>
            <input 
              type="number"
              value={days}
              onChange={(e) => setDays(Number(e.target.value))}
-             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-black text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+             className={ui.input}
            />
         </div>
 
         <div className="space-y-2">
-           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ghi chú lý do</label>
+           <label className={ui.label}>Ghi chú lý do</label>
            <textarea 
              value={note}
              onChange={(e) => setNote(e.target.value)}
              placeholder="Ví dụ: Tặng quà tri ân, đền bù lỗi hệ thống..."
-             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all min-h-[100px]"
+             className={cn(ui.input, "min-h-[100px] resize-none")}
            />
         </div>
 
-        <button 
+        <AppButton 
           onClick={() => onConfirm(user.id, { credits, durationDays: days, note })}
-          className="w-full h-16 flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-white font-black text-lg hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100"
+          variant="accent"
+          className="w-full h-16 text-lg font-black"
         >
-          <PlusCircle className="h-5 w-5" /> Xác nhận cấp Credits
-        </button>
+          <PlusCircle className="h-6 w-6 mr-2" /> Xác nhận cấp Credits
+        </AppButton>
       </div>
     </Modal>
   );
@@ -793,49 +775,52 @@ function NotifyUserModal({ user, onClose, onConfirm }: { user: UserItem, onClose
   const [type, setType] = useState("INFO");
 
   return (
-    <Modal title="Gửi thông báo cá nhân" onClose={onClose}>
+    <Modal open={true} title="Gửi thông báo cá nhân" onClose={onClose}>
       <div className="space-y-6">
         <div className="space-y-2">
-           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tiêu đề</label>
+           <label className={ui.label}>Tiêu đề</label>
            <input 
              type="text"
              value={title}
              onChange={(e) => setTitle(e.target.value)}
-             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-black text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+             className={ui.input}
            />
         </div>
 
         <div className="space-y-2">
-           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Loại thông báo</label>
+           <label className={ui.label}>Loại thông báo</label>
            <div className="grid grid-cols-4 gap-2">
               {["INFO", "SUCCESS", "WARNING", "ERROR"].map((t) => (
-                <button 
+                <AppButton 
                   key={t}
                   onClick={() => setType(t)}
-                  className={`rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all ${type === t ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                  variant={type === t ? 'accent' : 'secondary'}
+                  size="sm"
+                  className="text-[10px] font-black"
                 >
                   {t}
-                </button>
+                </AppButton>
               ))}
            </div>
         </div>
 
         <div className="space-y-2">
-           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nội dung</label>
+           <label className={ui.label}>Nội dung</label>
            <textarea 
              value={message}
              onChange={(e) => setMessage(e.target.value)}
              placeholder="Nhập nội dung thông báo..."
-             className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all min-h-[150px]"
+             className={cn(ui.input, "min-h-[150px] resize-none")}
            />
         </div>
 
-        <button 
+        <AppButton 
           onClick={() => onConfirm(user.id, { title, message, type })}
-          className="w-full h-16 flex items-center justify-center gap-2 rounded-2xl bg-blue-600 text-white font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-100"
+          variant="primary"
+          className="w-full h-16 text-lg font-black"
         >
-          <Bell className="h-5 w-5" /> Gửi thông báo ngay
-        </button>
+          <Bell className="h-6 w-6 mr-2" /> Gửi thông báo ngay
+        </AppButton>
       </div>
     </Modal>
   );

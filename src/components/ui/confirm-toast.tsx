@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, Info } from "lucide-react";
+import { AppButton } from "./app-button";
 
 type ConfirmDialogType = "danger" | "warning" | "info" | "primary";
 
@@ -80,28 +81,23 @@ export function ConfirmDialog({
         </div>
 
         <div className="mt-6 flex items-center justify-end gap-3">
-          <button
-            type="button"
+          <AppButton
+            variant="secondary"
             onClick={onCancel}
             disabled={isLoading}
-            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="px-6"
           >
             {cancelLabel}
-          </button>
+          </AppButton>
 
-          <button
-            type="button"
+          <AppButton
+            variant={type === "danger" ? "danger" : type === "primary" ? "primary" : "accent"}
             onClick={onConfirm}
-            disabled={isLoading}
-            className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${confirmButtonStyles[type]}`}
+            isLoading={isLoading}
+            className="px-6"
           >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                <span>Đang xử lý...</span>
-              </div>
-            ) : confirmLabel}
-          </button>
+            {confirmLabel}
+          </AppButton>
         </div>
       </div>
     </div>

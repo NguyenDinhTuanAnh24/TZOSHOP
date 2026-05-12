@@ -16,6 +16,10 @@ import {
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ToastMessage } from "@/components/ui/toast-message";
+import { AppCard } from "@/components/ui/app-card";
+import { AppButton } from "@/components/ui/app-button";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
 
 export default function ApiDocsPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -95,141 +99,150 @@ console.log(data);`;
     <main className="min-h-screen bg-white text-[#0b0f0d]">
       <SiteHeader />
 
-      {/* Section 1: Header */}
-      <section className="hero-gradient border-b border-[#edf1ee]">
-        <div className="container-page py-16 md:py-24">
+      <section className="bg-[#fbfbf8] border-b border-[#edf1ee]">
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-24">
           <div className="max-w-4xl">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#dfe5e1] bg-white/80 px-4 py-2 text-sm font-semibold text-[#00d4a4] backdrop-blur">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#edf1ee] bg-white px-4 py-2 text-sm font-black text-[#00d4a4] shadow-sm">
               <BookOpen className="h-4 w-4" />
-              Tài liệu kỹ thuật
+              TAI LIỆU KỸ THUẬT
             </div>
-            <h1 className="text-4xl font-bold tracking-tight text-[#0b0f0d] sm:text-6xl">
+            <h1 className={cn(ui.h1, "mb-6")}>
               Tài liệu API
             </h1>
-            <p className="mt-6 text-lg leading-8 text-[#47524d] max-w-2xl">
+            <p className={cn(ui.pMuted, "text-lg max-w-2xl leading-relaxed")}>
               Tích hợp API theo chuẩn OpenAI-compatible để sử dụng trong extension, IDE hoặc công cụ API client. 
               Sử dụng hệ thống credits linh hoạt để truy cập nhiều dòng AI mạnh mẽ nhất hiện nay.
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
-              <Link href="/pricing" className="btn-accent gap-2">
-                Mua credits
-                <ChevronRight className="h-4 w-4" />
+              <Link href="/pricing">
+                <AppButton variant="accent">
+                  Mua credits
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </AppButton>
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="container-page py-16 lg:grid lg:grid-cols-[1fr_300px] lg:gap-12">
+      <div className="max-w-[1200px] mx-auto px-6 py-16 lg:grid lg:grid-cols-[1fr_300px] lg:gap-12">
         <div className="space-y-16">
           {/* Section 2: Base URL */}
           <section id="base-url" className="scroll-mt-24">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e7fff7] text-[#00d4a4]">
-                <Code2 className="h-5 w-5" />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e7fff7] text-[#00d4a4] ring-1 ring-[#00d4a4]/20 shadow-sm">
+                <Code2 className="h-6 w-6" />
               </div>
-              <h2 className="text-2xl font-bold">Base URL</h2>
+              <h2 className={ui.h3}>Base URL</h2>
             </div>
             
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="card-base p-5 group relative">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#66736d] mb-2">Production</p>
-                <div className="flex items-center justify-between gap-3">
-                  <code className="text-sm font-medium text-[#00d4a4] break-all">{baseUrl.production}</code>
-                  <button 
+            <div className="grid gap-6 sm:grid-cols-2">
+              <AppCard className="p-6">
+                <p className={ui.label}>Production</p>
+                <div className="flex items-center justify-between gap-3 mt-2">
+                  <code className="text-sm font-black text-[#00d4a4] break-all">{baseUrl.production}</code>
+                  <AppButton 
                     onClick={() => handleCopy(baseUrl.production, "prod-url")}
-                    className="p-2 rounded-lg hover:bg-[#f7f8f6] transition-colors text-[#66736d]"
+                    variant="secondary"
+                    size="sm"
+                    className="h-10 w-10 p-0"
                   >
-                    {copyState["prod-url"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4" />}
-                  </button>
+                    {copyState["prod-url"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4 text-[#8a9690]" />}
+                  </AppButton>
                 </div>
-              </div>
+              </AppCard>
               
-              <div className="card-base p-5 group relative">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#66736d] mb-2">Local Development</p>
-                <div className="flex items-center justify-between gap-3">
-                  <code className="text-sm font-medium text-[#00d4a4] break-all">{baseUrl.local}</code>
-                  <button 
+              <AppCard className="p-6">
+                <p className={ui.label}>Local Development</p>
+                <div className="flex items-center justify-between gap-3 mt-2">
+                  <code className="text-sm font-black text-[#00d4a4] break-all">{baseUrl.local}</code>
+                  <AppButton 
                     onClick={() => handleCopy(baseUrl.local, "local-url")}
-                    className="p-2 rounded-lg hover:bg-[#f7f8f6] transition-colors text-[#66736d]"
+                    variant="secondary"
+                    size="sm"
+                    className="h-10 w-10 p-0"
                   >
-                    {copyState["local-url"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4" />}
-                  </button>
+                    {copyState["local-url"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4 text-[#8a9690]" />}
+                  </AppButton>
                 </div>
-              </div>
+              </AppCard>
             </div>
           </section>
 
-          {/* Section 3: Xác thực */}
           <section id="authentication" className="scroll-mt-24">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e7fff7] text-[#00d4a4]">
-                <KeyRound className="h-5 w-5" />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e7fff7] text-[#00d4a4] ring-1 ring-[#00d4a4]/20 shadow-sm">
+                <KeyRound className="h-6 w-6" />
               </div>
-              <h2 className="text-2xl font-bold">Xác thực</h2>
+              <h2 className={ui.h3}>Xác thực</h2>
             </div>
             
-            <div className="card-base p-6">
-              <p className="text-[#47524d] mb-6">
-                Tất cả các yêu cầu API phải bao gồm API key của bạn trong header <code className="bg-[#f7f8f6] px-1.5 py-0.5 rounded border border-[#dfe5e1] font-bold">Authorization</code>.
+            <AppCard className="p-8">
+              <p className={cn(ui.p, "mb-6")}>
+                Tất cả các yêu cầu API phải bao gồm API key của bạn trong header <code className="bg-[#fbfbf8] px-2 py-1 rounded border border-[#edf1ee] font-black text-[#00d4a4]">Authorization</code>.
               </p>
               
-              <div className="bg-[#101827] rounded-xl p-5 overflow-hidden">
-                <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3">
-                  <span className="text-xs font-bold text-white/50 uppercase">HTTP Header</span>
-                  <button 
+              <div className="bg-[#0b0f0d] rounded-3xl p-6 overflow-hidden shadow-2xl">
+                <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-4">
+                  <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">HTTP Header</span>
+                  <AppButton 
                     onClick={() => handleCopy("Authorization: Bearer YOUR_API_KEY", "auth-header")}
-                    className="text-white/50 hover:text-white transition-colors"
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/10"
                   >
-                    {copyState["auth-header"] ? <span className="text-xs text-[#00d4a4]">Đã copy</span> : <Copy className="h-4 w-4" />}
-                  </button>
+                    {copyState["auth-header"] ? <span className="text-[#00d4a4]">Đã copy</span> : <Copy className="h-4 w-4" />}
+                  </AppButton>
                 </div>
-                <code className="text-emerald-400 text-sm">Authorization: Bearer YOUR_API_KEY</code>
+                <code className="text-[#00d4a4] text-sm font-mono block">Authorization: Bearer YOUR_API_KEY</code>
               </div>
               
-              <div className="mt-6 flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-100 p-4">
-                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-800 leading-6">
-                  <strong>Lưu ý:</strong> API key của bạn là bí mật. Đừng bao giờ chia sẻ nó công khai hoặc đưa vào code client-side mà người khác có thể thấy.
+              <div className="mt-8 flex items-start gap-4 rounded-3xl bg-amber-50/50 border border-amber-100 p-6">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm">
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-bold text-amber-800 leading-relaxed">
+                  API key của bạn là bí mật tuyệt đối. Đừng bao giờ chia sẻ công khai hoặc nhúng trực tiếp vào mã nguồn phía client (Frontend) để tránh bị đánh cắp credits.
                 </p>
               </div>
-            </div>
+            </AppCard>
           </section>
 
           {/* Section 4 & 5: Chat Completions & Examples */}
           <section id="chat-completions" className="scroll-mt-24">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e7fff7] text-[#00d4a4]">
-                <Code2 className="h-5 w-5" />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e7fff7] text-[#00d4a4] ring-1 ring-[#00d4a4]/20 shadow-sm">
+                <Code2 className="h-6 w-6" />
               </div>
-              <h2 className="text-2xl font-bold">Chat Completions</h2>
+              <h2 className={ui.h3}>Chat Completions</h2>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-12">
               <div>
-                <p className="text-[#47524d] mb-4">
-                  Sử dụng endpoint này để tương tác với các dòng AI. Chúng tôi hỗ trợ đầy đủ cấu trúc của OpenAI API.
+                <p className={cn(ui.p, "mb-6")}>
+                  Sử dụng endpoint này để tương tác với các dòng AI. Chúng tôi hỗ trợ đầy đủ cấu trúc của OpenAI API giúp bạn dễ dàng chuyển đổi từ OpenAI sang TzoShop.
                 </p>
-                <div className="flex items-center gap-3 bg-[#f7f8f6] border border-[#dfe5e1] rounded-xl px-4 py-3">
-                  <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded">POST</span>
-                  <code className="text-sm font-bold text-[#0b0f0d]">/chat/completions</code>
+                <div className="flex items-center gap-4 bg-[#fbfbf8] border border-[#edf1ee] rounded-2xl px-6 py-4 shadow-sm">
+                  <span className="bg-[#00d4a4] text-white text-[10px] font-black px-3 py-1.5 rounded-lg shadow-sm">POST</span>
+                  <code className="text-sm font-black text-[#0b0f0d]">/chat/completions</code>
                 </div>
               </div>
 
               {/* Curl Example */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold">Ví dụ CURL</h3>
-                  <button 
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h3 className={cn(ui.label, "text-[#0b0f0d]")}>Ví dụ CURL</h3>
+                  <AppButton 
                     onClick={() => handleCopy(curlExample, "curl-code")}
-                    className="flex items-center gap-2 text-sm font-bold text-[#66736d] hover:text-[#0b0f0d] transition-colors"
+                    variant="secondary"
+                    size="sm"
                   >
-                    {copyState["curl-code"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4" />}
+                    {copyState["curl-code"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4] mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                     {copyState["curl-code"] ? "Đã copy" : "Copy nội dung"}
-                  </button>
+                  </AppButton>
                 </div>
-                <div className="bg-[#101827] rounded-xl p-6 overflow-x-auto mockup-shadow">
-                  <pre className="text-sm text-gray-300 leading-relaxed">
+                <div className="bg-[#0b0f0d] rounded-[32px] p-8 overflow-x-auto shadow-2xl ring-8 ring-[#fbfbf8]">
+                  <pre className="text-sm text-[#00d4a4] font-mono leading-relaxed">
                     <code>{curlExample}</code>
                   </pre>
                 </div>
@@ -237,18 +250,19 @@ console.log(data);`;
 
               {/* JS Example */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold">Ví dụ JavaScript (Fetch)</h3>
-                  <button 
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h3 className={cn(ui.label, "text-[#0b0f0d]")}>Ví dụ JavaScript (Fetch)</h3>
+                  <AppButton 
                     onClick={() => handleCopy(jsExample, "js-code")}
-                    className="flex items-center gap-2 text-sm font-bold text-[#66736d] hover:text-[#0b0f0d] transition-colors"
+                    variant="secondary"
+                    size="sm"
                   >
-                    {copyState["js-code"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4" />}
+                    {copyState["js-code"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4] mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                     {copyState["js-code"] ? "Đã copy" : "Copy nội dung"}
-                  </button>
+                  </AppButton>
                 </div>
-                <div className="bg-[#101827] rounded-xl p-6 overflow-x-auto mockup-shadow">
-                  <pre className="text-sm text-gray-300 leading-relaxed">
+                <div className="bg-[#0b0f0d] rounded-[32px] p-8 overflow-x-auto shadow-2xl ring-8 ring-[#fbfbf8]">
+                  <pre className="text-sm text-[#00d4a4] font-mono leading-relaxed">
                     <code>{jsExample}</code>
                   </pre>
                 </div>
@@ -258,43 +272,42 @@ console.log(data);`;
 
           {/* Section 6: Response mẫu */}
           <section id="response" className="scroll-mt-24">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e7fff7] text-[#00d4a4]">
-                <ShieldCheck className="h-5 w-5" />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e7fff7] text-[#00d4a4] ring-1 ring-[#00d4a4]/20 shadow-sm">
+                <ShieldCheck className="h-6 w-6" />
               </div>
-              <h2 className="text-2xl font-bold">Response mẫu</h2>
+              <h2 className={ui.h3}>Response mẫu</h2>
             </div>
             
-            <div className="card-base overflow-hidden">
-              <div className="bg-[#f7f8f6] px-6 py-3 border-b border-[#dfe5e1]">
-                <span className="text-xs font-bold text-[#66736d] uppercase tracking-widest">JSON Response</span>
+            <AppCard className="overflow-hidden p-0">
+              <div className="bg-[#fbfbf8] px-8 py-4 border-b border-[#edf1ee]">
+                <span className={ui.label}>JSON Response</span>
               </div>
-              <div className="p-6 bg-white overflow-x-auto">
-                <pre className="text-sm text-[#47524d] leading-relaxed font-medium">
+              <div className="p-8 bg-white overflow-x-auto">
+                <pre className="text-sm text-[#47524d] leading-relaxed font-mono font-bold">
                   <code>{responseExample}</code>
                 </pre>
               </div>
-            </div>
+            </AppCard>
           </section>
 
-          {/* Section 7: Lỗi thường gặp */}
           <section id="errors" className="scroll-mt-24">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
-                <AlertCircle className="h-5 w-5" />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 ring-1 ring-rose-500/20 shadow-sm">
+                <AlertCircle className="h-6 w-6" />
               </div>
-              <h2 className="text-2xl font-bold">Lỗi thường gặp</h2>
+              <h2 className={ui.h3}>Lỗi thường gặp</h2>
             </div>
             
-            <div className="overflow-hidden rounded-2xl border border-[#dfe5e1]">
+            <AppCard className="overflow-hidden p-0">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-[#f7f8f6] border-b border-[#dfe5e1]">
+                <thead className="bg-[#fbfbf8] border-b border-[#edf1ee]">
                   <tr>
-                    <th className="px-6 py-4 text-sm font-bold text-[#0b0f0d]">Mã lỗi</th>
-                    <th className="px-6 py-4 text-sm font-bold text-[#0b0f0d]">Mô tả</th>
+                    <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-[#8a9690]">Mã lỗi</th>
+                    <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-[#8a9690]">Mô tả</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#dfe5e1]">
+                <tbody className="divide-y divide-[#edf1ee]">
                   {[
                     { code: "401", desc: "Thiếu hoặc sai API key" },
                     { code: "403", desc: "Model không nằm trong gói đã mua" },
@@ -303,24 +316,24 @@ console.log(data);`;
                     { code: "500", desc: "Lỗi hệ thống phía Gateway" },
                   ].map((error) => (
                     <tr key={error.code} className="hover:bg-[#fbfbf8] transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">{error.code}</span>
+                      <td className="px-8 py-5">
+                        <span className="font-mono font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-100">{error.code}</span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-[#47524d]">{error.desc}</td>
+                      <td className="px-8 py-5 text-sm font-bold text-[#47524d]">{error.desc}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            </AppCard>
           </section>
 
           {/* Section 8: Lưu ý */}
           <section id="notes" className="scroll-mt-24">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e7fff7] text-[#00d4a4]">
-                <ShieldCheck className="h-5 w-5" />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e7fff7] text-[#00d4a4] ring-1 ring-[#00d4a4]/20 shadow-sm">
+                <ShieldCheck className="h-6 w-6" />
               </div>
-              <h2 className="text-2xl font-bold">Lưu ý quan trọng</h2>
+              <h2 className={ui.h3}>Lưu ý quan trọng</h2>
             </div>
             
             <div className="grid gap-6 sm:grid-cols-2">
@@ -330,13 +343,13 @@ console.log(data);`;
                 { title: "Cách tính phí", content: "Credits sẽ bị trừ theo usage thực tế (tokens) của model bạn sử dụng." },
                 { title: "Quản lý", content: "Bạn có thể xem lịch sử sử dụng chi tiết và quản lý key tại dashboard cá nhân." },
               ].map((note) => (
-                <div key={note.title} className="card-base p-6">
-                  <h3 className="font-bold text-[#0b0f0d] mb-2 flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#00d4a4]" />
+                <AppCard key={note.title} className="p-8">
+                  <h3 className={cn(ui.label, "text-[#0b0f0d] mb-4 flex items-center gap-3")}>
+                    <span className="h-2 w-2 rounded-full bg-[#00d4a4] shadow-[0_0_10px_#00d4a4]" />
                     {note.title}
                   </h3>
-                  <p className="text-sm text-[#47524d] leading-6">{note.content}</p>
-                </div>
+                  <p className="text-sm font-bold text-[#47524d] leading-relaxed">{note.content}</p>
+                </AppCard>
               ))}
             </div>
           </section>
@@ -345,9 +358,9 @@ console.log(data);`;
         {/* Sidebar Navigation */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-8">
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-widest text-[#66736d] mb-4">Nội dung chính</h4>
-              <nav className="flex flex-col gap-1">
+            <div className="bg-[#fbfbf8] rounded-3xl p-6 border border-[#edf1ee]">
+              <h4 className={ui.label}>Nội dung chính</h4>
+              <nav className="flex flex-col gap-1 mt-4">
                 {[
                   { id: "base-url", label: "Base URL" },
                   { id: "authentication", label: "Xác thực" },
@@ -359,25 +372,28 @@ console.log(data);`;
                   <a 
                     key={item.id} 
                     href={`#${item.id}`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#47524d] hover:text-[#00d4a4] hover:bg-[#e7fff7] rounded-lg transition-all"
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-black text-[#47524d] hover:text-[#00d4a4] hover:bg-white rounded-xl transition-all border border-transparent hover:border-[#edf1ee] hover:shadow-sm"
                   >
-                    <ChevronRight className="h-3 w-3 opacity-50" />
+                    <ChevronRight className="h-3 w-3 opacity-30" />
                     {item.label}
                   </a>
                 ))}
               </nav>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#020c0a] text-white">
-              <h4 className="font-bold mb-2">Cần hỗ trợ?</h4>
-              <p className="text-sm text-white/70 mb-4 leading-relaxed">
+            <div className="p-8 rounded-[32px] bg-[#0b0f0d] text-white shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#00d4a4]/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-[#00d4a4]/20" />
+              <h4 className="text-lg font-black mb-3 relative z-10">Cần hỗ trợ?</h4>
+              <p className="text-sm font-bold text-white/50 mb-6 leading-relaxed relative z-10">
                 Nếu bạn gặp khó khăn trong việc tích hợp, hãy liên hệ với đội ngũ kỹ thuật.
               </p>
-              <Link 
-                href="/support" 
-                className="inline-flex items-center gap-2 text-xs font-bold text-[#00d4a4] hover:underline"
-              >
-                Gửi yêu cầu hỗ trợ <ExternalLink className="h-3 w-3" />
+              <Link href="/support">
+                <AppButton 
+                  variant="accent"
+                  className="w-full relative z-10"
+                >
+                  Gửi yêu cầu hỗ trợ <ExternalLink className="h-4 w-4 ml-2" />
+                </AppButton>
               </Link>
             </div>
           </div>

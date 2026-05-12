@@ -24,8 +24,13 @@ import {
   Link as LinkIcon,
   LockKeyhole
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
 import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
+import { AppButton } from "@/components/ui/app-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
 
 type NotificationSetting = {
   id: string;
@@ -195,8 +200,7 @@ function SettingsContent() {
     );
   }
 
-  const btnPrimary = "rounded-full bg-emerald-600 text-white hover:bg-emerald-700 px-6 py-2.5 text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50";
-  const btnDanger = "rounded-full border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 px-5 py-2 text-sm font-bold transition-all flex items-center justify-center gap-2";
+
 
   return (
     <div className="space-y-8 pb-20">
@@ -206,104 +210,89 @@ function SettingsContent() {
           { label: "Hỗ trợ", href: "/support" },
         ]} 
       />
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-          <AppIcon icon={ShieldCheck} className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Cài đặt</h1>
-          <p className="mt-1 text-slate-500 font-medium">
-            Cập nhật hồ sơ, thông báo và các tùy chọn tài khoản.
-          </p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Cài đặt" 
+        description="Cập nhật hồ sơ, thông báo và các tùy chọn tài khoản."
+        icon={<ShieldCheck className="h-8 w-8" />}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_320px] items-start">
         {/* Left Column */}
         <div className="space-y-6">
-          {/* Section 1: Personal Info */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+          <AppCard className="p-6 sm:p-8">
             <div className="mb-8 flex items-center gap-3">
-              <AppIcon icon={UserRound} className="h-5 w-5 text-emerald-600" />
-              <h2 className="text-xl font-black text-slate-900">Thông tin cá nhân</h2>
+              <UserRound className="h-5 w-5 text-[#00d4a4]" />
+              <h2 className={ui.h3}>Thông tin cá nhân</h2>
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-8">
               <div className="flex items-center gap-6">
                 <div className="relative group">
-                  <div className="h-20 w-20 rounded-3xl bg-emerald-50 flex items-center justify-center text-2xl font-black text-emerald-600 ring-4 ring-white shadow-sm overflow-hidden uppercase">
+                  <div className="h-20 w-20 rounded-3xl bg-[#e7fff7] border border-[#00d4a4]/20 flex items-center justify-center text-2xl font-black text-[#00d4a4] ring-4 ring-white shadow-sm overflow-hidden uppercase">
                     {session?.user?.name?.[0] || "U"}
                   </div>
-                  <button type="button" className="absolute -bottom-1 -right-1 h-8 w-8 bg-white rounded-full border border-slate-200 flex items-center justify-center shadow-md hover:bg-slate-50 transition-colors">
-                    <AppIcon icon={UserRound} className="h-4 w-4 text-slate-600" />
+                  <button type="button" className="absolute -bottom-1 -right-1 h-8 w-8 bg-white rounded-full border border-[#dfe5e1] flex items-center justify-center shadow-md hover:bg-[#fbfbf8] transition-colors text-[#0b0f0d]">
+                    <UserRound className="h-4 w-4" />
                   </button>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-900">Ảnh đại diện</p>
-                  <p className="text-xs text-slate-400 mt-1">Khuyến nghị ảnh vuông, tối đa 2MB.</p>
+                  <p className="text-sm font-black text-[#0b0f0d]">Ảnh đại diện</p>
+                  <p className={ui.pMuted}>Khuyến nghị ảnh vuông, tối đa 2MB.</p>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 max-w-3xl">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Họ và tên</label>
+                  <label className={ui.label}>Họ và tên</label>
                   <input
                     type="text"
                     defaultValue={session?.user?.name || ""}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all"
+                    className={ui.input}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1">Email đăng nhập</label>
+                  <label className={ui.label}>Email đăng nhập</label>
                   <input
                     type="email"
                     readOnly
                     value={session?.user?.email || ""}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-400 outline-none cursor-not-allowed"
+                    className={cn(ui.input, "bg-[#fbfbf8] text-[#8a9690] cursor-not-allowed")}
                   />
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <button type="submit" disabled={isSavingProfile} className={btnPrimary}>
-                  {isSavingProfile ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <AppIcon icon={Save} className="h-4 w-4" />
-                  )}
+                <AppButton type="submit" isLoading={isSavingProfile} variant="accent">
+                  <Save className="h-4 w-4 mr-2" />
                   Lưu thay đổi
-                </button>
+                </AppButton>
               </div>
             </form>
-          </section>
+          </AppCard>
 
-          {/* Section 2: Auth Methods */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+          <AppCard className="p-6 sm:p-8">
             <div className="mb-6 flex items-center gap-3">
-              <AppIcon icon={ShieldCheck} className="h-5 w-5 text-emerald-600" />
-              <h2 className="text-xl font-black text-slate-900">Phương thức đăng nhập</h2>
+              <ShieldCheck className="h-5 w-5 text-[#00d4a4]" />
+              <h2 className={ui.h3}>Phương thức đăng nhập</h2>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4 ring-1 ring-slate-100">
+              <div className="flex items-center justify-between rounded-2xl border border-[#edf1ee] bg-[#fbfbf8] p-4 ring-1 ring-[#edf1ee]">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-slate-100">
-                    <AppIcon icon={ShieldCheck} className="h-5 w-5 text-emerald-600" />
+                  <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-[#edf1ee]">
+                    <ShieldCheck className="h-5 w-5 text-[#00d4a4]" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-900">Email & Mật khẩu</p>
-                    <p className="text-xs text-slate-500">Đang được sử dụng</p>
+                    <p className="text-sm font-black text-[#0b0f0d]">Email & Mật khẩu</p>
+                    <p className={ui.pMuted}>Đang được sử dụng</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-700 ring-1 ring-emerald-200">
-                  Đang kết nối
-                </span>
+                <StatusBadge status="Đang kết nối" variant="success" />
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4">
+              <div className="flex items-center justify-between rounded-2xl border border-[#edf1ee] bg-white p-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-slate-100">
+                  <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-[#edf1ee]">
                     <svg className="h-5 w-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -312,47 +301,39 @@ function SettingsContent() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-900">Google</p>
+                    <p className="text-sm font-black text-[#0b0f0d]">Google</p>
                     {authMethods.googleLinked && authMethods.googleEmail ? (
-                      <p className="text-xs text-slate-500 mt-0.5">{authMethods.googleEmail}</p>
+                      <p className={ui.pMuted}>{authMethods.googleEmail}</p>
                     ) : (
-                      <p className="text-xs text-slate-500 mt-0.5">Chưa liên kết</p>
+                      <p className={ui.pMuted}>Chưa liên kết</p>
                     )}
                   </div>
                 </div>
 
                 {authMethods.googleLinked ? (
-                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-700 ring-1 ring-emerald-200">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Đã liên kết
-                  </span>
+                  <StatusBadge status="Đã liên kết" variant="success" />
                 ) : (
-                  <button
-                    type="button"
+                  <AppButton
+                    variant="secondary"
+                    size="sm"
                     onClick={handleLinkGoogle}
-                    disabled={isLinkingGoogle}
-                    className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                    isLoading={isLinkingGoogle}
                   >
-                    {isLinkingGoogle ? (
-                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
-                    ) : (
-                      <LinkIcon className="h-3 w-3" />
-                    )}
+                    <LinkIcon className="h-3 w-3 mr-2" />
                     Liên kết Google
-                  </button>
+                  </AppButton>
                 )}
               </div>
             </div>
-          </section>
+          </AppCard>
 
-          {/* Section 2.5: Change Password */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+          <AppCard className="p-6 sm:p-8">
             <div className="mb-6 flex items-center gap-3">
-              <AppIcon icon={LockKeyhole} className="h-5 w-5 text-emerald-600" />
-              <h2 className="text-xl font-black text-slate-900">Đổi mật khẩu</h2>
+              <LockKeyhole className="h-5 w-5 text-[#00d4a4]" />
+              <h2 className={ui.h3}>Đổi mật khẩu</h2>
             </div>
             
-            <p className="text-sm font-medium text-slate-500 mb-6">
+            <p className={ui.p + " mb-6 font-bold"}>
               Cập nhật mật khẩu đăng nhập cho tài khoản của bạn.
             </p>
 
@@ -360,95 +341,92 @@ function SettingsContent() {
               {/* Nếu tài khoản có email/password mới yêu cầu mật khẩu hiện tại. 
                   Tuy nhiên ta để server quyết định (hoặc ta cứ show input, nếu họ chưa từng có password, server sẽ bỏ qua) */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Mật khẩu hiện tại</label>
+                <label className={ui.label}>Mật khẩu hiện tại</label>
                 <input
                   type="password"
                   placeholder="Nhập mật khẩu hiện tại..."
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all"
+                  className={ui.input}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Mật khẩu mới</label>
+                <label className={ui.label}>Mật khẩu mới</label>
                 <input
                   type="password"
                   placeholder="Tối thiểu 8 ký tự"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all"
+                  className={ui.input}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Xác nhận mật khẩu mới</label>
+                <label className={ui.label}>Xác nhận mật khẩu mới</label>
                 <input
                   type="password"
                   placeholder="Nhập lại mật khẩu mới"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all"
+                  className={ui.input}
                 />
               </div>
 
               <div className="flex justify-end pt-2">
-                <button type="submit" disabled={isChangingPassword} className={btnPrimary}>
-                  {isChangingPassword ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <AppIcon icon={Save} className="h-4 w-4" />
-                  )}
+                <AppButton type="submit" isLoading={isChangingPassword} variant="accent">
+                  <Save className="h-4 w-4 mr-2" />
                   Lưu mật khẩu
-                </button>
+                </AppButton>
               </div>
             </form>
-          </section>
+          </AppCard>
 
-          {/* Section 3: Notifications */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+          <AppCard className="p-6 sm:p-8">
             <div className="mb-6 flex items-center gap-3">
-              <AppIcon icon={Bell} className="h-5 w-5 text-emerald-600" />
-              <h2 className="text-xl font-black text-slate-900">Thông báo</h2>
+              <Bell className="h-5 w-5 text-[#00d4a4]" />
+              <h2 className={ui.h3}>Thông báo</h2>
             </div>
 
             <div className="space-y-3">
               {notifications.map((item) => (
-                <div key={item.id} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <div key={item.id} className="flex items-center justify-between rounded-2xl border border-[#edf1ee] bg-white px-4 py-3">
                   <div className="flex-1 pr-4">
-                    <p className="text-sm font-black text-slate-900">{item.title}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+                    <p className="text-sm font-black text-[#0b0f0d]">{item.title}</p>
+                    <p className={ui.pMuted}>{item.desc}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleToggleNotification(item.id)}
-                    className={`relative h-6 w-11 rounded-full transition-colors focus:outline-none ring-2 ring-transparent focus:ring-emerald-200 ${
-                      item.enabled ? "bg-emerald-600" : "bg-slate-200"
-                    }`}
+                    className={cn(
+                      "relative h-6 w-11 rounded-full transition-colors focus:outline-none ring-2 ring-transparent focus:ring-[#00d4a4]/20",
+                      item.enabled ? "bg-[#00d4a4]" : "bg-[#dfe5e1]"
+                    )}
                   >
-                    <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    <span className={cn(
+                      "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform",
                       item.enabled ? "translate-x-5" : "translate-x-0"
-                    }`} />
+                    )} />
                   </button>
                 </div>
               ))}
             </div>
-          </section>
+          </AppCard>
 
-          {/* Section 4: Danger Zone (Optional but kept for functionality) */}
-          <section className="rounded-3xl border border-rose-100 bg-white p-6 sm:p-8 shadow-sm ring-1 ring-rose-50">
+          <AppCard className="p-6 sm:p-8 border-red-100 ring-1 ring-red-50">
             <div className="mb-6 flex items-center gap-3">
-              <AppIcon icon={AlertTriangle} className="h-5 w-5 text-rose-600" />
-              <h2 className="text-xl font-black text-rose-600">Vùng nguy hiểm</h2>
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <h2 className={ui.h3 + " text-red-600"}>Vùng nguy hiểm</h2>
             </div>
 
-            <div className="flex flex-col gap-4 p-5 rounded-2xl border border-rose-100 bg-rose-50/30 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 p-5 rounded-2xl border border-red-100 bg-red-50/30 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-black text-slate-900">Đăng xuất tất cả thiết bị</p>
-                <p className="text-[11px] text-slate-500 mt-1">Kết thúc tất cả các phiên đăng nhập hiện tại trừ thiết bị này.</p>
+                <p className="text-sm font-black text-[#0b0f0d]">Đăng xuất tất cả thiết bị</p>
+                <p className={ui.pMuted + " mt-1"}>Kết thúc tất cả các phiên đăng nhập hiện tại trừ thiết bị này.</p>
               </div>
-              <button 
-                type="button" 
+              <AppButton
+                variant="danger"
+                size="sm"
                 onClick={() => askConfirm({
                   title: "Đăng xuất tất cả?",
                   description: "Hành động này sẽ yêu cầu bạn đăng nhập lại trên các thiết bị khác.",
@@ -457,55 +435,54 @@ function SettingsContent() {
                   type: "danger",
                   onConfirm: handleLogoutAll
                 })}
-                className={btnDanger}
               >
-                <AppIcon icon={LogOut} className="h-4 w-4" />
+                <LogOut className="h-4 w-4 mr-2" />
                 Thực hiện
-              </button>
+              </AppButton>
             </div>
-          </section>
+          </AppCard>
         </div>
 
         {/* Right Column */}
         <aside className="space-y-6">
-          {/* Profile Summary */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <AppCard className="p-5">
             <div className="flex items-center gap-2 mb-6">
-              <AppIcon icon={Info} className="h-5 w-5 text-emerald-600" />
-              <h3 className="text-lg font-black text-slate-900">Hồ sơ</h3>
+              <Info className="h-5 w-5 text-[#00d4a4]" />
+              <h3 className={ui.h3}>Hồ sơ</h3>
             </div>
             <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái</span>
-                <span className="text-sm font-black text-emerald-600">Hoạt động</span>
+              <div className="flex justify-between items-center py-2 border-b border-[#edf1ee]">
+                <span className={ui.label}>Trạng thái</span>
+                <StatusBadge status="Hoạt động" variant="success" />
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gói dùng</span>
-                <span className="text-sm font-black text-slate-900 text-right">Free Tier</span>
+              <div className="flex justify-between items-center py-2 border-b border-[#edf1ee]">
+                <span className={ui.label}>Gói dùng</span>
+                <span className="text-sm font-black text-[#0b0f0d] text-right">Free Tier</span>
               </div>
               <div className="flex justify-between items-center py-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ngày tạo</span>
-                <span className="text-sm font-black text-slate-900">10/05/2026</span>
+                <span className={ui.label}>Ngày tạo</span>
+                <span className="text-sm font-black text-[#0b0f0d]">10/05/2026</span>
               </div>
             </div>
-          </div>
+          </AppCard>
 
           {/* API Protection */}
-          <div className="rounded-3xl bg-slate-900 p-6 text-white shadow-xl shadow-slate-200/50">
+          <div className="rounded-3xl bg-[#020c0a] p-6 text-white shadow-xl shadow-slate-200/50">
             <div className="flex items-center gap-2 mb-4">
-              <AppIcon icon={ShieldCheck} className="h-5 w-5 text-emerald-400" />
+              <ShieldCheck className="h-5 w-5 text-[#00d4a4]" />
               <h3 className="text-lg font-black">Bảo vệ API</h3>
             </div>
-            <p className="text-xs leading-5 text-slate-400 font-medium">
+            <p className="text-xs leading-5 text-white/50 font-medium">
               Quản lý API key định kỳ để bảo vệ credits và tránh truy cập trái phép.
             </p>
-            <Link
-              href="/api-keys"
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-bold !text-slate-950 shadow-sm transition hover:bg-slate-100"
+            <AppButton
+              variant="secondary"
+              className="mt-5 w-full bg-white !text-[#020c0a] hover:bg-white/90"
+              onClick={() => window.location.href = "/api-keys"}
             >
-              <KeyRound className="h-4 w-4 text-emerald-600" />
-              <span className="text-slate-950">Xem API Keys</span>
-            </Link>
+              <KeyRound className="h-4 w-4 mr-2 text-[#00d4a4]" />
+              Xem API Keys
+            </AppButton>
           </div>
         </aside>
       </div>

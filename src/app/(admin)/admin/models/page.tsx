@@ -21,9 +21,16 @@ import {
   Cpu,
   Layers,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Pencil
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
+import { AppButton } from "@/components/ui/app-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Modal } from "@/components/ui/modal";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -230,45 +237,39 @@ export default function AdminModelsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-6">
-           <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-slate-900 text-white shadow-xl shadow-slate-200 ring-4 ring-slate-50">
-              <Bot className="h-8 w-8" />
-           </div>
-           <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">AI Models</h1>
-              <p className="text-slate-500 font-bold mt-1">Quản lý model public, model upstream và mức quy đổi credits.</p>
-           </div>
-        </div>
-        <div className="flex items-center gap-3">
-           <div className="text-right mr-4 hidden md:block">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang sẵn sàng</p>
-              <p className="text-xl font-black text-emerald-600">
-                {models.filter(m => m.isActive).length} / {models.length}
-              </p>
-           </div>
-           <button 
-              onClick={() => handleOpenModal()}
-              className="flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-sm font-black text-white hover:bg-black transition-all shadow-lg shadow-slate-200"
-           >
-              <Plus className="h-4 w-4" />
-              Thêm Model
-           </button>
-        </div>
-      </div>
+      <PageHeader 
+        title="AI Models" 
+        description="Quản lý model public, model upstream và mức quy đổi credits."
+        icon={<Bot className="h-8 w-8" />}
+        actions={
+          <div className="flex items-center gap-6">
+             <div className="text-right mr-4 hidden md:block">
+                <p className={ui.label}>Đang sẵn sàng</p>
+                <p className="text-xl font-black text-[#00d4a4]">
+                  {models.filter(m => m.isActive).length} / {models.length}
+                </p>
+             </div>
+             <AppButton 
+                onClick={() => handleOpenModal()}
+                variant="accent"
+             >
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm Model
+             </AppButton>
+          </div>
+        }
+      />
 
-      {/* Filters */}
-      <div className="flex flex-col gap-6 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
+      <AppCard className="p-8">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="relative flex-1 min-w-[280px]">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8a9690]" />
             <input
               type="text"
               placeholder="Tìm theo tên model hoặc upstream..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-12 pr-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+              className={cn(ui.input, "pl-12")}
             />
           </div>
           
@@ -276,7 +277,7 @@ export default function AdminModelsPage() {
             <select 
               value={filterFamily}
               onChange={(e) => { setFilterFamily(e.target.value); setCurrentPage(1); }}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+              className={ui.input}
             >
               <option value="ALL">Tất cả Family</option>
               {families.map(f => <option key={f} value={f}>{f}</option>)}
@@ -285,7 +286,7 @@ export default function AdminModelsPage() {
             <select 
               value={filterProvider}
               onChange={(e) => { setFilterProvider(e.target.value); setCurrentPage(1); }}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+              className={ui.input}
             >
               <option value="ALL">Tất cả Provider</option>
               {uniqueProviders.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -294,7 +295,7 @@ export default function AdminModelsPage() {
             <select 
               value={filterActive}
               onChange={(e) => { setFilterActive(e.target.value); setCurrentPage(1); }}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+              className={ui.input}
             >
               <option value="ALL">Trạng thái</option>
               <option value="ACTIVE">Đang hoạt động</option>
@@ -302,63 +303,63 @@ export default function AdminModelsPage() {
             </select>
           </div>
         </div>
-      </div>
+      </AppCard>
 
-      {/* Table */}
-      <div className="rounded-[40px] border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <AppCard className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Tên hiển thị</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Dòng AI</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Nhà cung cấp</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Model gốc (Upstream)</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Hệ số Input</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Hệ số Output</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Trạng thái</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-right">Hành động</th>
+              <tr className="bg-[#fbfbf8] border-b border-[#edf1ee]">
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Tên hiển thị</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Dòng AI</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Nhà cung cấp</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Model gốc (Upstream)</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Hệ số Input</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Hệ số Output</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Trạng thái</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {isLoading ? (
                 <tr><td colSpan={8} className="py-24 text-center">
                    <div className="flex flex-col items-center gap-4">
-                    <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-                    <p className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">Đang tải models...</p>
+                    <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#00d4a4] border-t-transparent" />
+                    <p className={cn(ui.label, "animate-pulse")}>Đang tải models...</p>
                   </div>
                 </td></tr>
               ) : paginatedModels.length === 0 ? (
-                <tr><td colSpan={8} className="py-24 text-center text-slate-400 font-bold italic">Không có AI model nào phù hợp.</td></tr>
+                <tr><td colSpan={8} className="py-24 text-center text-[#8a9690] font-bold italic">Không có AI model nào phù hợp.</td></tr>
               ) : (
                 paginatedModels.map((model) => (
-                  <tr key={model.id} className={`group transition-colors ${!model.isActive ? "bg-slate-50/50 grayscale opacity-75" : "hover:bg-slate-50/30"}`}>
+                  <tr key={model.id} className={`group transition-colors ${!model.isActive ? "bg-[#fbfbf8] grayscale opacity-75" : "hover:bg-[#fbfbf8]"}`}>
                     <td className="px-8 py-6">
                        <div className="flex items-center gap-4">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-emerald-600 transition-all shadow-sm ring-1 ring-slate-200">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fbfbf8] text-[#8a9690] group-hover:bg-white group-hover:text-[#00d4a4] transition-all shadow-sm ring-1 ring-[#edf1ee]">
                              <Bot className="h-5 w-5" />
                           </div>
-                          <p className="text-sm font-black text-slate-900 group-hover:text-emerald-700 transition-colors whitespace-nowrap">{model.publicName}</p>
+                          <p className="text-sm font-black text-[#0b0f0d] group-hover:text-[#00d4a4] transition-colors whitespace-nowrap">{model.publicName}</p>
                        </div>
                     </td>
                     <td className="px-8 py-6">
-                       <span className={`inline-flex rounded-lg px-2.5 py-1 text-[10px] font-black tracking-widest uppercase ring-1 ring-inset ${getFamilyBadge(model.apiFamily)}`}>
-                          {model.apiFamily}
-                       </span>
+                       <StatusBadge 
+                         status={model.apiFamily} 
+                         variant={model.apiFamily === 'CODEXAI' ? 'success' : model.apiFamily === 'CLAUDE' ? 'warning' : model.apiFamily === 'GEMINI' ? 'info' : 'neutral'} 
+                       />
                     </td>
                     <td className="px-8 py-6">
                        <div className="flex items-center gap-2">
-                          <Server className="h-3.5 w-3.5 text-slate-300" />
-                          <span className="text-sm font-bold text-slate-700">{model.provider?.name}</span>
+                          <Server className="h-3.5 w-3.5 text-[#dfe5e1]" />
+                          <span className="text-sm font-bold text-[#47524d]">{model.provider?.name}</span>
                        </div>
                     </td>
                     <td className="px-8 py-6">
-                       <code className="text-[10px] font-mono font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
+                       <code className="text-[10px] font-mono font-bold text-[#8a9690] bg-[#fbfbf8] px-2 py-1 rounded-md border border-[#edf1ee]">
                           {model.upstreamModel}
                        </code>
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <div className="inline-flex items-center gap-1 text-emerald-600 font-black">
+                       <div className="inline-flex items-center gap-1 text-[#00d4a4] font-black">
                           <ArrowDownLeft className="h-3 w-3" />
                           <span className="text-sm">{model.inputCreditRate}x</span>
                        </div>
@@ -369,23 +370,25 @@ export default function AdminModelsPage() {
                           <span className="text-sm">{model.outputCreditRate}x</span>
                        </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-8 py-6 text-center">
                        <div className="flex justify-center">
                           <Switch 
                             checked={model.isActive}
                             onCheckedChange={() => handleToggleActive(model)}
-                            className="data-[state=checked]:bg-emerald-500"
+                            className="data-[state=checked]:bg-[#00d4a4]"
                           />
                        </div>
                     </td>
-                    <td className="px-8 py-6 text-right">
-                        <div className="flex justify-end gap-2.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                          <button 
+                    <td className="px-8 py-6 text-center">
+                        <div className="flex justify-center gap-2.5">
+                          <button
+                             type="button"
                              onClick={() => handleOpenModal(model)}
-                             className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-black shadow-lg shadow-slate-200 transition-all"
-                             title="Chỉnh sửa"
+                             title="Sửa model"
+                             aria-label="Sửa model"
+                             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-all duration-150 ease-out hover:bg-slate-50 hover:text-slate-950 hover:shadow-md active:scale-95"
                           >
-                             <Edit className="h-4 w-4" />
+                             <Pencil className="h-4 w-4 shrink-0 text-slate-700" />
                           </button>
                         </div>
                     </td>
@@ -397,66 +400,60 @@ export default function AdminModelsPage() {
         </div>
         
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-8 py-4">
-            <div className="text-sm font-bold text-slate-500">
+          <div className="flex items-center justify-between border-t border-[#edf1ee] bg-[#fbfbf8] px-8 py-4">
+            <div className={ui.pMuted}>
               Hiển thị {((currentPage - 1) * ITEMS_PER_PAGE) + 1} đến {Math.min(currentPage * ITEMS_PER_PAGE, filteredModels.length)} trong {filteredModels.length} models
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <AppButton
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 transition-all"
+                variant="secondary"
+                size="sm"
               >
                 Trước
-              </button>
-              <div className="px-4 text-sm font-black text-slate-900">
+              </AppButton>
+              <div className="px-4 text-sm font-black text-[#0b0f0d]">
                 {currentPage} / {totalPages}
               </div>
-              <button
+              <AppButton
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 transition-all"
+                variant="secondary"
+                size="sm"
               >
                 Sau
-              </button>
+              </AppButton>
             </div>
           </div>
         )}
-      </div>
+      </AppCard>
 
-      {/* Modal Redesign */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[40px] bg-white p-8 sm:p-10 shadow-2xl animate-in zoom-in-95 duration-200 custom-scrollbar">
-            <div className="flex items-center gap-4 mb-8">
-               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
-                  <Bot className="h-6 w-6" />
-               </div>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-                {editingId ? "Cập nhật AI Model" : "Thêm AI Model mới"}
-              </h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
+      <Modal 
+        open={isModalOpen}
+        title={editingId ? "Cập nhật AI Model" : "Thêm AI Model mới"} 
+        onClose={() => setIsModalOpen(false)}
+        maxWidthClassName="max-w-2xl"
+      >
+          <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Tên hiển thị (Public Name)</label>
+                  <label className={ui.label}>Tên hiển thị (Public Name)</label>
                   <input
                     type="text"
                     required
                     value={formData.publicName}
                     onChange={e => setFormData({...formData, publicName: e.target.value})}
                     placeholder="Ví dụ: Claude 3.5 Sonnet"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                    className={ui.input}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Dòng AI (API Family)</label>
+                  <label className={ui.label}>Dòng AI (API Family)</label>
                   <select
                     value={formData.apiFamily}
                     onChange={e => setFormData({...formData, apiFamily: e.target.value})}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all appearance-none cursor-pointer"
+                    className={ui.input}
                   >
                     <option value="CODEXAI">CodeX AI</option>
                     <option value="CLAUDE">Claude</option>
@@ -468,12 +465,12 @@ export default function AdminModelsPage() {
 
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nhà cung cấp (Provider)</label>
+                  <label className={ui.label}>Nhà cung cấp (Provider)</label>
                   <select
                     required
                     value={formData.providerId}
                     onChange={e => setFormData({...formData, providerId: e.target.value})}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all appearance-none cursor-pointer"
+                    className={ui.input}
                   >
                     <option value="" disabled>Chọn Provider</option>
                     {providersList
@@ -487,22 +484,22 @@ export default function AdminModelsPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Model gốc (Upstream Model)</label>
+                  <label className={ui.label}>Model gốc (Upstream Model)</label>
                   <input
                     type="text"
                     required
                     value={formData.upstreamModel}
                     onChange={e => setFormData({...formData, upstreamModel: e.target.value})}
                     placeholder="Ví dụ: claude-3-5-sonnet-20240620"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                    className={ui.input}
                   />
                 </div>
               </div>
 
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                     Hệ số Input (Input Rate) <ArrowDownLeft className="h-3 w-3 text-emerald-500" />
+                  <label className={cn(ui.label, "flex items-center gap-2")}>
+                     Hệ số Input (Input Rate) <ArrowDownLeft className="h-3 w-3 text-[#00d4a4]" />
                   </label>
                   <input
                     type="number"
@@ -511,11 +508,11 @@ export default function AdminModelsPage() {
                     min="0"
                     value={formData.inputCreditRate}
                     onChange={e => setFormData({...formData, inputCreditRate: e.target.value})}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                    className={ui.input}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <label className={cn(ui.label, "flex items-center gap-2")}>
                      Hệ số Output (Output Rate) <ArrowUpRight className="h-3 w-3 text-blue-500" />
                   </label>
                   <input
@@ -525,42 +522,41 @@ export default function AdminModelsPage() {
                     min="0"
                     value={formData.outputCreditRate}
                     onChange={e => setFormData({...formData, outputCreditRate: e.target.value})}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                    className={ui.input}
                   />
                 </div>
               </div>
 
               <div className="pt-2">
-                <label className="flex items-center gap-3 cursor-pointer group p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
+                <label className="flex items-center gap-3 cursor-pointer group p-4 rounded-2xl border border-[#edf1ee] bg-[#fbfbf8]">
                   <input
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={e => setFormData({...formData, isActive: e.target.checked})}
-                    className="h-5 w-5 rounded-lg border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                    className="h-5 w-5 rounded-lg border-[#dfe5e1] text-[#00d4a4] focus:ring-[#00d4a4]"
                   />
-                  <span className="text-sm font-black text-slate-600 group-hover:text-slate-900 transition-colors">Sẵn sàng phục vụ (Active Status)</span>
+                  <span className={cn(ui.label, "lowercase first-letter:uppercase")}>Sẵn sàng phục vụ (Active Status)</span>
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-8 border-t border-slate-100">
-                <button
+              <div className="flex justify-end gap-3 pt-6 border-t border-[#edf1ee]">
+                <AppButton
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-2xl px-8 py-3.5 text-sm font-black text-slate-500 hover:bg-slate-50 transition-all"
+                  variant="secondary"
                 >
                   Hủy
-                </button>
-                <button
+                </AppButton>
+                <AppButton
                   type="submit"
-                  className="rounded-2xl bg-slate-900 px-10 py-3.5 text-sm font-black text-white shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-95"
+                  variant="accent"
+                  className="px-10"
                 >
                   {editingId ? "Cập nhật thay đổi" : "Lưu AI Model"}
-                </button>
+                </AppButton>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+        </Modal>
 
       {toast && (
         <ToastMessage

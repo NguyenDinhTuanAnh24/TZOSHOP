@@ -15,10 +15,14 @@ import {
   Cpu,
   Plus
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
-import Skeleton from "react-loading-skeleton";
-import { StatCardsSkeleton, CardListSkeleton } from "@/components/ui/page-skeleton";
 import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
+import { AppButton } from "@/components/ui/app-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
+import { StatCardsSkeleton, CardListSkeleton } from "@/components/ui/page-skeleton";
 
 type ApiFamily = "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
 
@@ -109,7 +113,7 @@ export default function MyPlansPage() {
     return { totalRemaining, totalUsed, activeCount: activeBuckets.length, activeKeys };
   }, [buckets]);
 
-  const btnPrimary = "rounded-full bg-emerald-600 text-white hover:bg-emerald-700 px-6 py-2.5 text-sm font-bold transition-all flex items-center justify-center gap-2";
+
 
   return (
     <div className="space-y-10 pb-20">
@@ -119,79 +123,72 @@ export default function MyPlansPage() {
           { label: "Gói của tôi", href: "/my-plans" },
         ]} 
       />
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-          <AppIcon icon={Package} className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Gói của tôi</h1>
-          <p className="mt-1 text-slate-500 font-medium">
-            Theo dõi credits, thời hạn và quản lý các gói credits đã sở hữu.
-          </p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Gói của tôi" 
+        description="Theo dõi credits, thời hạn và quản lý các gói credits đã sở hữu."
+        icon={<Package className="h-8 w-8" />}
+      />
 
       {/* Stats Cards */}
       {isLoading ? (
         <StatCardsSkeleton />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+          <AppCard className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Credits còn lại</p>
-              <AppIcon icon={Zap} className="h-4 w-4 text-emerald-600" />
+              <p className={ui.statLabel}>Credits còn lại</p>
+              <Zap className="h-4 w-4 text-[#00d4a4]" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-emerald-600">{formatCredits(stats.totalRemaining)}</p>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+            <p className={cn(ui.statValue, "text-[#00d4a4]")}>{formatCredits(stats.totalRemaining)}</p>
+          </AppCard>
+          <AppCard className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Credits đã dùng</p>
-              <AppIcon icon={History} className="h-4 w-4 text-slate-400" />
+              <p className={ui.statLabel}>Credits đã dùng</p>
+              <History className="h-4 w-4 text-[#8a9690]" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900">{formatCredits(stats.totalUsed)}</p>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+            <p className={ui.statValue}>{formatCredits(stats.totalUsed)}</p>
+          </AppCard>
+          <AppCard className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Gói hoạt động</p>
-              <AppIcon icon={CheckCircle2} className="h-4 w-4 text-emerald-600" />
+              <p className={ui.statLabel}>Gói hoạt động</p>
+              <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900">{stats.activeCount}</p>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+            <p className={ui.statValue}>{stats.activeCount}</p>
+          </AppCard>
+          <AppCard className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">API Key đang dùng</p>
-              <AppIcon icon={KeyRound} className="h-4 w-4 text-slate-400" />
+              <p className={ui.statLabel}>API Key đang dùng</p>
+              <KeyRound className="h-4 w-4 text-[#8a9690]" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900">{stats.activeKeys}</p>
-          </div>
+            <p className={ui.statValue}>{stats.activeKeys}</p>
+          </AppCard>
         </div>
       )}
 
       {/* Buckets List */}
       <section className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-black text-slate-900">Danh sách gói sở hữu</h2>
-          <Link href="/plans" className={btnPrimary + " w-full sm:w-auto"}>
-            <Plus className="h-4 w-4" />
+          <h2 className={ui.h3}>Danh sách gói sở hữu</h2>
+          <AppButton variant="accent" onClick={() => window.location.href = "/plans"}>
+            <Plus className="h-4 w-4 mr-2" />
             Mua thêm credits
-          </Link>
+          </AppButton>
         </div>
 
         {isLoading ? (
           <CardListSkeleton count={2} />
         ) : buckets.length === 0 ? (
-          <div className="rounded-[40px] border border-dashed border-slate-300 bg-slate-50/50 p-10 sm:p-20 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 text-slate-400 mb-6">
-              <AppIcon icon={Package} className="h-8 w-8" />
+          <div className="rounded-[40px] border border-dashed border-[#dfe5e1] bg-[#fbfbf8] p-10 sm:p-20 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white border border-[#dfe5e1] text-[#8a9690] mb-6 shadow-sm">
+              <Package className="h-8 w-8" />
             </div>
-            <h3 className="text-xl font-black text-slate-900">Bạn chưa sở hữu gói nào.</h3>
-            <p className="mt-2 text-slate-500 font-medium">Khám phá cửa hàng để chọn gói credits phù hợp ngay.</p>
+            <h3 className={ui.h3}>Bạn chưa sở hữu gói nào.</h3>
+            <p className={ui.p}>Khám phá cửa hàng để chọn gói credits phù hợp ngay.</p>
             <div className="mt-8 flex justify-center">
-              <Link href="/plans" className={btnPrimary + " w-full sm:w-auto"}>
-                <Plus className="h-4 w-4" />
+              <AppButton variant="accent" onClick={() => window.location.href = "/plans"}>
+                <Plus className="h-4 w-4 mr-2" />
                 Mua gói đầu tiên ngay
-              </Link>
+              </AppButton>
             </div>
           </div>
         ) : (
@@ -203,81 +200,78 @@ export default function MyPlansPage() {
               const progress = totalNum > 0 ? Math.round((remainingNum / totalNum) * 100) : 0;
 
               return (
-                <article
+                <AppCard
                   key={bucket.id}
-                  className="group relative rounded-[32px] border border-slate-200 bg-white p-5 sm:p-8 shadow-sm transition-all hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/5"
+                  variant="interactive"
+                  className="flex flex-col gap-6 lg:flex-row lg:items-center group p-8"
                 >
-                  <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
-                    <div className="flex-1 min-w-0 space-y-6">
-                      <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shrink-0">
-                          <AppIcon icon={Package} className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <h3 className="text-xl font-black text-slate-900 truncate">{bucket.product?.name ?? "Gói Tùy Chỉnh"}</h3>
-                            <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${status === "ACTIVE"
-                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                                : "bg-rose-50 text-rose-700 ring-1 ring-rose-200"
-                              }`}>
-                              <AppIcon icon={status === "ACTIVE" ? CheckCircle2 : AlertCircle} className="h-3.5 w-3.5" />
-                              {status === "ACTIVE" ? "Đang hoạt động" : status === "EXPIRED" ? "Hết hạn" : status === "DEPLETED" ? "Hết credits" : "Đã thu hồi"}
-                            </span>
-                          </div>
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{getFamilyLabel(bucket.apiFamily)}</p>
-                        </div>
+                  <div className="flex-1 min-w-0 space-y-6">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#e7fff7] text-[#00d4a4] shrink-0 border border-[#00d4a4]/20">
+                        <Package className="h-5 w-5" />
                       </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="flex items-center gap-2 text-xs font-black text-slate-600 uppercase">
-                            <AppIcon icon={Zap} className="h-3.5 w-3.5" />
-                            Credits còn lại
-                          </p>
-                          <p className="text-sm font-black text-slate-900">{progress}%</p>
-                        </div>
-                        <div className="h-3 w-full rounded-full bg-slate-100 p-0.5 ring-1 ring-slate-200 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${progress > 20 ? "bg-emerald-500" : "bg-rose-500"}`}
-                            style={{ width: `${progress}%` }}
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h3 className={ui.h3}>{bucket.product?.name ?? "Gói Tùy Chỉnh"}</h3>
+                          <StatusBadge 
+                            status={status === "ACTIVE" ? "Đang hoạt động" : status === "EXPIRED" ? "Hết hạn" : status === "DEPLETED" ? "Hết credits" : "Đã thu hồi"} 
+                            variant={status === "ACTIVE" ? "success" : "danger"} 
                           />
                         </div>
-                        <div className="flex items-center justify-between text-sm font-black gap-2">
-                          <span className="text-emerald-600 truncate">{formatCredits(bucket.creditsRemaining)}</span>
-                          <span className="text-slate-300 truncate">/ {formatCredits(bucket.creditsTotal)}</span>
-                        </div>
+                        <p className={cn(ui.label, "mt-1")}>{getFamilyLabel(bucket.apiFamily)}</p>
                       </div>
                     </div>
 
-                    <div className="grid shrink-0 gap-4 sm:grid-cols-2 lg:w-[400px] border-t border-slate-50 pt-6 lg:border-none lg:pt-0">
-                      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <AppIcon icon={KeyRound} className="h-3.5 w-3.5 text-slate-400" />
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">API Keys</p>
-                        </div>
-                        <p className="text-base font-black text-slate-900">{bucket.activeApiKeys} / {bucket.apiKeyLimit}</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className={cn(ui.label, "flex items-center gap-2")}>
+                          <Zap className="h-3.5 w-3.5" />
+                          Credits còn lại
+                        </p>
+                        <p className="text-sm font-black text-[#0b0f0d]">{progress}%</p>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <AppIcon icon={Clock3} className="h-3.5 w-3.5 text-slate-400" />
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                            {bucket.expiresAt ? "Ngày hết hạn" : "Hiệu lực"}
-                          </p>
-                        </div>
-                        <p className="text-base font-black text-slate-900">
-                          {bucket.expiresAt 
-                            ? new Date(bucket.expiresAt).toLocaleDateString("vi-VN") 
-                            : "Không giới hạn thời gian"
-                          }
+                      <div className="h-3 w-full rounded-full bg-[#fbfbf8] p-0.5 ring-1 ring-[#edf1ee] overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${progress > 20 ? "bg-[#00d4a4]" : "bg-red-500"}`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-sm font-black gap-2">
+                        <span className="text-[#00d4a4] truncate">{formatCredits(bucket.creditsRemaining)}</span>
+                        <span className="text-[#8a9690] truncate">/ {formatCredits(bucket.creditsTotal)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid shrink-0 gap-4 sm:grid-cols-2 lg:w-[400px] border-t border-[#edf1ee] pt-6 lg:border-none lg:pt-0">
+                    <div className="rounded-2xl bg-[#fbfbf8] p-4 ring-1 ring-[#edf1ee]">
+                      <div className="flex items-center gap-2 mb-2">
+                        <KeyRound className="h-3.5 w-3.5 text-[#8a9690]" />
+                        <p className={ui.label}>API Keys</p>
+                      </div>
+                      <p className="text-base font-black text-[#0b0f0d]">{bucket.activeApiKeys} / {bucket.apiKeyLimit}</p>
+                    </div>
+                    <div className="rounded-2xl bg-[#fbfbf8] p-4 ring-1 ring-[#edf1ee]">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock3 className="h-3.5 w-3.5 text-[#8a9690]" />
+                        <p className={ui.label}>
+                          {bucket.expiresAt ? "Ngày hết hạn" : "Hiệu lực"}
                         </p>
                       </div>
-                      <div className="col-span-full rounded-2xl bg-slate-50 p-4 sm:p-5 ring-1 ring-slate-100">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <AppIcon icon={Cpu} className="h-4 w-4 text-slate-500" />
-                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Models được phép</p>
-                          </div>
+                      <p className="text-base font-black text-[#0b0f0d]">
+                        {bucket.expiresAt 
+                          ? new Date(bucket.expiresAt).toLocaleDateString("vi-VN") 
+                          : "Không giới hạn thời gian"
+                        }
+                      </p>
+                    </div>
+                    <div className="col-span-full rounded-2xl bg-[#fbfbf8] p-4 sm:p-5 ring-1 ring-[#edf1ee]">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Cpu className="h-4 w-4 text-[#8a9690]" />
+                          <p className={ui.label}>Models được phép</p>
                         </div>
+                      </div>
 
                         {bucket.allowedModels && bucket.allowedModels.length > 0 ? (
                           <div className="space-y-4">
@@ -288,7 +282,7 @@ export default function MyPlansPage() {
                               ).map((m) => (
                                 <span
                                   key={m}
-                                  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300"
+                                  className="inline-flex items-center rounded-full border border-[#dfe5e1] bg-white px-3 py-1.5 text-xs font-bold text-[#47524d] shadow-sm transition-colors hover:border-[#00d4a4]"
                                 >
                                   {m}
                                 </span>
@@ -296,16 +290,17 @@ export default function MyPlansPage() {
                             </div>
 
                             {bucket.allowedModels.length > 6 && (
-                              <button
+                              <AppButton
                                 onClick={() => toggleExpandModel(bucket.id)}
-                                className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors shadow-sm"
+                                variant="secondary"
+                                size="sm"
                               >
                                 {expandedModelBucketIds.has(bucket.id) ? (
                                   "Thu gọn"
                                 ) : (
                                   `Xem tất cả ${bucket.allowedModels.length} model`
                                 )}
-                              </button>
+                              </AppButton>
                             )}
                           </div>
                         ) : (
@@ -315,8 +310,7 @@ export default function MyPlansPage() {
                         )}
                       </div>
                     </div>
-                  </div>
-                </article>
+                </AppCard>
               );
             })}
           </div>

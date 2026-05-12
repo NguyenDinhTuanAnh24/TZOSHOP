@@ -15,9 +15,14 @@ import {
   Info,
   Filter
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
-import { StatCardsSkeleton, CardListSkeleton } from "@/components/ui/page-skeleton";
 import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
+import { AppButton } from "@/components/ui/app-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
+import { StatCardsSkeleton, CardListSkeleton } from "@/components/ui/page-skeleton";
 
 type ApiFamily = "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
 
@@ -113,7 +118,7 @@ export default function UsagePage() {
     return { totalCalls, creditsUsed, successCalls, failedCalls };
   }, [filteredLogs]);
 
-  const btnSecondary = "rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 px-5 py-2 text-sm font-bold transition-all flex items-center justify-center gap-2";
+
 
   return (
     <div className="space-y-10 pb-20">
@@ -124,60 +129,53 @@ export default function UsagePage() {
           { label: "Lịch sử sử dụng", href: "/usage" },
         ]} 
       />
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-          <AppIcon icon={BarChart3} className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Lịch sử sử dụng</h1>
-          <p className="mt-1 text-slate-500 font-medium">
-            Theo dõi lượt gọi API, credits đã dùng và trạng thái request.
-          </p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Lịch sử sử dụng" 
+        description="Theo dõi lượt gọi API, credits đã dùng và trạng thái request."
+        icon={<BarChart3 className="h-8 w-8" />}
+      />
 
       {/* Stats Cards */}
       {isLoading ? (
         <StatCardsSkeleton />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <AppCard className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tổng lượt gọi</p>
-              <div className="p-1.5 rounded-lg bg-slate-50">
-                <AppIcon icon={BarChart3} className="h-4 w-4 text-slate-400" />
+              <p className={ui.statLabel}>Tổng lượt gọi</p>
+              <div className="p-1.5 rounded-lg bg-[#fbfbf8] border border-[#edf1ee]">
+                <BarChart3 className="h-4 w-4 text-[#8a9690]" />
               </div>
             </div>
-            <p className="text-3xl font-black text-slate-900">{stats.totalCalls.toLocaleString("vi-VN")}</p>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className={ui.statValue}>{stats.totalCalls.toLocaleString("vi-VN")}</p>
+          </AppCard>
+          <AppCard className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credits đã dùng</p>
-              <div className="p-1.5 rounded-lg bg-emerald-50">
-                <AppIcon icon={Zap} className="h-4 w-4 text-emerald-600" />
+              <p className={ui.statLabel}>Credits đã dùng</p>
+              <div className="p-1.5 rounded-lg bg-[#e7fff7] border border-[#00d4a4]/20">
+                <Zap className="h-4 w-4 text-[#00d4a4]" />
               </div>
             </div>
-            <p className="text-3xl font-black text-emerald-600">{new Intl.NumberFormat("vi-VN").format(stats.creditsUsed)}</p>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className={cn(ui.statValue, "text-[#00d4a4]")}>{new Intl.NumberFormat("vi-VN").format(stats.creditsUsed)}</p>
+          </AppCard>
+          <AppCard className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Thành công</p>
-              <div className="p-1.5 rounded-lg bg-emerald-50">
-                <AppIcon icon={CheckCircle2} className="h-4 w-4 text-emerald-600" />
+              <p className={ui.statLabel}>Thành công</p>
+              <div className="p-1.5 rounded-lg bg-[#e7fff7] border border-[#00d4a4]/20">
+                <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" />
               </div>
             </div>
-            <p className="text-3xl font-black text-emerald-600">{stats.successCalls.toLocaleString("vi-VN")}</p>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className={cn(ui.statValue, "text-[#00d4a4]")}>{stats.successCalls.toLocaleString("vi-VN")}</p>
+          </AppCard>
+          <AppCard className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Thất bại</p>
-              <div className="p-1.5 rounded-lg bg-rose-50">
-                <AppIcon icon={XCircle} className="h-4 w-4 text-rose-500" />
+              <p className={ui.statLabel}>Thất bại</p>
+              <div className="p-1.5 rounded-lg bg-red-50 border border-red-100">
+                <XCircle className="h-4 w-4 text-red-500" />
               </div>
             </div>
-            <p className="text-3xl font-black text-rose-600">{stats.failedCalls.toLocaleString("vi-VN")}</p>
-          </div>
+            <p className={cn(ui.statValue, "text-red-600")}>{stats.failedCalls.toLocaleString("vi-VN")}</p>
+          </AppCard>
         </div>
       )}
 
@@ -185,18 +183,18 @@ export default function UsagePage() {
         <div className="space-y-8">
 
           {/* Filter Bar */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <AppCard className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              <AppIcon icon={Filter} className="h-5 w-5 text-emerald-600" />
-              <h2 className="text-lg font-black text-slate-900">Bộ lọc lịch sử</h2>
+              <Filter className="h-5 w-5 text-[#00d4a4]" />
+              <h2 className={ui.h3}>Bộ lọc lịch sử</h2>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">API Key</label>
+                <label className={ui.label}>API Key</label>
                 <select
                   value={filterApiKeyId}
                   onChange={(e) => setFilterApiKeyId(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px_18px] bg-[right_1rem_center] bg-no-repeat"
+                  className={ui.select}
                 >
                   <option value="all">Tất cả key</option>
                   {apiKeys.map(k => (
@@ -205,11 +203,11 @@ export default function UsagePage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Model</label>
+                <label className={ui.label}>Model</label>
                 <select
                   value={filterModel}
                   onChange={(e) => setFilterModel(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px_18px] bg-[right_1rem_center] bg-no-repeat"
+                  className={ui.select}
                 >
                   <option value="all">Tất cả model</option>
                   {models.map(m => (
@@ -218,11 +216,11 @@ export default function UsagePage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Trạng thái</label>
+                <label className={ui.label}>Trạng thái</label>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px_18px] bg-[right_1rem_center] bg-no-repeat"
+                  className={ui.select}
                 >
                   <option value="all">Tất cả trạng thái</option>
                   <option value="SUCCESS">Thành công</option>
@@ -230,17 +228,17 @@ export default function UsagePage() {
                 </select>
               </div>
             </div>
-          </section>
+          </AppCard>
 
           {/* Logs Section */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <AppIcon icon={History} className="h-5 w-5 text-emerald-600" />
-                <h2 className="text-xl font-black text-slate-900">Nhật ký chi tiết</h2>
+                <History className="h-5 w-5 text-[#00d4a4]" />
+                <h2 className={ui.h3}>Nhật ký chi tiết</h2>
               </div>
               {!isLoading && (
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <span className={ui.label}>
                   Hiển thị {filteredLogs.length} kết quả
                 </span>
               )}
@@ -249,60 +247,58 @@ export default function UsagePage() {
             {isLoading ? (
               <CardListSkeleton count={4} />
             ) : filteredLogs.length === 0 ? (
-              <div className="rounded-[40px] border border-dashed border-slate-300 bg-slate-50/50 p-10 sm:p-20 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 text-slate-400 mb-6">
-                  <AppIcon icon={History} className="h-8 w-8" />
+              <div className="rounded-[40px] border border-dashed border-[#dfe5e1] bg-[#fbfbf8] p-10 sm:p-20 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white border border-[#dfe5e1] text-[#8a9690] mb-6 shadow-sm">
+                  <History className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-black text-slate-900">Không tìm thấy nhật ký.</h3>
-                <p className="mt-2 text-slate-500 font-medium">Hãy thay đổi bộ lọc hoặc bắt đầu sử dụng API để ghi nhận lịch sử.</p>
+                <h3 className={ui.h3}>Không tìm thấy nhật ký.</h3>
+                <p className={ui.p}>Hãy thay đổi bộ lọc hoặc bắt đầu sử dụng API để ghi nhận lịch sử.</p>
               </div>
             ) : (
               <div className="grid gap-4">
                 {filteredLogs.map((log) => (
-                  <article
+                  <AppCard
                     key={log.id}
-                    className="flex flex-col gap-6 rounded-[32px] border border-slate-200 bg-white p-5 sm:p-6 shadow-sm transition-all hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/5 sm:flex-row sm:items-center sm:justify-between"
+                    variant="interactive"
+                    className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="space-y-2 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span 
-                          className="font-mono text-[13px] font-black text-slate-900 truncate max-w-[200px]"
+                          className="font-mono text-[13px] font-black text-[#0b0f0d] truncate max-w-[200px]"
                           title={log.model}
                         >
                           {log.model}
                         </span>
-                        <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${log.status === "SUCCESS"
-                            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                            : "bg-rose-50 text-rose-700 ring-1 ring-rose-200"
-                          }`}>
-                          <AppIcon icon={log.status === "SUCCESS" ? CheckCircle2 : XCircle} className="h-3.5 w-3.5" />
-                          {log.status === "SUCCESS" ? "Thành công" : "Thất bại"}
-                          {log.httpStatus && <span className="opacity-50 ml-0.5">({log.httpStatus})</span>}
-                        </span>
+                        <StatusBadge 
+                          status={log.status === "SUCCESS" ? "Thành công" : "Thất bại"} 
+                          variant={log.status === "SUCCESS" ? "success" : "danger"} 
+                        />
+                        {log.httpStatus && <span className="text-[10px] font-bold text-[#8a9690]">({log.httpStatus})</span>}
                       </div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight line-clamp-1">
+                      <p className={cn(ui.pMuted, "font-bold uppercase tracking-tight")}>
                         {new Date(log.createdAt).toLocaleString("vi-VN")} · {log.apiKey?.name ?? "API Key"} ({log.apiKey?.keyPrefix ?? "..."})
                       </p>
                       {(log.errorCode || log.errorMessage) && (
                         <div className="flex flex-col gap-0.5">
-                          {log.errorCode && <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{log.errorCode}</p>}
-                          {log.errorMessage && <p className="text-xs font-bold text-rose-600 line-clamp-2">{log.errorMessage}</p>}
+                          {log.errorCode && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">{log.errorCode}</p>}
+                          {log.errorMessage && <p className="text-xs font-bold text-red-600 line-clamp-2">{log.errorMessage}</p>}
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-6 justify-between border-t border-slate-50 pt-4 sm:pt-0 sm:border-none sm:text-right sm:justify-end">
+                    <div className="flex items-center gap-6 justify-between border-t border-[#edf1ee] pt-4 sm:pt-0 sm:border-none sm:text-right sm:justify-end">
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tokens</p>
-                        <p className="text-sm font-black text-slate-900">{log.inputTokens.toLocaleString()}/{log.outputTokens.toLocaleString()}</p>
+                        <p className={ui.label}>Tokens</p>
+                        <p className="text-sm font-black text-[#0b0f0d]">{log.inputTokens.toLocaleString()}/{log.outputTokens.toLocaleString()}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credits</p>
-                        <p className={`text-lg font-black ${log.creditsUsed > 0 ? "text-emerald-600" : "text-slate-400"}`}>
+                        <p className={ui.label}>Credits</p>
+                        <p className={`text-lg font-black ${log.creditsUsed > 0 ? "text-[#00d4a4]" : "text-[#8a9690]"}`}>
                           {new Intl.NumberFormat("vi-VN").format(log.creditsUsed)}
                         </p>
                       </div>
                     </div>
-                  </article>
+                  </AppCard>
                 ))}
               </div>
             )}
@@ -311,38 +307,32 @@ export default function UsagePage() {
 
         {/* Sidebar Info */}
         <aside className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <AppCard className="p-6">
             <div className="mb-4 flex items-center gap-2">
-              <AppIcon icon={KeyRound} className="h-5 w-5 text-emerald-600" />
-              <h3 className="text-lg font-black text-slate-900">Kiểm tra API key</h3>
+              <KeyRound className="h-5 w-5 text-[#00d4a4]" />
+              <h3 className={ui.h3}>Kiểm tra API key</h3>
             </div>
-            <p className="text-xs font-bold text-slate-500 leading-6 mb-6">
+            <p className={ui.pMuted + " leading-6 mb-6 font-bold"}>
               Sử dụng API key trong extension, IDE hoặc API client tương thích OpenAI để kiểm tra kết nối.
             </p>
             <div className="space-y-3">
-              <Link 
-                href="/api-docs" 
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 transition-colors"
-              >
+              <AppButton variant="secondary" onClick={() => window.location.href = "/api-docs"} className="w-full" size="sm">
                 Xem tài liệu API
-              </Link>
-              <Link 
-                href="/api-keys" 
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white py-2.5 text-xs font-black text-slate-700 hover:bg-slate-50 transition-colors"
-              >
+              </AppButton>
+              <AppButton variant="secondary" onClick={() => window.location.href = "/api-keys"} className="w-full" size="sm">
                 Quản lý API Keys
-              </Link>
+              </AppButton>
             </div>
-          </div>
+          </AppCard>
 
-          <div className="rounded-3xl bg-slate-900 p-8 text-white">
+          <div className="rounded-3xl bg-[#020c0a] p-8 text-white">
             <h3 className="text-lg font-black mb-4">Bạn gặp vấn đề?</h3>
-            <p className="text-xs font-medium text-slate-400 leading-6 mb-6">
+            <p className="text-xs font-medium text-white/50 leading-6 mb-6">
               Nếu bạn thấy có sự sai lệch về credits hoặc lượt gọi, hãy liên hệ đội ngũ kỹ thuật để được hỗ trợ kiểm soát.
             </p>
-            <button className="w-full rounded-full bg-emerald-600 py-3 text-sm font-black hover:bg-emerald-700 transition-colors">
+            <AppButton variant="accent" className="w-full">
               Gửi hỗ trợ
-            </button>
+            </AppButton>
           </div>
         </aside>
       </div>

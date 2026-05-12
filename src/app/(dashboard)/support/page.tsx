@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { 
   LifeBuoy, 
   Mail, 
@@ -12,10 +13,14 @@ import {
   ChevronRight,
   Clock
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
-import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
+import { AppButton } from "@/components/ui/app-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
 
 const REQUEST_TYPES = [
   "Thanh toán",
@@ -176,8 +181,7 @@ export default function SupportPage() {
     }
   };
 
-  const inputClasses = "w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all placeholder:text-slate-400 placeholder:font-medium";
-  const labelClasses = "text-sm font-bold text-slate-700 ml-1 mb-2 block";
+
 
   return (
     <div className="space-y-8 pb-20">
@@ -187,45 +191,37 @@ export default function SupportPage() {
           { label: "Hỗ trợ", href: "/support" },
         ]} 
       />
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-          <AppIcon icon={LifeBuoy} className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Hỗ trợ</h1>
-          <p className="mt-1 text-slate-500 font-medium">
-            Gửi yêu cầu hỗ trợ khi bạn gặp vấn đề về thanh toán, credits hoặc API key.
-          </p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Hỗ trợ" 
+        description="Gửi yêu cầu hỗ trợ khi bạn gặp vấn đề về thanh toán, credits hoặc API key."
+        icon={<LifeBuoy className="h-8 w-8" />}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_360px] items-start">
-        {/* Form hỗ trợ */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+        <AppCard className="p-6 sm:p-8">
           <div className="mb-8 flex items-center gap-3">
-            <AppIcon icon={MessageCircle} className="h-5 w-5 text-emerald-600" />
-            <h2 className="text-xl font-black text-slate-900">Gửi yêu cầu mới</h2>
+            <MessageCircle className="h-5 w-5 text-[#00d4a4]" />
+            <h2 className={ui.h3}>Gửi yêu cầu mới</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-1">
-                <label className={labelClasses}>Họ tên <span className="text-rose-500">*</span></label>
+                <label className={ui.label}>Họ tên <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   placeholder="Nguyễn Văn A"
-                  className={inputClasses}
+                  className={ui.input}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
-                <label className={labelClasses}>Email <span className="text-rose-500">*</span></label>
+                <label className={ui.label}>Email <span className="text-red-500">*</span></label>
                 <input
                   type="email"
                   placeholder="email@example.com"
-                  className={inputClasses}
+                  className={ui.input}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -234,9 +230,9 @@ export default function SupportPage() {
 
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-1">
-                <label className={labelClasses}>Loại yêu cầu</label>
+                <label className={ui.label}>Loại yêu cầu</label>
                 <select
-                  className={inputClasses}
+                  className={ui.input}
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 >
@@ -246,9 +242,9 @@ export default function SupportPage() {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className={labelClasses}>Mức độ ưu tiên</label>
+                <label className={ui.label}>Mức độ ưu tiên</label>
                 <select
-                  className={inputClasses}
+                  className={ui.input}
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                 >
@@ -260,112 +256,102 @@ export default function SupportPage() {
             </div>
 
             <div className="space-y-1">
-              <label className={labelClasses}>Tiêu đề <span className="text-rose-500">*</span></label>
+              <label className={ui.label}>Tiêu đề <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 placeholder="Ví dụ: Lỗi không nhận được credits sau thanh toán"
-                className={inputClasses}
+                className={ui.input}
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </div>
 
             <div className="space-y-1">
-              <label className={labelClasses}>Nội dung chi tiết <span className="text-rose-500">*</span></label>
+              <label className={ui.label}>Nội dung chi tiết <span className="text-red-500">*</span></label>
               <textarea
                 rows={5}
                 placeholder="Vui lòng mô tả chi tiết vấn đề bạn đang gặp phải..."
-                className={`${inputClasses} resize-none`}
+                className={cn(ui.input, "resize-none")}
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               />
             </div>
 
             <div className="space-y-1">
-              <label className={labelClasses}>Mã đơn hàng hoặc API key prefix (nếu có)</label>
+              <label className={ui.label}>Mã đơn hàng hoặc API key prefix (nếu có)</label>
               <input
                 type="text"
                 placeholder="Ví dụ: TZO-123456 hoặc tzo_live_..."
-                className={inputClasses}
+                className={ui.input}
                 value={formData.reference}
                 onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
               />
             </div>
 
             <div className="pt-2">
-              <button
+              <AppButton
                 type="submit"
-                disabled={isSubmitting}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 py-4 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                isLoading={isSubmitting}
+                variant="accent"
+                className="w-full py-6 text-base"
               >
-                {isSubmitting ? (
-                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                ) : (
-                  <>
-                    <AppIcon icon={Send} className="h-4 w-4" />
-                    Gửi yêu cầu hỗ trợ
-                  </>
-                )}
-              </button>
+                <Send className="h-5 w-5 mr-2" />
+                Gửi yêu cầu hỗ trợ
+              </AppButton>
             </div>
           </form>
 
-          {/* Lịch sử yêu cầu */}
           <div className="mt-16 space-y-6">
-            <div className="flex items-center justify-between border-t border-slate-100 pt-10">
+            <div className="flex items-center justify-between border-t border-[#edf1ee] pt-10">
               <div className="flex items-center gap-3">
-                <AppIcon icon={Clock} className="h-5 w-5 text-slate-400" />
-                <h2 className="text-xl font-black text-slate-900">Lịch sử yêu cầu</h2>
+                <Clock className="h-5 w-5 text-[#8a9690]" />
+                <h2 className={ui.h3}>Lịch sử yêu cầu</h2>
               </div>
             </div>
 
             {isLoadingTickets ? (
               <div className="py-10 text-center"><div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" /></div>
             ) : tickets.length === 0 ? (
-              <p className="py-10 text-center text-sm font-medium text-slate-400 italic">Bạn chưa gửi yêu cầu hỗ trợ nào.</p>
+              <p className={cn(ui.pMuted, "py-10 text-center italic")}>Bạn chưa gửi yêu cầu hỗ trợ nào.</p>
             ) : (
               <div className="grid gap-4">
-                {tickets.map((ticket) => {
-                  const status = getStatusLabel(ticket.status);
-                  return (
-                    <div key={ticket.id} className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5 transition-all hover:bg-white hover:shadow-md">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ring-1 ${status.color}`}>
-                              {status.text}
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                              {ticket.category} · {new Date(ticket.createdAt).toLocaleDateString("vi-VN")}
-                            </span>
-                          </div>
-                          <h3 className="text-sm font-black text-slate-900 truncate">{ticket.subject}</h3>
-                          <p className="mt-2 text-xs font-medium text-slate-500 line-clamp-2 leading-relaxed">
-                            {ticket.message}
-                          </p>
-                          {ticket.adminNotes && (
-                            <div className="mt-4 rounded-xl bg-emerald-50 p-3 border border-emerald-100">
-                              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Phản hồi từ Admin:</p>
-                              <p className="text-xs font-bold text-emerald-700">{ticket.adminNotes}</p>
-                            </div>
-                          )}
+                {tickets.map((ticket) => (
+                  <div key={ticket.id} className="rounded-2xl border border-[#edf1ee] bg-[#fbfbf8] p-5 transition-all hover:bg-white hover:shadow-md">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                          <StatusBadge 
+                            status={getStatusLabel(ticket.status).text} 
+                            variant={ticket.status === "RESOLVED" ? "success" : ticket.status === "CLOSED" ? "neutral" : ticket.status === "IN_PROGRESS" ? "warning" : "info"} 
+                          />
+                          <span className={ui.label}>
+                            {ticket.category} · {new Date(ticket.createdAt).toLocaleDateString("vi-VN")}
+                          </span>
                         </div>
+                        <h3 className={cn(ui.h3, "text-base")}>{ticket.subject}</h3>
+                        <p className={cn(ui.pMuted, "mt-2 line-clamp-2 leading-relaxed")}>
+                          {ticket.message}
+                        </p>
+                        {ticket.adminNotes && (
+                          <div className="mt-4 rounded-xl bg-[#e7fff7] p-3 border border-[#00d4a4]/20">
+                            <p className={cn(ui.label, "text-[#00d4a4] mb-1")}>Phản hồi từ Admin:</p>
+                            <p className="text-xs font-bold text-[#020c0a]">{ticket.adminNotes}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
-        </div>
+        </AppCard>
 
-        {/* Right Sidebar */}
         <aside className="space-y-6">
-          {/* Liên hệ nhanh */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <AppCard className="p-6">
             <div className="mb-6 flex items-center gap-3">
-              <AppIcon icon={AlertCircle} className="h-5 w-5 text-emerald-600" />
-              <h3 className="text-lg font-black text-slate-900">Liên hệ nhanh</h3>
+              <AlertCircle className="h-5 w-5 text-[#00d4a4]" />
+              <h3 className={ui.h3}>Liên hệ nhanh</h3>
             </div>
 
             <div className="space-y-4">
@@ -375,66 +361,65 @@ export default function SupportPage() {
                   href={channel.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:border-emerald-200 hover:bg-emerald-50"
+                  className="group flex items-center gap-4 rounded-2xl border border-[#edf1ee] bg-[#fbfbf8] p-4 transition-all hover:border-[#00d4a4]/40 hover:bg-white hover:shadow-md"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100 transition-all group-hover:ring-emerald-200">
-                    <AppIcon icon={channel.icon} className="h-5 w-5 text-slate-600 group-hover:text-emerald-600" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-[#edf1ee] transition-all group-hover:ring-[#00d4a4]/20">
+                    <channel.icon className="h-5 w-5 text-[#8a9690] group-hover:text-[#00d4a4]" />
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-emerald-500">
+                    <p className={cn(ui.label, "group-hover:text-[#00d4a4]")}>
                       {channel.name}
                     </p>
-                    <p className="truncate text-sm font-black text-slate-900">
+                    <p className="truncate text-sm font-black text-[#0b0f0d]">
                       {channel.value}
                     </p>
                   </div>
-                  <ExternalLink className="h-3 w-3 text-slate-300 group-hover:text-emerald-400" />
+                  <ExternalLink className="h-3 w-3 text-[#dfe5e1] group-hover:text-[#00d4a4]" />
                 </a>
               ))}
 
-              <div className="flex items-center gap-3 rounded-2xl bg-slate-900 p-4 text-white">
+              <div className="flex items-center gap-3 rounded-2xl bg-[#020c0a] p-4 text-white">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10">
-                  <Clock className="h-5 w-5 text-emerald-400" />
+                  <Clock className="h-5 w-5 text-[#00d4a4]" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className={cn(ui.label, "text-white/50")}>
                     Thời gian phản hồi
                   </p>
-                  <p className="text-sm font-black text-emerald-400">
+                  <p className="text-sm font-black text-[#00d4a4]">
                     Thường dưới 15 phút
                   </p>
                 </div>
               </div>
             </div>
-          </div>
+          </AppCard>
 
-          {/* FAQ */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <AppCard className="p-6">
             <div className="mb-6 flex items-center gap-3">
-              <AppIcon icon={HelpCircle} className="h-5 w-5 text-emerald-600" />
-              <h3 className="text-lg font-black text-slate-900">Câu hỏi thường gặp</h3>
+              <HelpCircle className="h-5 w-5 text-[#00d4a4]" />
+              <h3 className={ui.h3}>Câu hỏi thường gặp</h3>
             </div>
 
             <div className="space-y-4">
               {FAQS.map((faq, idx) => (
                 <div key={idx} className="space-y-2">
                   <div className="flex items-start gap-2">
-                    <ChevronRight className="mt-1 h-3 w-3 shrink-0 text-emerald-500" />
-                    <p className="text-sm font-black text-slate-900">
+                    <ChevronRight className="mt-1 h-3 w-3 shrink-0 text-[#00d4a4]" />
+                    <p className="text-sm font-black text-[#0b0f0d]">
                       {faq.question}
                     </p>
                   </div>
-                  <p className="ml-5 text-xs font-medium leading-relaxed text-slate-500">
+                  <p className={cn(ui.pMuted, "ml-5 leading-relaxed")}>
                     {faq.answer}
                   </p>
                 </div>
               ))}
             </div>
             
-            <button className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white py-3 text-xs font-bold text-slate-700 transition hover:bg-slate-50">
+            <AppButton variant="secondary" className="mt-6 w-full text-xs" size="sm">
               Xem thêm câu hỏi
-            </button>
-          </div>
+            </AppButton>
+          </AppCard>
         </aside>
       </div>
 

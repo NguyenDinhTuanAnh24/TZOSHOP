@@ -21,6 +21,12 @@ import {
   Save,
   RotateCcw
 } from "lucide-react";
+import { AppButton } from "@/components/ui/app-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { format } from "date-fns";
@@ -120,13 +126,24 @@ export default function AdminSupportPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "OPEN": return <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-blue-600 ring-1 ring-blue-500/10">Đang mở</span>;
-      case "IN_PROGRESS": return <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-amber-600 ring-1 ring-amber-500/10">Đang xử lý</span>;
-      case "RESOLVED": return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-emerald-600 ring-1 ring-emerald-500/10">Đã giải quyết</span>;
-      case "CLOSED": return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500 ring-1 ring-slate-200">Đã đóng</span>;
-      default: return null;
-    }
+    const labels: Record<string, string> = {
+      OPEN: "Đang mở",
+      IN_PROGRESS: "Đang xử lý",
+      RESOLVED: "Đã giải quyết",
+      CLOSED: "Đã đóng"
+    };
+    const variants: Record<string, "info" | "warning" | "success" | "neutral"> = {
+      OPEN: "info",
+      IN_PROGRESS: "warning",
+      RESOLVED: "success",
+      CLOSED: "neutral"
+    };
+    return (
+      <StatusBadge 
+        status={labels[status] || status}
+        variant={variants[status] || "neutral"}
+      />
+    );
   };
 
   const getPriorityIcon = (priority: string) => {
@@ -152,75 +169,75 @@ export default function AdminSupportPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6">
-           <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-slate-900 text-white shadow-xl shadow-slate-200 ring-4 ring-slate-50">
-              <LifeBuoy className="h-8 w-8" />
-           </div>
-           <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Hỗ trợ khách hàng</h1>
-              <p className="text-slate-500 font-bold mt-1">Theo dõi và xử lý yêu cầu hỗ trợ từ người dùng.</p>
-           </div>
-        </div>
-        <div className="flex items-center gap-6">
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-4 border-r border-slate-100 hidden lg:grid">
-              <div className="text-center">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang mở</p>
-                 <p className="text-lg font-black text-blue-600">{tickets.filter(t => t.status === 'OPEN').length}</p>
-              </div>
-              <div className="text-center">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang xử lý</p>
-                 <p className="text-lg font-black text-amber-600">{tickets.filter(t => t.status === 'IN_PROGRESS').length}</p>
-              </div>
-              <div className="text-center">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đã xong</p>
-                 <p className="text-lg font-black text-emerald-600">{tickets.filter(t => t.status === 'RESOLVED').length}</p>
-              </div>
-              <div className="text-center">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Khẩn cấp</p>
-                 <p className="text-lg font-black text-rose-600">{tickets.filter(t => t.priority === 'URGENT').length}</p>
-              </div>
-           </div>
-           <button 
-              onClick={fetchTickets}
-              className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-400 hover:text-emerald-600 transition-all active:scale-95 shadow-sm"
-           >
-              <RotateCcw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
-           </button>
-        </div>
-      </div>
+      <PageHeader 
+        title="Hỗ trợ khách hàng" 
+        description="Theo dõi và xử lý yêu cầu hỗ trợ từ người dùng."
+        icon={
+          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-950 text-white shadow-sm ring-1 ring-slate-800/50">
+            <LifeBuoy className="h-8 w-8 text-white" />
+          </div>
+        }
+        actions={
+          <div className="flex items-center gap-8">
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-10 px-6 border-r border-[#edf1ee] hidden lg:grid">
+                <div className="text-center">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Đang mở</p>
+                   <p className="text-xl font-black text-[#4d73ff]">{tickets.filter(t => t.status === 'OPEN').length}</p>
+                </div>
+                <div className="text-center">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Đang xử lý</p>
+                   <p className="text-xl font-black text-[#ffb800]">{tickets.filter(t => t.status === 'IN_PROGRESS').length}</p>
+                </div>
+                <div className="text-center">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Đã xong</p>
+                   <p className="text-xl font-black text-[#00d4a4]">{tickets.filter(t => t.status === 'RESOLVED').length}</p>
+                </div>
+                <div className="text-center">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Khẩn cấp</p>
+                   <p className="text-xl font-black text-rose-600">{tickets.filter(t => t.priority === 'URGENT').length}</p>
+                </div>
+             </div>
+             <button
+               type="button"
+               onClick={fetchTickets}
+               title="Làm mới"
+               className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-all duration-150 ease-out hover:bg-slate-50 hover:text-slate-950 hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+             >
+                <RotateCcw className={cn("h-5 w-5 shrink-0", isLoading && "animate-spin")} />
+             </button>
+          </div>
+        }
+      />
 
-      <div className="flex flex-1 gap-6 min-h-0">
-         {/* Left Side: Ticket List */}
-         <div className="w-full lg:w-[400px] flex flex-col bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 space-y-4 shrink-0">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)] flex-1 min-h-0">
+         <AppCard className="flex flex-col overflow-hidden p-0 border-slate-200 shadow-sm rounded-[32px]">
+            <div className="p-5 border-b border-slate-100 space-y-4 shrink-0 bg-[#fbfbf8]">
                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Tìm email, chủ đề..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 pl-11 pr-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   />
                </div>
-               <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                   <select 
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-[10px] font-black text-slate-600 outline-none appearance-none cursor-pointer"
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 focus:border-emerald-400 outline-none cursor-pointer transition-all"
                   >
-                    <option value="ALL">Tất cả Trạng thái</option>
-                    <option value="OPEN">Mở</option>
+                    <option value="ALL">Trạng thái</option>
+                    <option value="OPEN">Đang mở</option>
                     <option value="IN_PROGRESS">Đang xử lý</option>
                     <option value="RESOLVED">Giải quyết</option>
-                    <option value="CLOSED">Đóng</option>
+                    <option value="CLOSED">Đã đóng</option>
                   </select>
                   <select 
                     value={filterPriority}
                     onChange={(e) => setFilterPriority(e.target.value)}
-                    className="rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-[10px] font-black text-slate-600 outline-none appearance-none cursor-pointer"
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 focus:border-emerald-400 outline-none cursor-pointer transition-all"
                   >
                     <option value="ALL">Độ ưu tiên</option>
                     <option value="NORMAL">Bình thường</option>
@@ -232,34 +249,48 @@ export default function AdminSupportPage() {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                {isLoading ? (
-                  <div className="py-20 text-center space-y-4">
-                     <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang tải yêu cầu...</p>
+                  <div className="py-24 text-center space-y-4">
+                     <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#00d4a4] border-t-transparent" />
+                     <p className={cn(ui.label, "animate-pulse text-sm")}>Đang tải yêu cầu...</p>
                   </div>
-               ) : filteredTickets.length === 0 ? (
-                  <div className="py-20 text-center">
-                     <p className="text-sm font-bold text-slate-400 italic">Không tìm thấy yêu cầu nào.</p>
+               ) : (filteredTickets.length === 0 ? (
+                  <div className="flex min-h-[400px] items-center justify-center p-8 text-center">
+                     <div className="max-w-[240px]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 mb-4 ring-1 ring-slate-100 shadow-sm">
+                           <Search className="h-7 w-7" />
+                        </div>
+                        <p className="text-sm font-semibold text-slate-500 leading-relaxed">
+                           Không tìm thấy yêu cầu nào phù hợp với bộ lọc.
+                        </p>
+                     </div>
                   </div>
                ) : (
-                  <div className="divide-y divide-slate-50">
+                  <div className="divide-y divide-[#edf1ee]">
                      {filteredTickets.map((ticket) => (
                         <button
                           key={ticket.id}
                           onClick={() => setSelectedTicketId(ticket.id)}
-                          className={`w-full text-left p-6 transition-all border-l-4 ${
+                          className={`w-full text-left p-8 transition-all border-l-[6px] relative active:scale-[0.99] ${
                             selectedTicketId === ticket.id 
-                              ? "bg-slate-50 border-emerald-500 shadow-inner" 
-                              : "bg-white border-transparent hover:bg-slate-50/50"
+                              ? "bg-[#fbfbf8] border-[#00d4a4] shadow-inner z-10" 
+                              : "bg-white border-transparent hover:bg-slate-50"
                           }`}
                         >
-                           <div className="flex justify-between items-start mb-2">
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[120px]">
+                           <div className="flex justify-between items-start mb-3">
+                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 truncate max-w-[140px]">
                                  {ticket.category}
                               </span>
-                              {getPriorityIcon(ticket.priority)}
+                              <div className="flex items-center gap-2">
+                                 {getPriorityIcon(ticket.priority)}
+                              </div>
                            </div>
-                           <h4 className="text-sm font-black text-slate-900 leading-snug mb-1 line-clamp-1">{ticket.subject}</h4>
-                           <p className="text-[11px] font-bold text-slate-500 truncate mb-3">{ticket.email}</p>
+                           <h4 className="text-[15px] font-black text-slate-900 leading-snug mb-2 line-clamp-2 tracking-tight">{ticket.subject}</h4>
+                           <div className="flex items-center gap-2 mb-4">
+                              <div className="h-6 w-6 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 uppercase">
+                                 {ticket.name[0]}
+                              </div>
+                              <p className="text-xs font-bold text-slate-500 truncate">{ticket.email}</p>
+                           </div>
                            <div className="flex justify-between items-center">
                               {getStatusBadge(ticket.status)}
                               <span className="text-[10px] font-bold text-slate-400">
@@ -269,137 +300,144 @@ export default function AdminSupportPage() {
                         </button>
                      ))}
                   </div>
-               )}
+               ))}
             </div>
-         </div>
+         </AppCard>
 
-         {/* Right Side: Ticket Detail */}
-         <div className="flex-1 bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden flex flex-col relative">
+         <AppCard className="flex-1 overflow-hidden flex flex-col p-0 border-slate-200 shadow-sm rounded-[32px]">
             {!selectedTicket ? (
-               <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
-                  <div className="h-20 w-20 rounded-[32px] bg-slate-50 flex items-center justify-center mb-6">
-                     <MessageSquare className="h-10 w-10 text-slate-200" />
+               <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-[#fbfbf8]">
+                  <div className="h-24 w-24 rounded-[40px] bg-white flex items-center justify-center mb-8 shadow-sm ring-1 ring-[#edf1ee]">
+                     <MessageSquare className="h-12 w-12 text-slate-300" />
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 mb-2">Chọn yêu cầu để xử lý</h3>
-                  <p className="text-sm font-bold text-slate-400 max-w-[280px]">
+                  <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Chọn yêu cầu để xử lý</h3>
+                  <p className="max-w-[340px] text-sm font-bold text-slate-500 leading-relaxed">
                      Chọn một yêu cầu hỗ trợ từ danh sách bên trái để xem nội dung chi tiết và phản hồi khách hàng.
                   </p>
                </div>
             ) : (
                <>
-                  {/* Detail Header */}
-                  <div className="p-8 border-b border-slate-100 shrink-0">
-                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                           <div className="flex items-center gap-3 mb-2">
-                              {getStatusBadge(selectedTicket.status)}
-                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-600 uppercase tracking-widest ring-1 ring-slate-200">
-                                 {selectedTicket.category}
-                              </span>
+                  <div className="p-10 border-b border-[#edf1ee] shrink-0 bg-[#fbfbf8]">
+                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div className="space-y-4">
+                           <div className="flex items-center gap-3">
+                               {getStatusBadge(selectedTicket.status)}
+                               <span className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest ring-1 ring-slate-100 shadow-sm">
+                                  {selectedTicket.category}
+                               </span>
                            </div>
-                           <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">{selectedTicket.subject}</h2>
+                           <h2 className="text-3xl font-black text-slate-950 tracking-tight leading-[1.2]">{selectedTicket.subject}</h2>
                         </div>
-                        <div className="flex items-center gap-2">
-                           <div className={`flex h-10 px-4 items-center gap-2 rounded-xl border text-[10px] font-black uppercase tracking-widest ${
-                              selectedTicket.priority === 'URGENT' ? 'bg-rose-50 border-rose-100 text-rose-600' :
-                              selectedTicket.priority === 'HIGH' ? 'bg-amber-50 border-amber-100 text-amber-600' :
-                              'bg-slate-50 border-slate-100 text-slate-500'
-                           }`}>
-                              {getPriorityIcon(selectedTicket.priority)}
-                              {selectedTicket.priority}
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* Detail Body */}
-                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
-                     {/* User Info */}
-                     <div className="grid sm:grid-cols-2 gap-6">
-                        <div className="p-6 rounded-3xl bg-slate-50/50 border border-slate-100">
-                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Thông tin khách hàng</p>
-                           <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center text-slate-900 text-sm font-black shadow-sm ring-1 ring-slate-200">
+                        <div className="flex items-center gap-3">
+                           <div className={cn(
+                               "flex h-11 px-5 items-center gap-2.5 rounded-2xl border text-xs font-black uppercase tracking-widest shadow-sm",
+                               selectedTicket.priority === 'URGENT' ? 'bg-rose-50 border-rose-100 text-rose-600' :
+                               selectedTicket.priority === 'HIGH' ? 'bg-amber-50 border-amber-100 text-amber-600' :
+                               'bg-white border-slate-200 text-slate-500'
+                            )}>
+                               {getPriorityIcon(selectedTicket.priority)}
+                               {selectedTicket.priority}
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+ 
+                   <div className="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-10">
+                      <div className="grid sm:grid-cols-2 gap-8">
+                         <div className="p-8 rounded-[32px] bg-[#fbfbf8] border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Thông tin khách hàng</p>
+                            <div className="flex items-center gap-5">
+                              <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center text-slate-900 text-lg font-black shadow-sm ring-1 ring-slate-200 transition-transform hover:scale-105">
                                  {selectedTicket.name[0].toUpperCase()}
                               </div>
-                              <div>
-                                 <p className="text-sm font-black text-slate-900">{selectedTicket.name}</p>
-                                 <p className="text-xs font-bold text-slate-500">{selectedTicket.email}</p>
+                              <div className="space-y-1">
+                                 <p className="text-[15px] font-black text-slate-900">{selectedTicket.name}</p>
+                                 <p className="text-sm font-bold text-slate-500">{selectedTicket.email}</p>
                               </div>
                            </div>
                         </div>
-                        <div className="p-6 rounded-3xl bg-slate-50/50 border border-slate-100">
-                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Tham chiếu hệ thống</p>
-                           <div className="space-y-2">
+                        <div className="p-8 rounded-[32px] bg-[#fbfbf8] border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Tham chiếu hệ thống</p>
+                           <div className="space-y-4">
                               {selectedTicket.orderCode ? (
-                                 <div className="flex items-center gap-2">
-                                    <ShoppingBag className="h-3.5 w-3.5 text-slate-400" />
-                                    <span className="text-xs font-bold text-slate-700">Đơn hàng: <span className="font-black text-indigo-600">{selectedTicket.orderCode}</span></span>
+                                 <div className="flex items-center gap-3.5">
+                                    <ShoppingBag className="h-5 w-5 text-slate-400" />
+                                    <span className="text-sm font-black text-slate-900">Đơn hàng: <span className="text-emerald-600">#{selectedTicket.orderCode}</span></span>
                                  </div>
                               ) : (
-                                 <p className="text-[11px] text-slate-400 italic">Không có mã đơn hàng</p>
+                                 <div className="flex items-center gap-3.5 opacity-50">
+                                    <ShoppingBag className="h-5 w-5 text-slate-300" />
+                                    <p className="text-xs font-bold text-slate-400 italic">Không có mã đơn hàng</p>
+                                 </div>
                               )}
                               {selectedTicket.apiKeyPrefix ? (
-                                 <div className="flex items-center gap-2">
-                                    <Hash className="h-3.5 w-3.5 text-slate-400" />
-                                    <span className="text-xs font-bold text-slate-700">API Key: <span className="font-black text-emerald-600">{selectedTicket.apiKeyPrefix}...</span></span>
+                                 <div className="flex items-center gap-3.5">
+                                    <Hash className="h-5 w-5 text-slate-400" />
+                                    <span className="text-sm font-black text-slate-900">API Key: <span className="text-[#00d4a4]">{selectedTicket.apiKeyPrefix}...</span></span>
                                  </div>
                               ) : (
-                                 <p className="text-[11px] text-slate-400 italic">Không có API Key tham chiếu</p>
+                                 <div className="flex items-center gap-3.5 opacity-50">
+                                    <Hash className="h-5 w-5 text-slate-300" />
+                                    <p className="text-xs font-bold text-slate-400 italic">Không có API Key tham chiếu</p>
+                                 </div>
                               )}
                            </div>
                         </div>
                      </div>
-
-                     {/* Message */}
-                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nội dung yêu cầu</label>
-                        <div className="p-8 rounded-[32px] bg-slate-900 text-slate-200 text-sm font-medium leading-relaxed shadow-xl ring-4 ring-slate-50 whitespace-pre-wrap">
+ 
+                     <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">Nội dung yêu cầu</label>
+                        <div className="p-10 rounded-[40px] bg-slate-950 text-emerald-400 text-base font-medium leading-relaxed shadow-2xl ring-[12px] ring-slate-50 whitespace-pre-wrap selection:bg-emerald-500/30">
                            {selectedTicket.message}
                         </div>
-                        <p className="text-[10px] text-right text-slate-400 font-bold px-4 pt-1">
-                           Gửi lúc: {format(new Date(selectedTicket.createdAt), "HH:mm:ss - dd MMMM, yyyy", { locale: vi })}
-                        </p>
+                        <div className="flex justify-end gap-2 pr-2 pt-2">
+                           <Clock className="h-4 w-4 text-slate-300" />
+                           <p className="text-[11px] font-bold text-slate-400">
+                              Gửi lúc: {format(new Date(selectedTicket.createdAt), "HH:mm:ss - dd/MM/yyyy", { locale: vi })}
+                           </p>
+                        </div>
                      </div>
 
-                     {/* Admin Section */}
-                     <div className="space-y-6 pt-4 border-t border-slate-100">
+                     <div className="space-y-8 pt-6 border-t border-slate-100">
                         <div className="space-y-4">
                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                              <MessageSquare className="h-3.5 w-3.5" /> Ghi chú nội bộ / Phản hồi
+                              <MessageSquare className="h-4 w-4" /> Ghi chú nội bộ / Phản hồi cho khách hàng
                            </label>
                            <textarea 
                               value={detailData.adminNotes}
                               onChange={e => setDetailData({...detailData, adminNotes: e.target.value})}
                               placeholder="Nhập ghi chú xử lý hoặc phản hồi để khách hàng xem..."
-                              className="w-full min-h-[160px] rounded-[32px] border border-slate-200 bg-slate-50/50 p-6 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all custom-scrollbar"
+                              className="w-full min-h-[180px] rounded-[32px] border border-slate-200 bg-slate-50/50 p-8 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all shadow-inner custom-scrollbar"
                            />
                         </div>
 
                         <div className="flex flex-col md:flex-row gap-6">
-                           <div className="flex-1 space-y-2">
+                           <div className="flex-1 space-y-3">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cập nhật trạng thái</label>
-                              <select 
-                                 value={detailData.status}
-                                 onChange={e => setDetailData({...detailData, status: e.target.value})}
-                                 className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-black text-slate-900 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
-                              >
-                                 <option value="OPEN">OPEN - Đang chờ</option>
-                                 <option value="IN_PROGRESS">IN_PROGRESS - Đang xử lý</option>
-                                 <option value="RESOLVED">RESOLVED - Đã giải quyết</option>
-                                 <option value="CLOSED">CLOSED - Đã đóng</option>
-                              </select>
+                              <div className="relative">
+                                 <select 
+                                    value={detailData.status}
+                                    onChange={e => setDetailData({...detailData, status: e.target.value})}
+                                    className="w-full rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-slate-900 outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer shadow-sm"
+                                 >
+                                    <option value="OPEN">OPEN - Đang chờ xử lý</option>
+                                    <option value="IN_PROGRESS">IN_PROGRESS - Đang giải quyết</option>
+                                    <option value="RESOLVED">RESOLVED - Đã xử lý xong</option>
+                                    <option value="CLOSED">CLOSED - Đã đóng vĩnh viễn</option>
+                                 </select>
+                                 <ChevronRight className="absolute right-5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+                              </div>
                            </div>
                            <div className="flex items-end">
                               <button 
                                  onClick={handleUpdateTicket}
                                  disabled={isUpdating}
-                                 className="w-full md:w-auto flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-10 py-3.5 text-sm font-black text-white shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-95 disabled:opacity-50"
+                                 className="w-full md:w-auto h-[56px] flex items-center justify-center gap-3 rounded-2xl bg-slate-900 px-12 text-sm font-black text-white shadow-xl shadow-slate-200 hover:bg-emerald-600 transition-all active:scale-95 disabled:opacity-50"
                               >
                                  {isUpdating ? (
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                  ) : (
-                                    <Save className="h-4 w-4" />
+                                    <Save className="h-5 w-5" />
                                  )}
                                  Lưu cập nhật
                               </button>
@@ -407,9 +445,9 @@ export default function AdminSupportPage() {
                         </div>
                      </div>
                   </div>
-               </>
-            )}
-         </div>
+                </>
+             )}
+         </AppCard>
       </div>
 
       {toast && (

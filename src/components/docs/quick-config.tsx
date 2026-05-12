@@ -1,7 +1,9 @@
 "use client";
 
-import { Terminal, Zap, Key } from "lucide-react";
+import { Terminal, Zap, Key, Settings } from "lucide-react";
 import { DocsCopyButton } from "./copy-button";
+import { AppCard } from "@/components/ui/app-card";
+import { ui } from "@/lib/ui-tokens";
 
 interface QuickConfigProps {
   baseUrl: string;
@@ -9,10 +11,10 @@ interface QuickConfigProps {
 
 export function DocsQuickConfig({ baseUrl }: QuickConfigProps) {
   return (
-    <div className="bg-white p-6 sm:p-8 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden">
+    <AppCard className="p-8 sm:p-10">
       <div className="flex items-center gap-3 mb-8">
-        <div className="h-10 w-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-          <Zap className="h-5 w-5" />
+        <div className="h-10 w-10 rounded-2xl bg-slate-900 flex items-center justify-center text-white">
+          <Settings className="h-5 w-5" />
         </div>
         <h2 className="text-2xl font-black text-slate-900">Cấu hình nhanh</h2>
       </div>
@@ -57,6 +59,6 @@ export function DocsQuickConfig({ baseUrl }: QuickConfigProps) {
           </div>
         </div>
       </div>
-    </div>
+    </AppCard>
   );
 }

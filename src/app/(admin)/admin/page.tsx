@@ -19,7 +19,11 @@ import {
   Inbox,
   LayoutDashboard
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
+import { AppButton } from "@/components/ui/app-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
 import { formatVnd } from "@/lib/format";
 import Link from "next/link";
 
@@ -95,8 +99,8 @@ export default function AdminOverviewPage() {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-          <p className="text-sm font-black text-slate-500 animate-pulse uppercase tracking-widest">Đang tải thống kê...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#00d4a4] border-t-transparent" />
+          <p className={cn(ui.label, "animate-pulse")}>Đang tải thống kê...</p>
         </div>
       </div>
     );
@@ -179,39 +183,31 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="space-y-10">
-      {/* Header Overview */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-slate-900 text-white shadow-xl shadow-slate-200 ring-4 ring-slate-50">
-            <LayoutDashboard className="h-8 w-8" />
+      <PageHeader 
+        title="Tổng quan quản trị" 
+        description="Theo dõi tình hình vận hành, đơn hàng, credits và hỗ trợ khách hàng."
+        icon={<LayoutDashboard className="h-8 w-8" />}
+        actions={
+          <div className="flex items-center gap-1.5 rounded-full bg-[#e7fff7] px-4 py-2 text-[10px] font-black text-[#00d4a4] ring-1 ring-[#00d4a4]/20 shadow-sm">
+            <div className="h-2 w-2 rounded-full bg-[#00d4a4] animate-pulse shadow-[0_0_8px_#00d4a4]" />
+            LIVE SYSTEM
           </div>
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Tổng quan quản trị</h1>
-            <p className="text-slate-500 font-bold mt-1">Theo dõi tình hình vận hành, đơn hàng, credits và hỗ trợ khách hàng.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-600 ring-1 ring-emerald-500/10">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Live System
-          </span>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Stats Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => (
-          <div key={card.label} className="group relative overflow-hidden rounded-[32px] border border-slate-200 bg-white p-7 transition-all hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5">
-            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${card.bg} ${card.color} transition-transform group-hover:scale-110 duration-300`}>
-              <AppIcon icon={card.icon} className="h-7 w-7" />
+          <AppCard key={card.label} className="group relative overflow-hidden p-7 transition-all hover:border-[#00d4a4] hover:shadow-xl hover:shadow-[#00d4a4]/5">
+            <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 duration-300", card.bg, card.color)}>
+              <card.icon className="h-7 w-7" />
             </div>
 
             <div className="mt-6">
-              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{card.label}</p>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{card.value}</h3>
-              <p className="mt-1.5 text-xs font-bold text-slate-400">{card.desc}</p>
+              <p className={ui.label}>{card.label}</p>
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-[#0b0f0d]">{card.value}</h3>
+              <p className={cn(ui.pMuted, "mt-1.5 text-xs")}>{card.desc}</p>
             </div>
-          </div>
+          </AppCard>
         ))}
       </div>
 

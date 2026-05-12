@@ -12,7 +12,13 @@ export async function GET(request: NextRequest) {
     const configStatus = {
       database: !!process.env.DATABASE_URL,
       payos: !!(process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY),
-      resend: !!process.env.RESEND_API_KEY,
+      resend: !!(process.env.RESEND_API_KEY && (
+        process.env.RESET_PASSWORD_FROM_EMAIL || 
+        process.env.RESEND_FROM_EMAIL || 
+        process.env.EMAIL_FROM || 
+        process.env.MAIL_FROM || 
+        process.env.SMTP_FROM
+      )),
       googleOAuth: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
       encryptionSecret: !!process.env.API_KEY_ENCRYPTION_SECRET && process.env.API_KEY_ENCRYPTION_SECRET.length >= 16,
     };

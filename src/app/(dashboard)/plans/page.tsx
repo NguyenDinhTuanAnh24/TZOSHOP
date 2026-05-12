@@ -275,8 +275,8 @@ function PlansPageContent() {
       <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-8 shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shrink-0">
-              <AppIcon icon={ShoppingCart} className="h-6 w-6" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-950 text-white shadow-sm shrink-0">
+              <ShoppingCart className="h-7 w-7 text-white" />
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Cửa hàng credits</p>

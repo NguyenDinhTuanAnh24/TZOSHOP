@@ -25,7 +25,13 @@ import {
   RefreshCw,
   MoreVertical
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
+import { AppButton } from "@/components/ui/app-button";
+import { IconButton } from "@/components/ui/icon-button";
+import { AppCard } from "@/components/ui/app-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ui } from "@/lib/ui-tokens";
+import { cn } from "@/lib/utils";
 import { formatVnd } from "@/lib/format";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -151,67 +157,64 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-6">
-           <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-slate-900 text-white shadow-xl shadow-slate-200 ring-4 ring-slate-50">
-              <ShoppingCart className="h-8 w-8" />
-           </div>
-           <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Đơn hàng</h1>
-              <p className="text-slate-500 font-bold mt-1">Theo dõi đơn mua credits, thanh toán và trạng thái kích hoạt gói.</p>
-           </div>
-        </div>
-        <div className="flex items-center gap-3">
-           <div className="text-right mr-4 hidden md:block">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng doanh thu</p>
-              <p className="text-xl font-black text-emerald-600">
-                {formatVnd(orders.reduce((acc, o) => o.status === "PAID" ? acc + o.amountVnd : acc, 0))}
-              </p>
-           </div>
-           <button 
-              onClick={fetchOrders}
-              className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-400 hover:text-emerald-600 transition-all active:scale-95 shadow-sm"
-           >
-              <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
-           </button>
-        </div>
-      </div>
+      <PageHeader 
+        title="Đơn hàng" 
+        description="Theo dõi đơn mua credits, thanh toán và trạng thái kích hoạt gói."
+        icon={<ShoppingCart className="h-8 w-8" />}
+        actions={
+          <div className="flex items-center gap-6">
+             <div className="text-right mr-4 hidden md:block">
+                <p className={ui.label}>Tổng doanh thu</p>
+                <p className="text-xl font-black text-[#00d4a4]">
+                  {formatVnd(orders.reduce((acc, o) => o.status === "PAID" ? acc + o.amountVnd : acc, 0))}
+                </p>
+             </div>
+             <IconButton 
+                onClick={fetchOrders}
+                isLoading={isLoading}
+                variant="outline"
+                title="Làm mới"
+                aria-label="Làm mới"
+             >
+                <RefreshCw className={cn("h-5 w-5 shrink-0", isLoading && "animate-spin")} />
+             </IconButton>
+          </div>
+        }
+      />
 
-      {/* Filter & Search */}
-      <div className="flex flex-col gap-6 bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <AppCard className="p-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tìm kiếm mã đơn</label>
+            <label className={ui.label}>Tìm kiếm mã đơn</label>
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a9690]" />
               <input
                 type="text"
                 placeholder="Nhập mã đơn..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                className={cn(ui.input, "pl-10")}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Lọc theo Email</label>
+            <label className={ui.label}>Lọc theo Email</label>
             <input
               type="text"
               placeholder="Nhập email khách..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+              className={ui.input}
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Trạng thái</label>
+            <label className={ui.label}>Trạng thái</label>
             <select 
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 outline-none focus:border-emerald-500 transition-all appearance-none"
+              className={ui.input}
             >
               <option value="ALL">Tất cả trạng thái</option>
               <option value="PENDING">PENDING (Chờ)</option>
@@ -222,54 +225,53 @@ export default function AdminOrdersPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Khoảng ngày</label>
+            <label className={ui.label}>Khoảng ngày</label>
             <div className="flex items-center gap-2">
               <input 
                 type="date"
                 value={filterStartDate}
                 onChange={(e) => setFilterStartDate(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all"
+                className={ui.input}
               />
-              <span className="text-slate-300">-</span>
+              <span className="text-[#dfe5e1]">-</span>
               <input 
                 type="date"
                 value={filterEndDate}
                 onChange={(e) => setFilterEndDate(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 transition-all"
+                className={ui.input}
               />
             </div>
           </div>
         </div>
-      </div>
+      </AppCard>
 
-      {/* Orders Table */}
-      <div className="rounded-[40px] border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <AppCard className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Mã đơn</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Khách hàng</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Gói mua</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Số tiền</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Trạng thái</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Thời gian</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-right">Thao tác</th>
+              <tr className="bg-[#fbfbf8] border-b border-[#edf1ee]">
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Mã đơn</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Khách hàng</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Gói mua</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Số tiền</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Trạng thái</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Thời gian</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {isLoading ? (
                 <tr><td colSpan={7} className="py-24 text-center">
                    <div className="flex flex-col items-center gap-4">
-                    <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-                    <p className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">Đang tải đơn hàng...</p>
+                    <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#00d4a4] border-t-transparent" />
+                    <p className={cn(ui.label, "animate-pulse")}>Đang tải đơn hàng...</p>
                   </div>
                 </td></tr>
               ) : filteredOrders.length === 0 ? (
                 <tr><td colSpan={7} className="py-24 text-center">
-                   <div className="flex flex-col items-center gap-2 text-slate-400">
-                    <Inbox className="h-12 w-12 text-slate-200" />
-                    <p className="text-sm font-bold italic">Chưa có đơn hàng phù hợp.</p>
+                   <div className="flex flex-col items-center gap-2 text-[#8a9690]">
+                    <Inbox className="h-12 w-12 text-[#dfe5e1]" />
+                    <p className={cn(ui.pMuted, "italic")}>Chưa có đơn hàng phù hợp.</p>
                   </div>
                 </td></tr>
               ) : (
@@ -279,82 +281,88 @@ export default function AdminOrdersPage() {
                        <div className="flex items-center gap-4">
                           <Link 
                             href={`/admin/orders/${order.id}`}
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:bg-white hover:text-emerald-600 transition-all shadow-sm ring-1 ring-slate-200 active:scale-95"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fbfbf8] text-[#8a9690] hover:bg-white hover:text-[#00d4a4] transition-all shadow-sm ring-1 ring-[#edf1ee] active:scale-95"
                           >
                              <FileText className="h-5 w-5" />
                           </Link>
                           <Link 
                             href={`/admin/orders/${order.id}`}
-                            className="text-sm font-black text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer"
+                            className="text-sm font-black text-[#0b0f0d] hover:text-[#00d4a4] transition-colors cursor-pointer"
                           >
                             #{order.orderCode}
                           </Link>
                        </div>
                     </td>
                     <td className="px-8 py-6">
-                       <p className="text-sm font-black text-slate-900 leading-tight">{order.user.name || 'Khách hàng'}</p>
-                       <p className="text-[11px] font-bold text-slate-400 mt-0.5">{order.user.email}</p>
+                       <p className="text-sm font-black text-[#0b0f0d] leading-tight">{order.user.name || 'Khách hàng'}</p>
+                       <p className={cn(ui.pMuted, "text-[11px] mt-0.5")}>{order.user.email}</p>
                     </td>
                     <td className="px-8 py-6">
-                       <p className="text-sm font-black text-slate-900">{order.product.name}</p>
-                       <span className="inline-flex mt-1 rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-black text-slate-600 tracking-widest uppercase ring-1 ring-inset ring-slate-200">
-                          {order.product.apiFamily}
-                       </span>
+                       <p className="text-sm font-black text-[#0b0f0d]">{order.product.name}</p>
+                       <StatusBadge status={order.product.apiFamily} variant="neutral" className="mt-1" />
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <p className="text-sm font-black text-slate-900">{formatVnd(order.amountVnd)}</p>
+                       <p className="text-sm font-black text-[#0b0f0d]">{formatVnd(order.amountVnd)}</p>
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <div className="flex flex-col items-center gap-1.5">
-                          {getStatusBadge(order.status)}
+                       <div className="flex flex-col items-center gap-2">
+                          <StatusBadge 
+                            status={order.status} 
+                            variant={order.status === 'PAID' ? 'success' : order.status === 'PENDING' ? 'warning' : order.status === 'CANCELLED' ? 'danger' : 'neutral'} 
+                          />
                           {order.status === "PAID" && (
                             order.isCreditsGranted ? (
-                              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Đã cấp Credits ✅</span>
+                              <span className="text-[9px] font-black text-[#00d4a4] uppercase tracking-tighter">Đã cấp Credits ✅</span>
                             ) : (
-                              <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter">Chưa cấp Credits ⚠️</span>
+                              <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter">Chưa cấp Credits ⚠️</span>
                             )
                           )}
                        </div>
                     </td>
                     <td className="px-8 py-6">
-                       <div className="flex items-center gap-2 text-slate-900">
-                          <Clock className="h-4 w-4 text-slate-300" />
+                       <div className="flex items-center gap-2 text-[#0b0f0d]">
+                          <Clock className="h-4 w-4 text-[#dfe5e1]" />
                           <div className="flex flex-col">
                              <span className="text-[12px] font-bold">{format(new Date(order.createdAt), "dd/MM/yyyy")}</span>
-                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{format(new Date(order.createdAt), "HH:mm:ss")}</span>
+                             <span className={cn(ui.pMuted, "text-[10px]")}>{format(new Date(order.createdAt), "HH:mm:ss")}</span>
                           </div>
                        </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <div className="flex justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2.5 opacity-40 group-hover:opacity-100 transition-opacity">
                         {order.status === "PENDING" && (
                           <>
-                            <button 
+                            <AppButton 
+                              variant="secondary"
+                              size="sm"
                               onClick={() => handleUpdateStatus(order.id, "CANCELLED")}
-                              className="flex h-10 items-center gap-2 rounded-xl bg-white border border-rose-200 px-4 text-[10px] font-black text-rose-600 hover:bg-rose-50 transition-all shadow-sm"
+                              className="text-red-600 hover:bg-red-50 border-red-100"
                             >
-                              <XCircle className="h-4 w-4" /> Hủy đơn
-                            </button>
-                            <button 
+                              <XCircle className="h-4 w-4 mr-1.5" /> Hủy đơn
+                            </AppButton>
+                            <AppButton 
+                              variant="accent"
+                              size="sm"
                               onClick={() => handleVerifyPayment(order.id)}
-                              className="flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-[10px] font-black text-white hover:bg-black transition-all shadow-lg shadow-slate-200"
                             >
-                              <ExternalLink className="h-4 w-4" /> Check PayOS
-                            </button>
-                            <button 
+                              <ExternalLink className="h-4 w-4 mr-1.5" /> Check PayOS
+                            </AppButton>
+                            <AppButton 
+                              variant="primary"
+                              size="sm"
                               onClick={() => handleUpdateStatus(order.id, "PAID")}
-                              className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-[10px] font-black text-white hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
                             >
-                              <CheckCircle2 className="h-4 w-4" /> Duyệt
-                            </button>
+                              <CheckCircle2 className="h-4 w-4 mr-1.5" /> Duyệt
+                            </AppButton>
                           </>
                         )}
-                        <Link 
-                          href={`/admin/orders/${order.id}`}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all"
+                        <IconButton
+                          onClick={() => window.location.href = `/admin/orders/${order.id}`}
+                          variant="outline"
+                          title="Xem chi tiết"
                         >
                           <ChevronRight className="h-4 w-4" />
-                        </Link>
+                        </IconButton>
                       </div>
                     </td>
                   </tr>
@@ -363,7 +371,7 @@ export default function AdminOrdersPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </AppCard>
 
       {toast && (
         <ToastMessage

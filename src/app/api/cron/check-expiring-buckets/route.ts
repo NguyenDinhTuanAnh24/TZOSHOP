@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
       if (!bucket.user?.email) continue;
 
       try {
+        if (!bucket.expiresAt) continue;
+        
         const daysRemaining = Math.ceil(
           (bucket.expiresAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
         );
