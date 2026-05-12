@@ -11,17 +11,17 @@ async function main() {
 }
 
 async function seedModels() {
-  let codexProvider = await (prisma as any).aiProvider.findFirst({ where: { apiFamily: 'CODEXAI' } });
-  if (!codexProvider) codexProvider = await (prisma as any).aiProvider.create({ data: { name: 'CodeXAI', apiFamily: 'CODEXAI', baseUrl: 'https://api.openai.com/v1', encryptedApiKey: 'dummy' } });
+  let codexProvider = await prisma.aiProvider.findFirst({ where: { apiFamily: 'CODEXAI' } });
+  if (!codexProvider) codexProvider = await prisma.aiProvider.create({ data: { name: 'CodeXAI', apiFamily: 'CODEXAI', baseUrl: 'https://api.openai.com/v1', encryptedApiKey: 'dummy' } });
 
-  let claudeProvider = await (prisma as any).aiProvider.findFirst({ where: { apiFamily: 'CLAUDE' } });
-  if (!claudeProvider) claudeProvider = await (prisma as any).aiProvider.create({ data: { name: 'Claude', apiFamily: 'CLAUDE', baseUrl: 'https://api.anthropic.com', encryptedApiKey: 'dummy' } });
+  let claudeProvider = await prisma.aiProvider.findFirst({ where: { apiFamily: 'CLAUDE' } });
+  if (!claudeProvider) claudeProvider = await prisma.aiProvider.create({ data: { name: 'Claude', apiFamily: 'CLAUDE', baseUrl: 'https://api.anthropic.com', encryptedApiKey: 'dummy' } });
 
-  let geminiProvider = await (prisma as any).aiProvider.findFirst({ where: { apiFamily: 'GEMINI' } });
-  if (!geminiProvider) geminiProvider = await (prisma as any).aiProvider.create({ data: { name: 'Gemini', apiFamily: 'GEMINI', baseUrl: 'https://generativelanguage.googleapis.com', encryptedApiKey: 'dummy' } });
+  let geminiProvider = await prisma.aiProvider.findFirst({ where: { apiFamily: 'GEMINI' } });
+  if (!geminiProvider) geminiProvider = await prisma.aiProvider.create({ data: { name: 'Gemini', apiFamily: 'GEMINI', baseUrl: 'https://generativelanguage.googleapis.com', encryptedApiKey: 'dummy' } });
 
-  let deepseekProvider = await (prisma as any).aiProvider.findFirst({ where: { apiFamily: 'DEEPSEEK' } });
-  if (!deepseekProvider) deepseekProvider = await (prisma as any).aiProvider.create({ data: { name: 'DeepSeek', apiFamily: 'DEEPSEEK', baseUrl: 'https://api.deepseek.com', encryptedApiKey: 'dummy' } });
+  let deepseekProvider = await prisma.aiProvider.findFirst({ where: { apiFamily: 'DEEPSEEK' } });
+  if (!deepseekProvider) deepseekProvider = await prisma.aiProvider.create({ data: { name: 'DeepSeek', apiFamily: 'DEEPSEEK', baseUrl: 'https://api.deepseek.com', encryptedApiKey: 'dummy' } });
 
   const providers = {
     CODEXAI: codexProvider.id,
@@ -30,12 +30,12 @@ async function seedModels() {
     DEEPSEEK: deepseekProvider.id,
   };
 
-  const models = [
+  const models: Array<{ publicName: string; upstreamModel: string; apiFamily: import("@prisma/client").ApiFamily; providerId: string; inputCreditRate: number; outputCreditRate: number; }> = [
     // CodexAI
     {
       publicName: "codexai/gpt-5.3-codex",
       upstreamModel: "gpt-5.3-codex",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -43,7 +43,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.1-codex",
       upstreamModel: "gpt-5.1-codex",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -51,7 +51,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5-codex",
       upstreamModel: "gpt-5-codex",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -59,7 +59,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.4-mini",
       upstreamModel: "gpt-5.4-mini",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -67,7 +67,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.1",
       upstreamModel: "gpt-5.1",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -75,7 +75,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5-mini",
       upstreamModel: "gpt-5-mini",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -83,7 +83,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.5",
       upstreamModel: "gpt-5.5",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 4,
       outputCreditRate: 4,
@@ -91,7 +91,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.4",
       upstreamModel: "gpt-5.4",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 4,
       outputCreditRate: 4,
@@ -99,7 +99,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.2",
       upstreamModel: "gpt-5.2",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 4,
       outputCreditRate: 4,
@@ -107,7 +107,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5",
       upstreamModel: "gpt-5",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 4,
       outputCreditRate: 4,
@@ -115,7 +115,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.4-pro",
       upstreamModel: "gpt-5.4-pro",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 8,
       outputCreditRate: 8,
@@ -123,7 +123,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.2-pro",
       upstreamModel: "gpt-5.2-pro",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 8,
       outputCreditRate: 8,
@@ -131,7 +131,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5-pro",
       upstreamModel: "gpt-5-pro",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 8,
       outputCreditRate: 8,
@@ -139,7 +139,7 @@ async function seedModels() {
     {
       publicName: "codexai/gpt-5.5-pro",
       upstreamModel: "gpt-5.5-pro",
-      apiFamily: "CODEXAI" as any,
+      apiFamily: "CODEXAI",
       providerId: providers.CODEXAI,
       inputCreditRate: 50,
       outputCreditRate: 50,
@@ -149,7 +149,7 @@ async function seedModels() {
     {
       publicName: "claude/claude-haiku-4.5",
       upstreamModel: "claude-haiku-4.5",
-      apiFamily: "CLAUDE" as any,
+      apiFamily: "CLAUDE",
       providerId: providers.CLAUDE,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -157,7 +157,7 @@ async function seedModels() {
     {
       publicName: "claude/claude-sonnet-4.5",
       upstreamModel: "claude-sonnet-4.5",
-      apiFamily: "CLAUDE" as any,
+      apiFamily: "CLAUDE",
       providerId: providers.CLAUDE,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -165,7 +165,7 @@ async function seedModels() {
     {
       publicName: "claude/claude-sonnet-4.6",
       upstreamModel: "claude-sonnet-4.6",
-      apiFamily: "CLAUDE" as any,
+      apiFamily: "CLAUDE",
       providerId: providers.CLAUDE,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -173,7 +173,7 @@ async function seedModels() {
     {
       publicName: "claude/claude-opus-4.5",
       upstreamModel: "claude-opus-4.5",
-      apiFamily: "CLAUDE" as any,
+      apiFamily: "CLAUDE",
       providerId: providers.CLAUDE,
       inputCreditRate: 2,
       outputCreditRate: 2,
@@ -181,7 +181,7 @@ async function seedModels() {
     {
       publicName: "claude/claude-opus-4.6",
       upstreamModel: "claude-opus-4.6",
-      apiFamily: "CLAUDE" as any,
+      apiFamily: "CLAUDE",
       providerId: providers.CLAUDE,
       inputCreditRate: 2,
       outputCreditRate: 2,
@@ -189,7 +189,7 @@ async function seedModels() {
     {
       publicName: "claude/claude-opus-4.7",
       upstreamModel: "claude-opus-4.7",
-      apiFamily: "CLAUDE" as any,
+      apiFamily: "CLAUDE",
       providerId: providers.CLAUDE,
       inputCreditRate: 2,
       outputCreditRate: 2,
@@ -199,7 +199,7 @@ async function seedModels() {
     {
       publicName: "gemini/gemini-3.1-flash-lite-preview",
       upstreamModel: "gemini-3.1-flash-lite-preview",
-      apiFamily: "GEMINI" as any,
+      apiFamily: "GEMINI",
       providerId: providers.GEMINI,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -207,7 +207,7 @@ async function seedModels() {
     {
       publicName: "gemini/gemini-3-flash-preview",
       upstreamModel: "gemini-3-flash-preview",
-      apiFamily: "GEMINI" as any,
+      apiFamily: "GEMINI",
       providerId: providers.GEMINI,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -215,7 +215,7 @@ async function seedModels() {
     {
       publicName: "gemini/gemini-2.5-pro",
       upstreamModel: "gemini-2.5-pro",
-      apiFamily: "GEMINI" as any,
+      apiFamily: "GEMINI",
       providerId: providers.GEMINI,
       inputCreditRate: 5,
       outputCreditRate: 5,
@@ -223,7 +223,7 @@ async function seedModels() {
     {
       publicName: "gemini/gemini-3.1-pro-preview",
       upstreamModel: "gemini-3.1-pro-preview",
-      apiFamily: "GEMINI" as any,
+      apiFamily: "GEMINI",
       providerId: providers.GEMINI,
       inputCreditRate: 6,
       outputCreditRate: 6,
@@ -233,7 +233,7 @@ async function seedModels() {
     {
       publicName: "deepseek/deepseek-v4-flash",
       upstreamModel: "deepseek-v4-flash",
-      apiFamily: "DEEPSEEK" as any,
+      apiFamily: "DEEPSEEK",
       providerId: providers.DEEPSEEK,
       inputCreditRate: 1,
       outputCreditRate: 1,
@@ -241,7 +241,7 @@ async function seedModels() {
     {
       publicName: "deepseek/deepseek-v4-pro",
       upstreamModel: "deepseek-v4-pro",
-      apiFamily: "DEEPSEEK" as any,
+      apiFamily: "DEEPSEEK",
       providerId: providers.DEEPSEEK,
       inputCreditRate: 3,
       outputCreditRate: 3,
@@ -249,10 +249,10 @@ async function seedModels() {
   ];
 
   for (const model of models) {
-    await (prisma as any).aiModel.upsert({
+    await prisma.aiModel.upsert({
       where: { publicName: model.publicName },
-      update: model as any,
-      create: model as any,
+      update: model,
+      create: model,
     });
   }
 
@@ -374,7 +374,7 @@ function getModelsForPlanTier(family: string, tier: string): string[] {
 }
 
 async function seedProducts() {
-  const products = [
+  const products: Array<{ name: string; slug: string; apiFamily: import("@prisma/client").ApiFamily; credits: bigint; durationDays: number | null; priceVnd: number; isPopular?: boolean; tier?: string; }> = [
     // CodexAI thường
     {
       name: "CodexAI Trial",
@@ -928,7 +928,7 @@ async function seedProducts() {
   ];
 
   for (const product of products) {
-    const tier = (product as any).tier ?? getTierFromSlug(product.slug);
+    const tier = (product).tier ?? getTierFromSlug(product.slug);
     const apiKeyLimit = apiKeyLimitByTier[tier] ?? 1;
 
     const allowedModels = getModelsForPlanTier(product.apiFamily, tier);
@@ -939,11 +939,11 @@ async function seedProducts() {
       },
       update: {
         name: product.name,
-        apiFamily: product.apiFamily as any,
+        apiFamily: product.apiFamily,
         tier,
         priceVnd: product.priceVnd,
         credits: product.credits,
-        durationDays: product.durationDays as any,
+        durationDays: product.durationDays,
         apiKeyLimit,
         allowedModels,
         allowedReasoning: [],
@@ -953,11 +953,11 @@ async function seedProducts() {
       create: {
         name: product.name,
         slug: product.slug,
-        apiFamily: product.apiFamily as any,
+        apiFamily: product.apiFamily,
         tier,
         priceVnd: product.priceVnd,
         credits: product.credits,
-        durationDays: product.durationDays as any,
+        durationDays: product.durationDays,
         apiKeyLimit,
         allowedModels,
         allowedReasoning: [],

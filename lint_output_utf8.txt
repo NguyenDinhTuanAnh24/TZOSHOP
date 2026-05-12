@@ -1,0 +1,193 @@
+﻿
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\audit-logs\page.tsx
+  68:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\models\page.tsx
+  222:9  warning  'getFamilyBadge' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\orders\[id]\page.tsx
+   74:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  102:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  122:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  142:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\orders\page.tsx
+  105:14  warning  'error' is defined but never used                    @typescript-eslint/no-unused-vars
+  123:14  warning  'error' is defined but never used                    @typescript-eslint/no-unused-vars
+  128:9   warning  'getStatusBadge' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\page.tsx
+   7:3   warning  'Clock' is defined but never used         @typescript-eslint/no-unused-vars
+   8:3   warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+   9:3   warning  'Wallet' is defined but never used        @typescript-eslint/no-unused-vars
+  16:3   warning  'AlertCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  17:3   warning  'Activity' is defined but never used      @typescript-eslint/no-unused-vars
+  22:10  warning  'AppButton' is defined but never used     @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\payment-settings\payos\page.tsx
+  49:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\providers\page.tsx
+  130:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\revenue\page.tsx
+  110:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\support\page.tsx
+    7:3   warning  'Filter' is defined but never used                      @typescript-eslint/no-unused-vars
+    8:3   warning  'CheckCircle2' is defined but never used                @typescript-eslint/no-unused-vars
+   19:10  warning  'AppButton' is defined but never used                   @typescript-eslint/no-unused-vars
+   59:26  warning  'setFilterCategory' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  123:14  warning  'error' is defined but never used                       @typescript-eslint/no-unused-vars
+  160:9   warning  'categories' is assigned a value but never used         @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\usage\page.tsx
+   7:3  warning  'Filter' is defined but never used        @typescript-eslint/no-unused-vars
+   9:3  warning  'User' is defined but never used          @typescript-eslint/no-unused-vars
+  13:3  warning  'XCircle' is defined but never used       @typescript-eslint/no-unused-vars
+  14:3  warning  'Clock' is defined but never used         @typescript-eslint/no-unused-vars
+  15:3  warning  'ChevronRight' is defined but never used  @typescript-eslint/no-unused-vars
+  16:3  warning  'ShieldCheck' is defined but never used   @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\users\[id]\page.tsx
+   6:3   warning  'User' is defined but never used           @typescript-eslint/no-unused-vars
+   8:3   warning  'Calendar' is defined but never used       @typescript-eslint/no-unused-vars
+   9:3   warning  'Shield' is defined but never used         @typescript-eslint/no-unused-vars
+  15:3   warning  'ExternalLink' is defined but never used   @typescript-eslint/no-unused-vars
+  18:3   warning  'ArrowRight' is defined but never used     @typescript-eslint/no-unused-vars
+  20:3   warning  'BarChart3' is defined but never used      @typescript-eslint/no-unused-vars
+  21:3   warning  'MessageSquare' is defined but never used  @typescript-eslint/no-unused-vars
+  24:10  warning  'AppIcon' is defined but never used        @typescript-eslint/no-unused-vars
+  87:14  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(admin)\admin\users\page.tsx
+    8:3    warning  'Filter' is defined but never used                    @typescript-eslint/no-unused-vars
+   11:3    warning  'UserCheck' is defined but never used                 @typescript-eslint/no-unused-vars
+   12:3    warning  'Calendar' is defined but never used                  @typescript-eslint/no-unused-vars
+   13:3    warning  'ChevronRight' is defined but never used              @typescript-eslint/no-unused-vars
+   14:3    warning  'MoreHorizontal' is defined but never used            @typescript-eslint/no-unused-vars
+   15:3    warning  'ExternalLink' is defined but never used              @typescript-eslint/no-unused-vars
+   16:3    warning  'ShieldCheck' is defined but never used               @typescript-eslint/no-unused-vars
+   18:3    warning  'LayoutDashboard' is defined but never used           @typescript-eslint/no-unused-vars
+   19:3    warning  'ShieldAlert' is defined but never used               @typescript-eslint/no-unused-vars
+   20:3    warning  'ArrowUpDown' is defined but never used               @typescript-eslint/no-unused-vars
+   23:3    warning  'LogOut' is defined but never used                    @typescript-eslint/no-unused-vars
+   30:3    warning  'XCircle' is defined but never used                   @typescript-eslint/no-unused-vars
+   32:3    warning  'Info' is defined but never used                      @typescript-eslint/no-unused-vars
+   33:3    warning  'CheckCircle2' is defined but never used              @typescript-eslint/no-unused-vars
+   37:3    warning  'ChevronDown' is defined but never used               @typescript-eslint/no-unused-vars
+   39:3    warning  'X' is defined but never used                         @typescript-eslint/no-unused-vars
+  110:10   warning  'activeMenuId' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  110:24   warning  'setActiveMenuId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  156:13   warning  'res' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  162:14   warning  'error' is defined but never used                     @typescript-eslint/no-unused-vars
+  197:18   warning  'error' is defined but never used                     @typescript-eslint/no-unused-vars
+  232:18   warning  'error' is defined but never used                     @typescript-eslint/no-unused-vars
+  254:14   warning  'error' is defined but never used                     @typescript-eslint/no-unused-vars
+  273:14   warning  'error' is defined but never used                     @typescript-eslint/no-unused-vars
+  615:154  error    Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  633:43   error    Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  656:39   error    Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+
+D:\TzoShop_New\TZOSHOP\src\app\(dashboard)\api-docs\page.tsx
+   8:3   warning  'Database' is defined but never used      @typescript-eslint/no-unused-vars
+  10:3   warning  'LayoutGrid' is defined but never used    @typescript-eslint/no-unused-vars
+  15:3   warning  'ChevronRight' is defined but never used  @typescript-eslint/no-unused-vars
+  16:3   warning  'Sparkles' is defined but never used      @typescript-eslint/no-unused-vars
+  18:3   warning  'FileText' is defined but never used      @typescript-eslint/no-unused-vars
+  23:10  warning  'ui' is defined but never used            @typescript-eslint/no-unused-vars
+  24:10  warning  'cn' is defined but never used            @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\(dashboard)\api-keys\page.tsx
+  237:12  error  'ShieldCheck' is not defined  react/jsx-no-undef
+
+D:\TzoShop_New\TZOSHOP\src\app\(dashboard)\billing\page.tsx
+  14:3  warning  'XCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\alerts\route.ts
+  10:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\api-keys\route.ts
+  9:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\orders\route.ts
+  98:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\products\route.ts
+  8:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\providers\[id]\route.ts
+  60:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\providers\route.ts
+  29:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\revenue\route.ts
+  4:22  warning  'endOfDay' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\stats\route.ts
+  9:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\support\route.ts
+  61:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\system-status\route.ts
+  7:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\system\route.ts
+   7:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+  53:14  warning  'e' is defined but never used        @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\usage\route.ts
+  10:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\admin\users\route.ts
+  7:27  warning  'request' is defined but never used        @typescript-eslint/no-unused-vars
+  9:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\api-keys\route.ts
+  3:8  warning  'bcrypt' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\api\v1\chat\completions\route.ts
+  303:26  warning  'e' is defined but never used    @typescript-eslint/no-unused-vars
+  472:16  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\layout.tsx
+  4:10  warning  'SkeletonTheme' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\app\register\page.tsx
+  68:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\components\admin\admin-alerts-block.tsx
+   3:10  warning  'useEffect' is defined but never used      @typescript-eslint/no-unused-vars
+   3:21  warning  'useState' is defined but never used       @typescript-eslint/no-unused-vars
+   5:3   warning  'AlertCircle' is defined but never used    @typescript-eslint/no-unused-vars
+   6:3   warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+   7:3   warning  'ChevronRight' is defined but never used   @typescript-eslint/no-unused-vars
+   8:3   warning  'CheckCircle2' is defined but never used   @typescript-eslint/no-unused-vars
+   9:3   warning  'ArrowRight' is defined but never used     @typescript-eslint/no-unused-vars
+  10:3   warning  'Activity' is defined but never used       @typescript-eslint/no-unused-vars
+  11:3   warning  'Clock' is defined but never used          @typescript-eslint/no-unused-vars
+  12:3   warning  'RefreshCw' is defined but never used      @typescript-eslint/no-unused-vars
+  14:10  warning  'useRouter' is defined but never used      @typescript-eslint/no-unused-vars
+  15:8   warning  'Link' is defined but never used           @typescript-eslint/no-unused-vars
+  17:6   warning  'Alert' is defined but never used          @typescript-eslint/no-unused-vars
+  27:6   warning  'Summary' is defined but never used        @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\components\admin\admin-sidebar.tsx
+  23:8   warning  'Image' is defined but never used             @typescript-eslint/no-unused-vars
+  66:17  warning  'session' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\components\admin\admin-topbar.tsx
+  5:18  warning  'ShieldCheck' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\components\dashboard\dashboard-mobile-nav.tsx
+  18:3  warning  'ShieldCheck' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\TzoShop_New\TZOSHOP\src\components\dashboard\dashboard-sidebar.tsx
+   6:10  warning  'buttonStyles' is defined but never used  @typescript-eslint/no-unused-vars
+  16:3   warning  'ShieldCheck' is defined but never used   @typescript-eslint/no-unused-vars
+
+Γ£û 115 problems (4 errors, 111 warnings)
+
+[ELIFECYCLE] Command failed with exit code 1.

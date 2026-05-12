@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const productId = body?.productId;
+    const couponCode = body?.couponCode;
 
     if (!productId || typeof productId !== "string") {
       return NextResponse.json(
@@ -137,12 +138,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const originalAmount = product.priceVnd;
+    let discountAmount = 0;
+    let finalAmount = product.priceVnd;
+    let couponId: string | undefined = undefined;
+    let validCouponCode: string | undefined = undefined;
+
+    if (couponCode) {
+      const { validateCouponForUser } = await import("@/lib/server/coupons");
+      const validation = await validateCouponForUser({
+        code: couponCode,
+        userId: user.id,
+        originalAmount: product.priceVnd,
+      });
+
+      if (!validation.isValid) {
+        return NextResponse.json(
+          {
+            error: {
+              message: validation.message,
+            },
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      discountAmount = validation.discountAmount;
+      finalAmount = validation.finalAmount;
+      couponId = validation.coupon?.id;
+      validCouponCode = validation.coupon?.code;
+    }
+
+    const isFreeOrder = finalAmount === 0;
+
     const order = await prisma.order.create({
       data: {
         orderCode: createOrderCode(),
         userId: user.id,
         productId: product.id,
-        amountVnd: product.priceVnd,
+        originalAmount,
+        discountAmount,
+        amountVnd: finalAmount,
+        couponId,
+        couponCode: validCouponCode,
         status: "PENDING",
       },
       include: {
@@ -162,6 +202,15 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    let creditBucketId: string | null = null;
+
+    // Nếu là đơn hàng miễn phí, hoàn tất kích hoạt ngay
+    if (isFreeOrder) {
+      const { completeOrderPayment } = await import("@/lib/server/orders/complete-order-payment");
+      const activation = await completeOrderPayment(order.id);
+      creditBucketId = activation.creditBucketId;
+    }
 
     // Tạo thông báo cho admin & user
     const { notifyAdmins, createNotificationOnce } = await import("@/lib/server/notifications");
@@ -194,6 +243,8 @@ export async function POST(request: NextRequest) {
           amountVnd: order.amountVnd,
           paidAt: order.paidAt,
           createdAt: order.createdAt,
+          freeOrder: isFreeOrder,
+          creditBucketId: creditBucketId,
           product: {
             ...order.product,
             credits: order.product.credits.toString(),

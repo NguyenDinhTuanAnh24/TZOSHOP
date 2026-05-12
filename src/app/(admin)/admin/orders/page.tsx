@@ -1,29 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { 
   ShoppingCart, 
   Search, 
-  Filter, 
   CheckCircle2, 
   XCircle, 
   Clock, 
-  MoreHorizontal,
   FileText,
-  CreditCard,
-  User,
   ExternalLink,
   ChevronRight,
-  TrendingUp,
   Inbox,
-  LayoutDashboard,
-  ArrowRight,
-  AlertCircle,
-  Calendar,
-  Zap,
-  RefreshCw,
-  MoreVertical
+  RefreshCw
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -32,9 +21,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ui } from "@/lib/ui-tokens";
 import { cn } from "@/lib/utils";
-import { formatVnd } from "@/lib/format";
+import { formatVnd, translateStatus } from "@/lib/format";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 
@@ -55,6 +43,8 @@ type OrderItem = {
     name: string;
     apiFamily: string;
   };
+  couponCode?: string;
+  discountAmount?: number;
 };
 
 export default function AdminOrdersPage() {
@@ -70,7 +60,7 @@ export default function AdminOrdersPage() {
   
   const { toast, showToast, clearToast } = useToast();
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -87,11 +77,14 @@ export default function AdminOrdersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filterStatus, filterEmail, filterStartDate, filterEndDate]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [filterStatus, filterEmail, filterStartDate, filterEndDate]);
+    const timer = setTimeout(() => {
+      fetchOrders();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchOrders]);
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     const confirmMsg = newStatus === "CANCELLED" 
@@ -111,7 +104,7 @@ export default function AdminOrdersPage() {
         showToast("Đã cập nhật trạng thái đơn hàng.", "success");
         fetchOrders();
       }
-    } catch (error) {
+    } catch {
       showToast("Không thể cập nhật trạng thái.", "error");
     }
   };
@@ -129,25 +122,12 @@ export default function AdminOrdersPage() {
       } else {
         showToast(result.message, "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi khi gọi API kiểm tra.", "error");
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "PAID": 
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-600 ring-1 ring-emerald-500/10">PAID</span>;
-      case "PENDING": 
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-600 ring-1 ring-amber-500/10">PENDING</span>;
-      case "CANCELLED": 
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-rose-600 ring-1 ring-rose-500/10">CANCELLED</span>;
-      case "EXPIRED": 
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 ring-1 ring-slate-200">EXPIRED</span>;
-      default: 
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-400 ring-1 ring-slate-200">{status}</span>;
-    }
-  };
+
 
   const filteredOrders = orders.filter(o => {
     if (!search) return true;
@@ -217,10 +197,10 @@ export default function AdminOrdersPage() {
               className={ui.input}
             >
               <option value="ALL">Tất cả trạng thái</option>
-              <option value="PENDING">PENDING (Chờ)</option>
-              <option value="PAID">PAID (Đã thanh toán)</option>
-              <option value="CANCELLED">CANCELLED (Đã hủy)</option>
-              <option value="EXPIRED">EXPIRED (Hết hạn)</option>
+              <option value="PENDING">Chờ thanh toán</option>
+              <option value="PAID">Đã thanh toán</option>
+              <option value="CANCELLED">Đã hủy</option>
+              <option value="EXPIRED">Hết hạn</option>
             </select>
           </div>
 
@@ -250,13 +230,13 @@ export default function AdminOrdersPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#fbfbf8] border-b border-[#edf1ee]">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Mã đơn</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Khách hàng</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Gói mua</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Số tiền</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Trạng thái</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Thời gian</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-right">Thao tác</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Mã đơn</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Khách hàng</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Gói mua</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400 text-center">Số tiền</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400 text-center">Trạng thái</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Thời gian</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -287,28 +267,35 @@ export default function AdminOrdersPage() {
                           </Link>
                           <Link 
                             href={`/admin/orders/${order.id}`}
-                            className="text-sm font-black text-[#0b0f0d] hover:text-[#00d4a4] transition-colors cursor-pointer"
+                            className="text-sm font-black text-slate-950 hover:text-[#00d4a4] transition-colors cursor-pointer"
                           >
                             #{order.orderCode}
                           </Link>
                        </div>
                     </td>
                     <td className="px-8 py-6">
-                       <p className="text-sm font-black text-[#0b0f0d] leading-tight">{order.user.name || 'Khách hàng'}</p>
-                       <p className={cn(ui.pMuted, "text-[11px] mt-0.5")}>{order.user.email}</p>
+                       <p className="text-sm font-bold text-slate-900 leading-tight">{order.user.name || 'Khách hàng'}</p>
+                       <p className="text-xs font-semibold text-slate-500 mt-0.5">{order.user.email}</p>
                     </td>
                     <td className="px-8 py-6">
-                       <p className="text-sm font-black text-[#0b0f0d]">{order.product.name}</p>
+                       <p className="text-sm font-bold text-slate-900">{order.product.name}</p>
                        <StatusBadge status={order.product.apiFamily} variant="neutral" className="mt-1" />
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <p className="text-sm font-black text-[#0b0f0d]">{formatVnd(order.amountVnd)}</p>
+                       <p className="text-sm font-black text-slate-950">{formatVnd(order.amountVnd)}</p>
+                       {order.couponCode && (
+                         <div className="mt-1 flex flex-col items-center">
+                            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-widest">{order.couponCode}</span>
+                            <span className="text-[9px] font-bold text-slate-400">-{formatVnd(order.discountAmount || 0)}</span>
+                         </div>
+                       )}
                     </td>
                     <td className="px-8 py-6 text-center">
                        <div className="flex flex-col items-center gap-2">
                           <StatusBadge 
-                            status={order.status} 
+                            status={translateStatus(order.status)} 
                             variant={order.status === 'PAID' ? 'success' : order.status === 'PENDING' ? 'warning' : order.status === 'CANCELLED' ? 'danger' : 'neutral'} 
+                            className="text-[11px] font-black px-3 py-1.5"
                           />
                           {order.status === "PAID" && (
                             order.isCreditsGranted ? (
@@ -336,7 +323,7 @@ export default function AdminOrdersPage() {
                               variant="secondary"
                               size="sm"
                               onClick={() => handleUpdateStatus(order.id, "CANCELLED")}
-                              className="text-red-600 hover:bg-red-50 border-red-100"
+                              className="h-9 text-red-600 hover:bg-red-50 border-red-100"
                             >
                               <XCircle className="h-4 w-4 mr-1.5" /> Hủy đơn
                             </AppButton>
@@ -344,6 +331,7 @@ export default function AdminOrdersPage() {
                               variant="accent"
                               size="sm"
                               onClick={() => handleVerifyPayment(order.id)}
+                              className="h-9"
                             >
                               <ExternalLink className="h-4 w-4 mr-1.5" /> Check PayOS
                             </AppButton>
@@ -351,6 +339,7 @@ export default function AdminOrdersPage() {
                               variant="primary"
                               size="sm"
                               onClick={() => handleUpdateStatus(order.id, "PAID")}
+                              className="h-9"
                             >
                               <CheckCircle2 className="h-4 w-4 mr-1.5" /> Duyệt
                             </AppButton>
@@ -360,6 +349,7 @@ export default function AdminOrdersPage() {
                           onClick={() => window.location.href = `/admin/orders/${order.id}`}
                           variant="outline"
                           title="Xem chi tiết"
+                          className="h-9 w-9"
                         >
                           <ChevronRight className="h-4 w-4" />
                         </IconButton>

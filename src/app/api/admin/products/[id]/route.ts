@@ -1,3 +1,4 @@
+import { Prisma, ApiFamily } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -18,11 +19,11 @@ export async function PATCH(
 
     const body = await request.json();
 
-    const updateData: any = {};
+    const updateData: Prisma.ProductUpdateInput = {};
     
     if (body.name !== undefined) updateData.name = body.name;
     if (body.slug !== undefined) updateData.slug = body.slug;
-    if (body.apiFamily !== undefined) updateData.apiFamily = body.apiFamily;
+    if (body.apiFamily !== undefined) updateData.apiFamily = body.apiFamily as ApiFamily;
     if (body.credits !== undefined) updateData.credits = BigInt(body.credits);
     if (body.durationDays !== undefined) updateData.durationDays = Number(body.durationDays);
     if (body.priceVnd !== undefined) updateData.priceVnd = Number(body.priceVnd);

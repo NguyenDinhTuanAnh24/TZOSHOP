@@ -1,25 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   Bot,
   Search,
   Plus,
-  Edit,
-  Power,
-  PowerOff,
-  Boxes,
   Server,
-  Zap,
-  MoreHorizontal,
-  ChevronRight,
-  ShieldCheck,
-  Filter,
-  CheckCircle2,
-  XCircle,
-  Database,
-  Cpu,
-  Layers,
   ArrowUpRight,
   ArrowDownLeft,
   Pencil
@@ -46,6 +32,7 @@ type AiModel = {
   provider: { name: string };
   inputCreditRate: number;
   outputCreditRate: number;
+  upstreamEndpointType: string;
   isActive: boolean;
 };
 
@@ -78,39 +65,43 @@ export default function AdminModelsPage() {
     providerId: "",
     inputCreditRate: "1",
     outputCreditRate: "1",
+    upstreamEndpointType: "CHAT_COMPLETIONS",
     isActive: true,
   });
 
   const { toast, showToast, clearToast } = useToast();
   const { confirmState, isConfirming, askConfirm, closeConfirm, handleConfirm } = useConfirm();
 
-  const fetchModels = async () => {
+  const fetchModels = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/models");
       const result = await res.json();
       if (result.success) setModels(result.data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchProviders = async () => {
+  const fetchProviders = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/providers");
       const result = await res.json();
       if (result.success) setProvidersList(result.data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchModels();
-    fetchProviders();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchModels();
+      fetchProviders();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchModels, fetchProviders]);
 
   const handleOpenModal = (model?: AiModel) => {
     if (model) {
@@ -122,6 +113,7 @@ export default function AdminModelsPage() {
         providerId: model.providerId,
         inputCreditRate: model.inputCreditRate.toString(),
         outputCreditRate: model.outputCreditRate.toString(),
+        upstreamEndpointType: model.upstreamEndpointType,
         isActive: model.isActive,
       });
     } else {
@@ -133,6 +125,7 @@ export default function AdminModelsPage() {
         providerId: providersList.length > 0 ? providersList[0].id : "",
         inputCreditRate: "1",
         outputCreditRate: "1",
+        upstreamEndpointType: "CHAT_COMPLETIONS",
         isActive: true,
       });
     }
@@ -172,8 +165,9 @@ export default function AdminModelsPage() {
       } else {
         showToast(result.error?.message || result.message || "Lỗi khi lưu.", "error");
       }
-    } catch (error) {
-      showToast("Lỗi hệ thống.", "error");
+    } catch (err) {
+      showToast("Lỗi khi lưu model", "error");
+      console.error(err);
     }
   };
 
@@ -225,15 +219,7 @@ export default function AdminModelsPage() {
     return { id, name: model?.provider?.name || "Unknown" };
   });
 
-  const getFamilyBadge = (family: string) => {
-    switch (family) {
-      case "CODEXAI": return "bg-emerald-50 text-emerald-600 ring-emerald-500/10";
-      case "CLAUDE": return "bg-amber-50 text-amber-600 ring-amber-500/10";
-      case "GEMINI": return "bg-sky-50 text-sky-600 ring-sky-500/10";
-      case "DEEPSEEK": return "bg-blue-50 text-blue-600 ring-blue-500/10";
-      default: return "bg-slate-50 text-slate-600 ring-slate-500/10";
-    }
-  };
+
 
   return (
     <div className="space-y-8">
@@ -525,6 +511,21 @@ export default function AdminModelsPage() {
                     className={ui.input}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className={ui.label}>Kiểu Upstream Endpoint</label>
+                <select
+                  value={formData.upstreamEndpointType}
+                  onChange={e => setFormData({...formData, upstreamEndpointType: e.target.value})}
+                  className={ui.input}
+                >
+                  <option value="CHAT_COMPLETIONS">Chat Completions (/v1/chat/completions)</option>
+                  <option value="RESPONSES">Responses API (/v1/responses)</option>
+                </select>
+                <p className="text-[10px] text-slate-500 font-medium px-1">
+                  Chọn &quot;Responses API&quot; cho các model đặc thù như GPT-5.5 Pro yêu cầu cấu trúc input/output khác với OpenAI chuẩn.
+                </p>
               </div>
 
               <div className="pt-2">

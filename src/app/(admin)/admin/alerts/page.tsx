@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   AlertCircle, 
   AlertTriangle, 
   RefreshCw, 
   ChevronRight, 
-  ExternalLink,
-  Search,
   Filter,
   CheckCircle2,
   Clock,
@@ -22,7 +20,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/lib/ui-tokens";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 type Alert = {
   id: string;
@@ -48,7 +45,7 @@ export default function AdminAlertsPage() {
   const [category, setCategory] = useState("ALL");
   const router = useRouter();
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/alerts");
@@ -62,11 +59,14 @@ export default function AdminAlertsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchAlerts();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchAlerts();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchAlerts]);
 
   const filteredAlerts = alerts.filter(alert => {
     const matchesSeverity = filter === "ALL" || alert.severity === filter;

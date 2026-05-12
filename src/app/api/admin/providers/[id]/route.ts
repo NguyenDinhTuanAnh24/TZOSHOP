@@ -1,3 +1,4 @@
+import { Prisma, ApiFamily } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -24,10 +25,10 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const updateData: any = {};
+    const updateData: Prisma.AiProviderUpdateInput = {};
 
     if (body.name !== undefined) updateData.name = body.name;
-    if (body.apiFamily !== undefined) updateData.apiFamily = body.apiFamily;
+    if (body.apiFamily !== undefined) updateData.apiFamily = body.apiFamily as ApiFamily;
     if (body.baseUrl !== undefined) updateData.baseUrl = body.baseUrl;
     if (body.isActive !== undefined) updateData.isActive = body.isActive;
 
@@ -56,7 +57,7 @@ export async function PATCH(
     } else {
       try {
         returnedMaskedKey = maskApiKey(decryptText(updatedProvider.encryptedApiKey));
-      } catch (e) {
+      } catch {
         // Ignored
       }
     }

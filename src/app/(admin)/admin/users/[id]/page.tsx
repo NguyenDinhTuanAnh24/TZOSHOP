@@ -3,30 +3,22 @@
 import { useEffect, useState, useCallback, use } from "react";
 import Link from "next/link";
 import { 
-  User, 
   Mail, 
-  Calendar, 
-  Shield, 
   ChevronLeft, 
   Wallet, 
   KeyRound, 
   ShoppingCart, 
   Activity, 
-  ExternalLink, 
   Clock,
   ShieldAlert,
-  ArrowRight,
   Zap,
-  BarChart3,
-  MessageSquare,
   AlertTriangle
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
-import { formatVnd } from "@/lib/format";
+import { formatVnd, translateStatus } from "@/lib/format";
 
 type UserDetail = {
   id: string;
@@ -41,9 +33,31 @@ type UserDetail = {
     usageLogs: number;
     supportTickets: number;
   };
-  creditBuckets: any[];
-  apiKeys: any[];
-  orders: any[];
+  creditBuckets: {
+    id: string;
+    creditsRemaining: string;
+    creditsTotal: string;
+    apiFamily: string;
+    isActive: boolean;
+    expiresAt: string | null;
+    product: { name: string } | null;
+  }[];
+  apiKeys: {
+    id: string;
+    name: string;
+    displayKey: string;
+    isActive: boolean;
+    revokedAt: string | null;
+    lastUsedAt: string | null;
+  }[];
+  orders: {
+    id: string;
+    orderCode: string;
+    amountVnd: number;
+    status: string;
+    createdAt: string;
+    product: { name: string } | null;
+  }[];
 };
 
 export default function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -62,7 +76,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
       } else {
         showToast(result.error?.message || "Không thể tải thông tin.", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi kết nối.", "error");
     } finally {
       setIsLoading(false);
@@ -70,7 +84,10 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
   }, [id, showToast]);
 
   useEffect(() => {
-    fetchUser();
+    const timer = window.setTimeout(() => {
+      void fetchUser();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [fetchUser]);
 
   if (isLoading) {
@@ -296,8 +313,12 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-black text-slate-900">{formatVnd(order.amountVnd)}</p>
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${order.status === 'PAID' ? 'text-emerald-600' : 'text-amber-500'}`}>
-                      {order.status}
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${
+                      order.status === 'PAID' ? 'text-emerald-600' : 
+                      order.status === 'CANCELLED' ? 'text-rose-500' : 
+                      'text-amber-500'
+                    }`}>
+                      {translateStatus(order.status)}
                     </span>
                   </div>
                 </Link>

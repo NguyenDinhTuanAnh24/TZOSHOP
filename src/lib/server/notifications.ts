@@ -7,12 +7,11 @@ export async function createNotificationOnce(data: {
   message: string;
   href?: string;
   dedupeKey?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }) {
   try {
     if (data.dedupeKey) {
-      const existing = await (prisma as any).notification.findFirst({
+      const existing = await prisma.notification.findFirst({
         where: {
           userId: data.userId,
           dedupeKey: data.dedupeKey,
@@ -21,7 +20,7 @@ export async function createNotificationOnce(data: {
       if (existing) return existing;
     }
 
-    return await (prisma as any).notification.create({
+    return await prisma.notification.create({
       data: {
         userId: data.userId,
         type: data.type || "INFO",
@@ -29,10 +28,10 @@ export async function createNotificationOnce(data: {
         message: data.message,
         href: data.href,
         dedupeKey: data.dedupeKey,
-        metadata: data.metadata,
+        metadata: data.metadata as import("@prisma/client").Prisma.InputJsonValue,
       },
     });
-  } catch (error) {
+  } catch {
     // If unique constraint error due to race condition, ignore and return null
     return null;
   }
@@ -44,8 +43,7 @@ export async function notifyAdmins(data: {
   message: string;
   href?: string;
   dedupeKey?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }) {
   try {
     const admins = await prisma.user.findMany({
@@ -87,7 +85,7 @@ export async function markNotificationAsRead(id: string, userId: string, isAdmin
       ];
     }
 
-    return await (prisma as any).notification.updateMany({
+    return await prisma.notification.updateMany({
       where,
       data: {
         isRead: true,
@@ -114,7 +112,7 @@ export async function markAllNotificationsAsRead(userId: string, isAdmin: boolea
     
     where.isRead = false;
 
-    return await (prisma as any).notification.updateMany({
+    return await prisma.notification.updateMany({
       where,
       data: {
         isRead: true,
@@ -130,19 +128,19 @@ export async function checkCreditAlertsForUser(userId: string) {
   try {
     const now = new Date();
     // 1. Lấy tất cả bucket active của user
-    const buckets = await (prisma.creditBucket.findMany({
+    const buckets = await prisma.creditBucket.findMany({
       where: {
         userId,
         isActive: true,
         OR: [
           { expiresAt: { gt: now } },
-          { expiresAt: null as any },
+          { expiresAt: null },
         ],
       },
       include: {
         product: { select: { name: true } },
       },
-    }) as Promise<any[]>);
+    });
 
     for (const bucket of buckets) {
       const remaining = Number(bucket.creditsRemaining);

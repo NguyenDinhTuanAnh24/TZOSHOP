@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LifeBuoy, ChevronRight } from "lucide-react";
+import { LifeBuoy } from "lucide-react";
 
 export function DocsSupportCard() {
   return (

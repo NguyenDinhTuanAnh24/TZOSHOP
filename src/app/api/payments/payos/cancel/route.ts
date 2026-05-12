@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const payos = getPayOSClient();
 
     // Hủy link thanh toán trên PayOS
-    const cancelledPayment = await (payos as any).paymentRequests.cancel(
+    const cancelledPayment = await payos.paymentRequests.cancel(
       Number(order.payosOrderCode),
       "User cancelled payment"
     );

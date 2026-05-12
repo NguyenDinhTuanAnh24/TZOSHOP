@@ -1,19 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   Activity, 
   Search, 
-  Filter, 
   Cpu, 
-  User, 
   Key, 
   Zap,
   CheckCircle2,
-  XCircle,
-  Clock,
-  ChevronRight,
-  ShieldCheck,
   RefreshCw,
   Terminal
 } from "lucide-react";
@@ -22,6 +16,7 @@ import { AppCard } from "@/components/ui/app-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ui } from "@/lib/ui-tokens";
+import { translateStatus } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -38,14 +33,14 @@ type UsageLog = {
   status: string;
   errorMessage?: string;
   createdAt: string;
-  user: {
-    name: string;
+  user?: {
+    name: string | null;
     email: string;
   };
-  apiKey: {
+  apiKey?: {
     name: string;
     keyPrefix: string;
-  };
+  } | null;
 };
 
 type UsageStats = {
@@ -79,7 +74,7 @@ export default function AdminUsagePage() {
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [filterTimeRange, setFilterTimeRange] = useState("all");
 
-  const fetchUsage = async () => {
+  const fetchUsage = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams({
@@ -100,15 +95,18 @@ export default function AdminUsagePage() {
         setPagination(result.pagination);
       }
     } catch (error) {
-      console.error(error);
+      console.error("fetchUsage failed:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, pageSize, filterTimeRange, filterEmail, filterApiKey, filterModel, filterStatus]);
 
   useEffect(() => {
-    fetchUsage();
-  }, [page, pageSize, filterStatus, filterTimeRange]);
+    const timer = window.setTimeout(() => {
+      void fetchUsage();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchUsage]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,11 +117,12 @@ export default function AdminUsagePage() {
   const getStatusBadge = (status: string) => {
     return (
       <StatusBadge 
-        status={status === "SUCCESS" ? "Success" : "Failed"}
+        status={translateStatus(status)}
         variant={status === "SUCCESS" ? "success" : "danger"}
       />
     );
   };
+
 
   return (
     <div className="space-y-8 pb-20">
@@ -218,9 +217,9 @@ export default function AdminUsagePage() {
                   onChange={(e) => setFilterStatus(e.target.value)}
                   className={ui.input}
                 >
-                  <option value="ALL">ALL</option>
-                  <option value="SUCCESS">SUCCESS</option>
-                  <option value="FAILED">FAILED</option>
+                  <option value="ALL">Tất cả</option>
+                  <option value="SUCCESS">Thành công</option>
+                  <option value="FAILED">Thất bại</option>
                 </select>
               </div>
            </div>
@@ -284,12 +283,14 @@ export default function AdminUsagePage() {
                     <td className="px-8 py-6">
                        <div className="flex items-center gap-3">
                           <div>
-                             <p className="text-[13px] font-black text-[#0b0f0d] leading-tight">{log.user.name}</p>
-                             <p className={cn(ui.pMuted, "text-[10px] truncate max-w-[150px]")}>{log.user.email}</p>
-                             <div className="flex items-center gap-1 mt-1 opacity-60">
-                                <Key className="h-3 w-3 text-[#8a9690]" />
-                                <p className="text-[9px] font-black text-[#8a9690] uppercase tracking-tight">{log.apiKey.name} ({log.apiKey.keyPrefix})</p>
-                             </div>
+                             <p className="text-[13px] font-black text-[#0b0f0d] leading-tight">{log.user?.name || "Người dùng ẩn danh"}</p>
+                             <p className={cn(ui.pMuted, "text-[10px] truncate max-w-[150px]")}>{log.user?.email || "N/A"}</p>
+                             {log.apiKey && (
+                               <div className="flex items-center gap-1 mt-1 opacity-60">
+                                  <Key className="h-3 w-3 text-[#8a9690]" />
+                                  <p className="text-[9px] font-black text-[#8a9690] uppercase tracking-tight">{log.apiKey.name} ({log.apiKey.keyPrefix})</p>
+                               </div>
+                             )}
                           </div>
                        </div>
                     </td>

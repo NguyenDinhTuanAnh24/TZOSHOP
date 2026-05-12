@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
-import { startOfDay, endOfDay, startOfMonth, subDays, format } from "date-fns";
+import { startOfDay, startOfMonth, subDays, format } from "date-fns";
 
 export const runtime = "nodejs";
 
@@ -82,7 +82,14 @@ export async function GET() {
     const revenueByDay = Array.from(dailyMap.values()).reverse();
 
     // 3. Revenue By Family
-    const familyMap: any = {};
+    interface FamilyData {
+      apiFamily: string;
+      revenueVnd: number;
+      paidOrders: number;
+      creditsSold: bigint;
+    }
+
+    const familyMap: Record<string, FamilyData> = {};
     // Ensure all 4 families exist even with 0 revenue
     ["CODEXAI", "CLAUDE", "GEMINI", "DEEPSEEK"].forEach(f => {
       familyMap[f] = { apiFamily: f, revenueVnd: 0, paidOrders: 0, creditsSold: BigInt(0) };
@@ -98,13 +105,22 @@ export async function GET() {
       familyMap[family].creditsSold += BigInt(o.product?.credits || 0);
     });
 
-    const revenueByFamily = Object.values(familyMap).map((f: any) => ({
+    const revenueByFamily = Object.values(familyMap).map((f) => ({
       ...f,
       creditsSold: f.creditsSold.toString()
     }));
 
     // 4. Top Products
-    const productMap: any = {};
+    interface ProductData {
+      productId: string;
+      productName: string;
+      apiFamily: string;
+      paidOrders: number;
+      revenueVnd: number;
+      creditsSold: bigint;
+    }
+
+    const productMap: Record<string, ProductData> = {};
     allPaidOrders.forEach(o => {
       const pId = o.productId;
       if (!productMap[pId]) {
@@ -123,9 +139,9 @@ export async function GET() {
     });
 
     const topProducts = Object.values(productMap)
-      .sort((a: any, b: any) => b.revenueVnd - a.revenueVnd)
+      .sort((a, b) => b.revenueVnd - a.revenueVnd)
       .slice(0, 10)
-      .map((p: any) => ({
+      .map((p) => ({
         ...p,
         creditsSold: p.creditsSold.toString()
       }));

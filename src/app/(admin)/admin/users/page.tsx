@@ -1,42 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   Users,
   Search,
-  Filter,
   Mail,
   Shield,
-  UserCheck,
-  Calendar,
-  ChevronRight,
-  MoreHorizontal,
-  ExternalLink,
-  ShieldCheck,
   User,
-  LayoutDashboard,
-  ShieldAlert,
-  ArrowUpDown,
   Wallet,
   Clock,
-  LogOut,
   RefreshCw,
   MoreVertical,
   Lock,
   Unlock,
   Bell,
   PlusCircle,
-  XCircle,
   AlertTriangle,
-  Info,
-  CheckCircle2,
   Package,
   History,
   KeyIcon,
-  ChevronDown,
   Eye,
-  X,
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -70,69 +54,95 @@ type UserItem = {
   totalCredits: string;
 };
 
+interface UserDetail extends UserItem {
+  totalCreditsUsed: string;
+  activeBucketsCount: number;
+  creditBuckets: {
+    id: string;
+    creditsRemaining: string;
+    expiresAt: string | null;
+  }[];
+  orders: {
+    id: string;
+    product: { name: string };
+    status: string;
+    createdAt: string;
+  }[];
+  apiKeys: {
+    id: string;
+    name: string;
+    displayKey: string;
+  }[];
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [me, setMe] = useState<{ id: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("ALL");
+
   const { toast, showToast, clearToast } = useToast();
   const { confirmState, isConfirming, askConfirm, closeConfirm, handleConfirm } = useConfirm();
 
   // Modal states
-  const [detailUser, setDetailUser] = useState<any | null>(null);
+  const [detailUser, setDetailUser] = useState<UserDetail | null>(null);
   const [manageUser, setManageUser] = useState<UserItem | null>(null);
   const [grantUser, setGrantUser] = useState<UserItem | null>(null);
   const [notifyUser, setNotifyUser] = useState<UserItem | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<{ id: string, top: number, right: number } | null>(null);
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/users");
       const result = await res.json();
       if (result.success) setUsers(result.data);
     } catch (error) {
-      console.error(error);
+      console.error("fetchUsers failed:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchUserDetail = async (userId: string) => {
+  const fetchUserDetail = useCallback(async (userId: string) => {
     try {
       const res = await fetch(`/api/admin/users/${userId}`);
       const result = await res.json();
       if (result.success) setDetailUser(result.data);
       else showToast(result.error?.message || "Không thể tải chi tiết.", "error");
     } catch (error) {
+      console.error("fetchUserDetail failed:", error);
       showToast("Lỗi kết nối.", "error");
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
-    fetchUsers();
-    fetch("/api/profile").then(res => res.json()).then(data => {
-      if (data.success) setMe(data.data);
-    });
-  }, []);
+    const timer = window.setTimeout(() => {
+      setMounted(true);
+      void fetchUsers();
+      void fetch("/api/profile").then(res => res.json()).then(data => {
+        if (data.success) setMe(data.data);
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchUsers]);
 
   const handleExportCsv = async () => {
     try {
       setIsExporting(true);
       const params = new URLSearchParams();
       if (search) params.set("q", search);
-      if (roleFilter !== "ALL") params.set("role", roleFilter);
       
-      const res = await downloadCsv(
+      
+      await downloadCsv(
         `/api/admin/users/export?${params.toString()}`,
         `tzoshop-users-${format(new Date(), "yyyy-MM-dd")}.csv`
       );
       
       showToast("Đã xuất CSV thành công.", "success");
-    } catch (error) {
+    } catch {
       showToast("Không thể xuất CSV.", "error");
     } finally {
       setIsExporting(false);
@@ -167,7 +177,7 @@ export default function AdminUsersPage() {
           } else {
             showToast(result.message || "Cập nhật thất bại.", "error");
           }
-        } catch (error) {
+        } catch {
           showToast("Lỗi hệ thống.", "error");
         }
       }
@@ -202,14 +212,14 @@ export default function AdminUsersPage() {
           } else {
             showToast(result.message, "error");
           }
-        } catch (error) {
+        } catch {
           showToast("Lỗi hệ thống.", "error");
         }
       }
     });
   };
 
-  const handleGrantCredits = async (userId: string, data: any) => {
+  const handleGrantCredits = async (userId: string, data: { credits: number, durationDays: number, note: string }) => {
     try {
       const res = await fetch(`/api/admin/users/${userId}/grant-credits`, {
         method: "POST",
@@ -224,12 +234,12 @@ export default function AdminUsersPage() {
       } else {
         showToast(result.message, "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi hệ thống.", "error");
     }
   };
 
-  const handleSendNotification = async (userId: string, data: any) => {
+  const handleSendNotification = async (userId: string, data: { title: string, message: string, type: string }) => {
     try {
       const res = await fetch(`/api/admin/users/${userId}/notify`, {
         method: "POST",
@@ -243,7 +253,7 @@ export default function AdminUsersPage() {
       } else {
         showToast(result.message, "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi hệ thống.", "error");
     }
   };
@@ -252,8 +262,7 @@ export default function AdminUsersPage() {
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase()) || 
                          u.email.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
-    return matchesSearch && matchesRole;
+    return matchesSearch;
   });
 
   return (
@@ -428,7 +437,7 @@ export default function AdminUsersPage() {
                              <MoreVertical className="h-4 w-4" />
                            </IconButton>
 
-                          {menuAnchor?.id === user.id && createPortal(
+                          {menuAnchor?.id === user.id && mounted && createPortal(
                             <>
                               <div className="fixed inset-0 z-[9998]" onClick={() => setMenuAnchor(null)} />
                               <div 
@@ -560,7 +569,7 @@ export default function AdminUsersPage() {
 
 
 
-function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) {
+function UserDetailModal({ user, onClose }: { user: UserDetail, onClose: () => void }) {
   return (
     <Modal open={true} title="Chi tiết khách hàng" onClose={onClose}>
       <div className="space-y-8">
@@ -585,7 +594,7 @@ function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) 
         <div className="grid gap-4 sm:grid-cols-3">
            <AppCard className="p-6 bg-[#fbfbf8]">
               <p className={ui.label + " mb-2"}>Tổng Credits</p>
-              <p className="text-2xl font-black text-[#0b0f0d]">{new Intl.NumberFormat('vi-VN').format(Number(user.creditBuckets.reduce((sum: number, b: any) => sum + Number(b.creditsRemaining), 0)))}</p>
+              <p className="text-2xl font-black text-[#0b0f0d]">{new Intl.NumberFormat('vi-VN').format(Number(user.creditBuckets.reduce((sum: number, b) => sum + Number(b.creditsRemaining), 0)))}</p>
            </AppCard>
            <AppCard className="p-6 bg-[#fbfbf8]">
               <p className={ui.label + " mb-2"}>Đã sử dụng</p>
@@ -603,7 +612,7 @@ function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) 
            </div>
            {user.orders.length > 0 ? (
               <div className="space-y-3">
-                 {user.orders.map((order: any) => (
+                 {user.orders.map((order) => (
                    <AppCard key={order.id} className="flex items-center justify-between p-5 border-[#edf1ee] bg-white">
                       <div>
                          <p className="text-sm font-black text-[#0b0f0d]">{order.product.name}</p>
@@ -626,7 +635,7 @@ function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) 
               <KeyIcon className="h-5 w-5 text-[#00d4a4]" /> Danh sách API Keys ({user.apiKeys.length})
            </div>
            <div className="flex flex-col gap-3">
-              {user.apiKeys.map((key: any) => (
+              {user.apiKeys.map((key) => (
                 <div key={key.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-3xl bg-[#fbfbf8] border border-[#edf1ee] gap-3 group/key hover:border-[#00d4a4]/40 transition-all">
                    <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-[#8a9690] group-hover/key:text-[#00d4a4] shadow-sm transition-colors border border-[#edf1ee]">
@@ -649,7 +658,17 @@ function UserDetailModal({ user, onClose }: { user: any, onClose: () => void }) 
   );
 }
 
-function AccountManagementModal({ user, onClose, onUpdateRole, onUpdateStatus }: { user: UserItem, onClose: () => void, onUpdateRole: any, onUpdateStatus: any }) {
+function AccountManagementModal({ 
+  user, 
+  onClose, 
+  onUpdateRole, 
+  onUpdateStatus 
+}: { 
+  user: UserItem, 
+  onClose: () => void, 
+  onUpdateRole: (userId: string, role: string) => void, 
+  onUpdateStatus: (userId: string, action: "LOCK" | "UNLOCK") => void 
+}) {
   return (
     <Modal open={true} title="Quản lý tài khoản" onClose={onClose}>
       <div className="space-y-6">
@@ -709,7 +728,15 @@ function AccountManagementModal({ user, onClose, onUpdateRole, onUpdateStatus }:
   );
 }
 
-function GrantCreditsModal({ user, onClose, onConfirm }: { user: UserItem, onClose: () => void, onConfirm: any }) {
+function GrantCreditsModal({ 
+  user, 
+  onClose, 
+  onConfirm 
+}: { 
+  user: UserItem, 
+  onClose: () => void, 
+  onConfirm: (userId: string, data: { credits: number, durationDays: number, note: string }) => void 
+}) {
   const [credits, setCredits] = useState(100000);
   const [days, setDays] = useState(30);
   const [note, setNote] = useState("");
@@ -769,7 +796,15 @@ function GrantCreditsModal({ user, onClose, onConfirm }: { user: UserItem, onClo
   );
 }
 
-function NotifyUserModal({ user, onClose, onConfirm }: { user: UserItem, onClose: () => void, onConfirm: any }) {
+function NotifyUserModal({ 
+  user, 
+  onClose, 
+  onConfirm 
+}: { 
+  user: UserItem, 
+  onClose: () => void, 
+  onConfirm: (userId: string, data: { title: string, message: string, type: string }) => void 
+}) {
   const [title, setTitle] = useState("Thông báo từ TzoShop");
   const [message, setMessage] = useState("");
   const [type, setType] = useState("INFO");

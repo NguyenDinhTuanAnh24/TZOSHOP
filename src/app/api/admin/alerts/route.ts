@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     // 1. Auth check
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const now = new Date();
     const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000);
@@ -22,14 +22,14 @@ export async function GET() {
           isActive: true,
           OR: [
             { expiresAt: { gt: now } },
-            { expiresAt: null as any }
+            { expiresAt: null }
           ]
         },
         include: {
           user: { select: { email: true, id: true } },
           product: { select: { name: true } },
         },
-      }) as Promise<any[]>,
+      }),
       // Fetch stale pending orders
       prisma.order.findMany({
         where: {
@@ -52,7 +52,17 @@ export async function GET() {
       }),
     ]);
 
-    const alerts: any[] = [];
+    interface Alert {
+      id: string;
+      type: string;
+      severity: "DANGER" | "WARNING" | "INFO";
+      title: string;
+      message: string;
+      href: string;
+      createdAt: string;
+    }
+
+    const alerts: Alert[] = [];
 
     // 3. Process Bucket Alerts (LOW_CREDITS, OUT_OF_CREDITS, EXPIRING_BUCKET)
     for (const bucket of activeBuckets) {

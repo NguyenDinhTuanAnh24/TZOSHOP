@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-toast";
@@ -15,11 +15,9 @@ import {
   Copy, 
   Trash2, 
   CheckCircle2, 
-  AlertCircle,
-  ShieldCheck,
   Zap,
-  Info,
-  RefreshCw
+  RefreshCw,
+  ShieldCheck
 } from "lucide-react";
 import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
 import { AppButton } from "@/components/ui/app-button";
@@ -88,7 +86,9 @@ function formatCredits(value: string | number) {
   return new Intl.NumberFormat("vi-VN").format(num);
 }
 
-export default function ApiKeysPage() {
+import { Suspense } from "react";
+
+function ApiKeysPageContent() {
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
   const [plans, setPlans] = useState<MyPlanItem[]>([]);
 
@@ -127,21 +127,59 @@ export default function ApiKeysPage() {
 
       setPlans(plansData.data ?? []);
       setApiKeys(keysData.data ?? []);
-    } catch (error) {
+    } catch {
       showToast("Không thể tải dữ liệu.", "error");
     } finally {
       setIsLoading(false);
     }
   }, [showToast]);
 
-  useEffect(() => {
-    setMounted(true);
-    loadData();
-    return () => setMounted(false);
-  }, [loadData]);
+  const searchParams = useSearchParams();
+  const bucketIdFromUrl = searchParams.get("bucketId");
 
   const activePlans = useMemo(() => plans.filter(p => p.isActive), [plans]);
   const selectedBucket = useMemo(() => plans.find(p => p.id === selectedCreditBucketId), [plans, selectedCreditBucketId]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setMounted(true);
+      void loadData();
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      setMounted(false);
+    };
+  }, [loadData]);
+
+  // Xử lý bucketId từ URL và đảm bảo không bị stale
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (isLoading) return;
+      
+      if (activePlans.length > 0) {
+        if (bucketIdFromUrl) {
+          const exists = activePlans.find(p => p.id === bucketIdFromUrl);
+          if (exists) {
+            setSelectedCreditBucketId(bucketIdFromUrl);
+          } else if (!selectedCreditBucketId) {
+            // Nếu URL sai và chưa chọn gì thì chọn cái đầu tiên
+            setSelectedCreditBucketId(activePlans[0].id);
+          }
+        } else if (!selectedCreditBucketId) {
+          // Nếu không có URL và chưa chọn gì thì chọn cái đầu tiên
+          setSelectedCreditBucketId(activePlans[0].id);
+        } else {
+          // Kiểm tra xem selection hiện tại còn hợp lệ không
+          const currentValid = activePlans.find(p => p.id === selectedCreditBucketId);
+          if (!currentValid) {
+            setSelectedCreditBucketId(activePlans[0].id);
+          }
+        }
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [bucketIdFromUrl, activePlans, isLoading, selectedCreditBucketId]);
 
   const handleCreate = async () => {
     if (!selectedCreditBucketId || !keyName.trim()) return;
@@ -492,5 +530,13 @@ export default function ApiKeysPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function ApiKeysPage() {
+  return (
+    <Suspense fallback={<CardListSkeleton count={5} />}>
+      <ApiKeysPageContent />
+    </Suspense>
   );
 }

@@ -1,3 +1,4 @@
+import { ApiFamily } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -25,7 +26,7 @@ export async function GET() {
       let plainKey = "";
       try {
         plainKey = decryptText(p.encryptedApiKey);
-      } catch (e) {
+      } catch {
         // Ignored
       }
       return {
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     const newProvider = await prisma.aiProvider.create({
       data: {
         name,
-        apiFamily,
+        apiFamily: apiFamily as ApiFamily,
         encryptedApiKey,
         baseUrl,
         isActive: isActive !== undefined ? isActive : true,

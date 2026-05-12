@@ -3,28 +3,22 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { 
-  ShoppingCart, 
   ChevronLeft, 
   User, 
   Mail, 
-  Calendar, 
   CreditCard, 
   Zap, 
   CheckCircle2, 
   XCircle, 
-  Clock, 
-  FileText,
+  Clock,
   ExternalLink,
-  ShieldCheck,
   AlertCircle,
   Hash,
   ArrowRight,
   Package,
   Globe
 } from "lucide-react";
-import { AppIcon } from "@/components/ui/icon";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { formatVnd } from "@/lib/format";
@@ -77,7 +71,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
       } else {
         showToast(result.error?.message || "Không thể tải thông tin.", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi kết nối.", "error");
     } finally {
       setIsLoading(false);
@@ -85,7 +79,10 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
   }, [params.id, showToast]);
 
   useEffect(() => {
-    fetchOrder();
+    const timer = setTimeout(() => {
+      fetchOrder();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchOrder]);
 
   const handleVerifyPayment = async () => {
@@ -102,7 +99,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
       } else {
         showToast(result.message, "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi khi gọi API kiểm tra.", "error");
     }
   };
@@ -122,7 +119,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
         showToast("Đã duyệt đơn hàng thành công.", "success");
         fetchOrder();
       }
-    } catch (error) {
+    } catch {
       showToast("Không thể duyệt đơn hàng.", "error");
     }
   };
@@ -142,7 +139,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
         showToast("Đã hủy đơn hàng.", "success");
         fetchOrder();
       }
-    } catch (error) {
+    } catch {
       showToast("Không thể hủy đơn hàng.", "error");
     }
   };
@@ -169,7 +166,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
   const sectionCard = "rounded-[40px] border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-xl hover:shadow-slate-200/50";
 
 
-  const statusConfig: Record<string, { label: string, color: string, bg: string, icon: any }> = {
+  const statusConfig: Record<string, { label: string, color: string, bg: string, icon: React.ElementType }> = {
     PAID: { label: "Đã thanh toán", color: "text-emerald-600", bg: "bg-emerald-50", icon: CheckCircle2 },
     PENDING: { label: "Chờ thanh toán", color: "text-amber-600", bg: "bg-amber-50", icon: Clock },
     CANCELLED: { label: "Đã hủy", color: "text-rose-600", bg: "bg-rose-50", icon: XCircle },

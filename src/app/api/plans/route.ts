@@ -55,10 +55,21 @@ export async function GET() {
       },
     }) as ProductItem[];
 
-    const data = products.map((product: ProductItem) => ({
-      ...product,
-      credits: product.credits.toString(),
-    }));
+    const activeModels = await prisma.aiModel.findMany({
+      where: { isActive: true },
+      select: { publicName: true }
+    });
+    const activeModelNames = new Set(activeModels.map(m => m.publicName));
+
+    const data = products.map((product: ProductItem) => {
+      const activeAllowedModels = product.allowedModels.filter(m => activeModelNames.has(m));
+      
+      return {
+        ...product,
+        credits: product.credits.toString(),
+        allowedModels: activeAllowedModels,
+      };
+    });
 
     return NextResponse.json({
       data,

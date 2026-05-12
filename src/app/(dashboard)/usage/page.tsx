@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import Link from "next/link";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -10,9 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   History,
-  Search,
   KeyRound,
-  Info,
   Filter
 } from "lucide-react";
 import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
@@ -82,7 +79,7 @@ export default function UsagePage() {
 
       setApiKeys(keysData.data ?? []);
       setUsageLogs(usageData.data ?? []);
-    } catch (error) {
+    } catch {
       showToast("Không thể tải dữ liệu sử dụng.", "error");
     } finally {
       setIsLoading(false);
@@ -90,7 +87,10 @@ export default function UsagePage() {
   }, [showToast]);
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadData]);
 
   // Derived data

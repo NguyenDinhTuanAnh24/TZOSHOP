@@ -30,6 +30,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Đơn hàng không ở trạng thái chờ thanh toán." }, { status: 400 });
     }
 
+    if (order.amountVnd === 0) {
+      return NextResponse.json({ error: "Đơn hàng miễn phí không cần thanh toán PayOS." }, { status: 400 });
+    }
+
     // 2. Nếu đã có thanh toán PayOS và chưa hết hạn, trả về thông tin cũ
     if (order.payosOrderCode && order.payosCheckoutUrl) {
       const now = new Date();
@@ -69,7 +73,7 @@ export async function POST(request: NextRequest) {
     };
 
     const payos = getPayOSClient();
-    const paymentLinkRes = await (payos as any).paymentRequests.create(paymentData);
+    const paymentLinkRes = await payos.paymentRequests.create(paymentData);
 
     // 4. Lưu thông tin vào Order
     const updatedOrder = await prisma.order.update({
@@ -97,8 +101,9 @@ export async function POST(request: NextRequest) {
       status: updatedOrder.payosStatus
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PayOS Create Error:", error);
-    return NextResponse.json({ error: error.message || "Lỗi tạo thanh toán." }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Lỗi tạo thanh toán.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

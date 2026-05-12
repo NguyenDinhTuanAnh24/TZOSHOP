@@ -1,20 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   BarChart3, 
   Wallet, 
   LineChart, 
   DollarSign, 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  Users, 
   ShoppingCart, 
   Package, 
   Calendar,
   RefreshCw,
   TrendingUp,
-  CreditCard,
   Target,
   ArrowRight
 } from "lucide-react";
@@ -26,7 +22,6 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { ui } from "@/lib/ui-tokens";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
@@ -81,7 +76,7 @@ export default function AdminRevenuePage() {
   const [isExporting, setIsExporting] = useState(false);
   const { toast, showToast, clearToast } = useToast();
 
-  const fetchRevenueData = async () => {
+  const fetchRevenueData = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/revenue");
@@ -94,11 +89,14 @@ export default function AdminRevenuePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchRevenueData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchRevenueData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchRevenueData]);
 
   const handleExportCsv = async () => {
     try {
@@ -109,7 +107,7 @@ export default function AdminRevenuePage() {
       );
       
       showToast("Đã xuất CSV thành công.", "success");
-    } catch (error) {
+    } catch {
       showToast("Không thể xuất CSV.", "error");
     } finally {
       setIsExporting(false);
@@ -395,7 +393,7 @@ export default function AdminRevenuePage() {
   );
 }
 
-function SummaryCard({ label, value, subValue, icon: Icon, color }: any) {
+function SummaryCard({ label, value, subValue, icon: Icon, color }: { label: string, value: string, subValue: string, icon: React.ElementType, color: string }) {
   return (
     <AppCard className="p-8 relative overflow-hidden group hover:shadow-xl hover:shadow-[#00d4a4]/10 transition-all border-[#edf1ee]">
       <div className="relative z-10">
@@ -415,7 +413,7 @@ function SummaryCard({ label, value, subValue, icon: Icon, color }: any) {
   );
 }
 
-function SummaryCardSmall({ label, value, icon: Icon, suffix, textColor = "text-[#0b0f0d]", bgColor = "bg-[#fbfbf8]" }: any) {
+function SummaryCardSmall({ label, value, icon: Icon, suffix, textColor = "text-[#0b0f0d]", bgColor = "bg-[#fbfbf8]" }: { label: string, value: string, icon: React.ElementType, suffix: string, textColor?: string, bgColor?: string }) {
   return (
     <AppCard className={cn("p-6 flex items-center gap-5 border-[#edf1ee]", bgColor)}>
        <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center text-[#8a9690] shrink-0 shadow-sm border border-[#edf1ee]">
@@ -432,7 +430,7 @@ function SummaryCardSmall({ label, value, icon: Icon, suffix, textColor = "text-
   );
 }
 
-function Clock(props: any) {
+function Clock(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

@@ -5,23 +5,16 @@ import Link from "next/link";
 import { 
   Zap, 
   Key, 
-  Database, 
   History, 
-  LayoutGrid, 
   Code2, 
   ListTree, 
   AlertTriangle, 
   Settings, 
-  ChevronRight, 
-  Sparkles,
-  BookOpen,
-  FileText
+  BookOpen
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { AppCard } from "@/components/ui/app-card";
-import { ui } from "@/lib/ui-tokens";
-import { cn } from "@/lib/utils";
 import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
 
 // Sub-components

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ElementType } from "react";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 import { AppButton } from "./app-button";
 
-type ConfirmDialogType = "danger" | "warning" | "info" | "primary";
+type ConfirmDialogType = "danger" | "warning" | "info" | "primary" | "success";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -24,20 +24,16 @@ const iconStyles: Record<ConfirmDialogType, string> = {
   warning: "bg-amber-50 text-amber-600 ring-amber-100",
   info: "bg-sky-50 text-sky-600 ring-sky-100",
   primary: "bg-blue-50 text-blue-600 ring-blue-100",
+  success: "bg-emerald-50 text-emerald-600 ring-emerald-100",
 };
 
-const confirmButtonStyles: Record<ConfirmDialogType, string> = {
-  danger: "bg-rose-600 hover:bg-rose-700",
-  warning: "bg-amber-600 hover:bg-amber-700",
-  info: "bg-sky-600 hover:bg-sky-700",
-  primary: "bg-blue-600 hover:bg-blue-700",
-};
 
-const Icons: Record<ConfirmDialogType, any> = {
+const Icons: Record<ConfirmDialogType, ElementType> = {
   danger: AlertTriangle,
   warning: AlertTriangle,
   info: Info,
   primary: Info,
+  success: CheckCircle2,
 };
 
 export function ConfirmDialog({
@@ -54,8 +50,13 @@ export function ConfirmDialog({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
+    const timer = window.setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      setMounted(false);
+    };
   }, []);
 
   if (!open || !mounted) return null;

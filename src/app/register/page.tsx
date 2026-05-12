@@ -65,7 +65,7 @@ function RegisterForm() {
         const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
         router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       }
-    } catch (error) {
+    } catch {
       showToast("Đã có lỗi xảy ra.", "error");
     } finally {
       setIsLoading(false);

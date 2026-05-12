@@ -1,31 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   Package,
   Search,
   Plus,
-  Edit,
   Power,
   PowerOff,
   Star,
-  PhoneCall,
   Clock,
-  ShieldCheck,
   ChevronRight,
-  MoreHorizontal,
   Filter,
-  Eye,
-  CheckCircle2,
-  XCircle,
-  LayoutGrid,
-  Zap,
-  RefreshCw,
-  MoreVertical,
-  Layers,
   Key,
   Pencil,
-  ChevronLeft
+  ChevronLeft,
+  LayoutGrid
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
 import { AppCard } from "@/components/ui/app-card";
@@ -40,7 +29,6 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { ConfirmDialog } from "@/components/ui/confirm-toast";
 import { Switch } from "@/components/ui/switch";
 import { Modal } from "@/components/ui/modal";
-import Link from "next/link";
 
 type Product = {
   id: string;
@@ -165,7 +153,7 @@ export default function AdminProductsPage() {
     setCurrentPage(1);
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       const [resProducts, resModels] = await Promise.all([
@@ -184,14 +172,20 @@ export default function AdminProductsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchData]);
   
   useEffect(() => {
-    setCurrentPage(1);
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [search, filterFamily, filterActive, filterContact, advancedFilters]);
 
   const handleOpenModal = (product?: Product) => {
@@ -255,7 +249,7 @@ export default function AdminProductsPage() {
       } else {
         showToast(result.error?.message || result.message || "Lỗi khi lưu.", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi hệ thống.", "error");
     }
   };

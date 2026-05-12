@@ -30,7 +30,15 @@ export async function completeOrderPayment(orderId: string) {
 
   // 2. Kiểm tra nếu đơn hàng đã được xử lý (idempotency)
   if (order.status === "PAID") {
-    return order;
+    // Find existing bucket via ledger
+    const ledger = await prisma.creditLedger.findFirst({
+      where: { referenceId: order.id, type: "PURCHASE" }
+    });
+    
+    return { 
+      order, 
+      creditBucketId: ledger?.creditBucketId || null 
+    };
   }
 
   // 3. Tính toán ngày hết hạn
@@ -61,7 +69,7 @@ export async function completeOrderPayment(orderId: string) {
         allowedModels: order.product.allowedModels,
         allowedReasoning: order.product.allowedReasoning,
         startsAt: now,
-        expiresAt: expiresAt as any,
+        expiresAt: expiresAt,
         isActive: true,
       },
     });
@@ -80,7 +88,36 @@ export async function completeOrderPayment(orderId: string) {
       },
     });
 
-    return updatedOrder;
+    // Xử lý Coupon Redemption nếu có
+    if (order.couponId) {
+      await tx.couponRedemption.create({
+        data: {
+          couponId: order.couponId,
+          userId: order.userId,
+          orderId: order.id,
+          originalAmount: order.originalAmount || order.product.priceVnd,
+          discountAmount: order.discountAmount,
+          finalAmount: order.amountVnd,
+        },
+      });
+
+      // Cập nhật usedAt trong Assignment nếu là mã được cấp riêng
+      await tx.couponAssignment.updateMany({
+        where: {
+          couponId: order.couponId,
+          userId: order.userId,
+          usedAt: null,
+        },
+        data: {
+          usedAt: now,
+        },
+      });
+    }
+
+    return {
+      order: updatedOrder,
+      creditBucketId: creditBucket.id
+    };
   });
 
   // 5. Gửi email thông báo (ngoài transaction để không block DB)

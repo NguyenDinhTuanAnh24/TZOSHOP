@@ -1,10 +1,11 @@
+import { ApiFamily } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
 
 export const runtime = "nodejs";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await requireAdminUser();
 
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         slug,
-        apiFamily,
+        apiFamily: apiFamily as ApiFamily,
         tier: "Standard",
         credits: BigInt(credits || 0),
         durationDays: Number(durationDays),

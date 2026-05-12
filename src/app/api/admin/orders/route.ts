@@ -1,3 +1,4 @@
+import { Prisma, OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -6,16 +7,16 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get("status") || undefined;
+    const status = searchParams.get("status");
     const email = searchParams.get("email") || undefined;
     const startDate = searchParams.get("startDate") || undefined;
     const endDate = searchParams.get("endDate") || undefined;
 
-    const where: any = {};
-    if (status && status !== "ALL") where.status = status;
+    const where: Prisma.OrderWhereInput = {};
+    if (status && status !== "ALL") where.status = status as OrderStatus;
     if (email) {
       where.user = {
         email: { contains: email, mode: 'insensitive' }
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const body = await request.json();
     const { orderId, status } = body;

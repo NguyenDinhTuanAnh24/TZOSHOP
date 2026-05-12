@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // 4. Gọi API PayOS để lấy trạng thái thực tế
     const payos = getPayOSClient();
-    const payosData = await (payos as any).paymentRequests.get(Number(order.payosOrderCode));
+    const payosData = await payos.paymentRequests.get(Number(order.payosOrderCode));
 
     // 5. Cập nhật DB dựa trên trạng thái từ PayOS
     const currentStatus = payosData.status; // PAID, PENDING, CANCELLED, EXPIRED
@@ -74,8 +74,9 @@ export async function GET(request: NextRequest) {
       amountRemaining: payosData.amountRemaining
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PayOS Status Check Error:", error);
-    return NextResponse.json({ error: error.message || "Lỗi kiểm tra trạng thái." }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Lỗi kiểm tra trạng thái.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

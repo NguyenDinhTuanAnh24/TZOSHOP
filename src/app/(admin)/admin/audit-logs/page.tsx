@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   ScrollText, 
   Search, 
   RefreshCw, 
   User, 
   Clock, 
-  Database, 
-  Tag,
-  ChevronRight,
-  ShieldCheck,
-  Filter,
-  Eye,
-  X,
-  Copy,
   Check,
-  Code,
   Layers,
-  Zap,
-  Calendar,
-  Settings
+  ShieldCheck,
+  Eye,
+  Copy
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -32,6 +23,7 @@ import { ui } from "@/lib/ui-tokens";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
+import { translateStatus } from "@/lib/format";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -64,7 +56,7 @@ export default function AuditLogsPage() {
 
   const { toast, showToast, clearToast } = useToast();
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/audit-logs");
@@ -74,16 +66,19 @@ export default function AuditLogsPage() {
       } else {
         showToast(result.message || "Lỗi khi tải dữ liệu", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi hệ thống", "error");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchLogs();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchLogs]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -212,7 +207,7 @@ export default function AuditLogsPage() {
                     <td className="px-8 py-6 text-center">
                         <div className="flex justify-center">
                            <StatusBadge 
-                             status={log.action}
+                             status={translateStatus(log.action)}
                              variant={
                                log.action.includes("CREATE") ? "success" :
                                log.action.includes("UPDATE") ? "warning" :

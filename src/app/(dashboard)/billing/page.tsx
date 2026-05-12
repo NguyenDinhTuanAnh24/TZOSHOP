@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import Link from "next/link";
+
 import { ConfirmDialog } from "@/components/ui/confirm-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -11,16 +11,12 @@ import {
   ShoppingCart, 
   CheckCircle2, 
   Clock3, 
-  XCircle, 
   Wallet,
-  ArrowRight,
-  Filter,
   CreditCard,
   Info,
-  Plus,
-  Zap
+  Plus
 } from "lucide-react";
-import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
+
 import { AppButton } from "@/components/ui/app-button";
 import { AppCard } from "@/components/ui/app-card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -67,21 +63,7 @@ function formatCredits(value: string) {
   return amount.toLocaleString("vi-VN");
 }
 
-function getStatusBadgeClass(status: ApiOrderStatus) {
-  switch (status) {
-    case "PAID": return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
-    case "PENDING": return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
-    default: return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
-  }
-}
 
-function getStatusIcon(status: ApiOrderStatus) {
-  switch (status) {
-    case "PAID": return CheckCircle2;
-    case "PENDING": return Clock3;
-    default: return XCircle;
-  }
-}
 
 import { PaymentModal } from "@/components/dashboard/payment-modal";
 
@@ -112,7 +94,7 @@ export default function BillingPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error?.message ?? "Không thể tải lịch sử đơn hàng.");
       setOrders(data.data ?? []);
-    } catch (error) {
+    } catch {
       showToast("Không thể tải lịch sử thanh toán.", "error");
     } finally {
       setIsLoading(false);
@@ -120,7 +102,10 @@ export default function BillingPage() {
   }, [showToast]);
 
   useEffect(() => {
-    loadBillingData();
+    const timer = window.setTimeout(() => {
+      void loadBillingData();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadBillingData]);
 
   const handlePayOS = async (order: ApiOrder) => {
@@ -134,8 +119,8 @@ export default function BillingPage() {
       
       // Open internal payment modal
       setActivePayment(result);
-    } catch (error: any) {
-      showToast(error.message || "Không thể tạo thanh toán.", "error");
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : "Không thể tạo thanh toán.", "error");
     }
   };
 
@@ -150,22 +135,12 @@ export default function BillingPage() {
       showToast("Đã hủy thanh toán.", "success");
       setActivePayment(null);
       await loadBillingData();
-    } catch (error: any) {
-      showToast(error.message, "error");
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : "Đã xảy ra lỗi", "error");
     }
   };
 
-  const handleMockPay = async (order: ApiOrder) => {
-    try {
-      const res = await fetch(`/api/orders/${order.id}/mock-pay`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message ?? "Không thể xử lý thanh toán.");
-      showToast("Thanh toán thành công.", "success");
-      await loadBillingData();
-    } catch (error) {
-      showToast("Không thể thực hiện thanh toán.", "error");
-    }
-  };
+
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
@@ -256,7 +231,7 @@ export default function BillingPage() {
               {["Tất cả", "Đã thanh toán", "Chờ thanh toán", "Đã hủy"].map((f) => (
                 <button
                   key={f}
-                  onClick={() => setSelectedFilter(f as any)}
+                  onClick={() => setSelectedFilter(f as "Tất cả" | "Đã thanh toán" | "Chờ thanh toán" | "Đã hủy")}
                   className={`rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
                     selectedFilter === f ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-500 hover:bg-slate-100"
                   }`}
@@ -313,7 +288,7 @@ export default function BillingPage() {
                         <AppButton 
                           onClick={() => askConfirm({
                             title: "Thanh toán đơn hàng?",
-                            description: "Bạn sẽ được chuyển sang cổng thanh toán PayOS để hoàn tất giao dịch.",
+                            description: "Bạn sẽ được chuyển hướng đến giao diện thanh toán an toàn để hoàn tất giao dịch.",
                             confirmLabel: "Thanh toán ngay",
                             cancelLabel: "Hủy",
                             type: "info",
@@ -341,7 +316,7 @@ export default function BillingPage() {
             </div>
             <div className="space-y-4 text-xs font-bold text-[#66736d] leading-6">
               <p>• <b className="text-[#0b0f0d]">Chờ thanh toán:</b> Đơn hàng vừa tạo, hãy hoàn tất thanh toán để nhận credits.</p>
-              <p>• <b className="text-[#0b0f0d]">Đã thanh toán:</b> Gói đã được kích hoạt, hãy kiểm tra tại mục "Gói của tôi".</p>
+              <p>• <b className="text-[#0b0f0d]">Đã thanh toán:</b> Gói đã được kích hoạt, hãy kiểm tra tại mục &quot;Gói của tôi&quot;.</p>
               <p>• <b className="text-[#0b0f0d]">Đã hủy:</b> Đơn hàng bị hết hạn hoặc bị hủy thủ công.</p>
             </div>
           </AppCard>

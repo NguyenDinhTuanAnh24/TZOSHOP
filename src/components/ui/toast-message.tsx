@@ -39,8 +39,11 @@ export function ToastMessage({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
+    const timer = window.setTimeout(() => setMounted(true), 0);
+    return () => {
+      window.clearTimeout(timer);
+      setMounted(false);
+    };
   }, []);
 
   if (!message || !mounted) return null;

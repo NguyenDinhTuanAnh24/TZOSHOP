@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const [
       userCount,
@@ -40,7 +40,7 @@ export async function GET() {
       prisma.aiModel.count({
         where: { isActive: true }
       }),
-      (prisma as any).aiProvider.count({
+      prisma.aiProvider.count({
         where: { isActive: true }
       }),
       prisma.creditBucket.findMany({
@@ -51,14 +51,8 @@ export async function GET() {
     // 1. Doanh thu (Chỉ tính các order PAID và priceVnd > 0)
     const revenueVnd = paidOrdersData.reduce((sum: number, order: { amountVnd: number }) => sum + order.amountVnd, 0);
 
-    // 3. Credits đã bán (Tổng credits của các gói PAID)
-    const creditsSold = paidOrdersData.reduce((sum: bigint, order: any) => {
-      const credits = order.product?.credits ? BigInt(order.product.credits) : BigInt(0);
-      return sum + credits;
-    }, BigInt(0));
-
-    // Credits đã cấp (Tổng creditsTotal của tất cả CreditBucket)
-    const creditsGranted = creditBucketsData.reduce((sum: bigint, bucket: { creditsTotal: bigint }) => {
+    // 3. Credits đã bán (Tổng creditsTotal của tất cả CreditBucket)
+    const creditsSold = creditBucketsData.reduce((sum: bigint, bucket: { creditsTotal: bigint }) => {
       return sum + BigInt(bucket.creditsTotal);
     }, BigInt(0));
 
@@ -70,7 +64,7 @@ export async function GET() {
         pendingOrders: pendingOrders,
         openTickets: openTicketsCount,
         creditsSold: creditsSold.toString(),
-        creditsGranted: creditsGranted.toString(),
+        creditsGranted: creditsSold.toString(),
         activeApiKeys: activeApiKeysCount,
         activeModels: activeModelsCount,
         activeProviders: activeProvidersCount,

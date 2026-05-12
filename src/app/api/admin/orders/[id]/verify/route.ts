@@ -27,7 +27,8 @@ export async function POST(
     }
 
     const payos = await getPayOSInstance();
-    const payosOrder = await (payos as any).getPaymentLinkInformation(Number(order.payosOrderCode));
+    // @ts-expect-error getPaymentLinkInformation may not be typed correctly
+    const payosOrder = await payos.getPaymentLinkInformation(Number(order.payosOrderCode));
 
     if (!payosOrder) {
        return NextResponse.json({ success: false, message: "Không lấy được thông tin từ PayOS." }, { status: 500 });

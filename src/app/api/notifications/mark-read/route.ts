@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/server/current-user";
@@ -12,7 +13,7 @@ export async function POST() {
     }
 
     const isAdmin = user.role === "ADMIN";
-    const where: any = { isRead: false };
+    const where: Prisma.NotificationWhereInput = { isRead: false };
 
     if (isAdmin) {
       where.OR = [

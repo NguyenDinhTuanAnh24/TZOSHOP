@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get("userId") || undefined;

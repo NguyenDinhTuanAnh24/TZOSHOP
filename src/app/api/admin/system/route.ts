@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
 
 export const runtime = "nodejs";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await requireAdminUser();
 
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     try {
       await prisma.$queryRaw`SELECT 1`;
       dbConnected = true;
-    } catch (e) {
+    } catch {
       dbConnected = false;
     }
 

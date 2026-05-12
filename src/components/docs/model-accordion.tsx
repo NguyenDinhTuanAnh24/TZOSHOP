@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, Search, Copy, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, Search, ExternalLink, Loader2 } from "lucide-react";
 import { DocsCopyButton } from "./copy-button";
 import Link from "next/link";
 
@@ -9,52 +9,48 @@ interface ModelCategory {
   id: string;
   name: string;
   models: string[];
-  count: number;
 }
-
-const MODEL_CATEGORIES: ModelCategory[] = [
-  {
-    id: "codexai",
-    name: "CodexAI",
-    count: 14,
-    models: [
-      "codexai/gpt-5.5", "codexai/gpt-5.5-pro", "codexai/gpt-5.4", "codexai/gpt-5.4-mini",
-      "codexai/gpt-5.4-pro", "codexai/gpt-5.3-codex", "codexai/gpt-5.2", "codexai/gpt-5.2-pro",
-      "codexai/gpt-5.1-codex", "codexai/gpt-5.1", "codexai/gpt-5-codex", "codexai/gpt-5",
-      "codexai/gpt-5-pro", "codexai/gpt-5-mini"
-    ]
-  },
-  {
-    id: "claude",
-    name: "Claude",
-    count: 6,
-    models: [
-      "claude/claude-opus-4.7", "claude/claude-sonnet-4.6", "claude/claude-opus-4.6",
-      "claude/claude-opus-4.5", "claude/claude-haiku-4.5", "claude/claude-sonnet-4.5"
-    ]
-  },
-  {
-    id: "gemini",
-    name: "Gemini",
-    count: 4,
-    models: [
-      "gemini/gemini-3.1-pro-preview", "gemini/gemini-3.1-flash-lite-preview",
-      "gemini/gemini-3-flash-preview", "gemini/gemini-2.5-pro"
-    ]
-  },
-  {
-    id: "deepseek",
-    name: "DeepSeek",
-    count: 2,
-    models: [
-      "deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro"
-    ]
-  }
-];
 
 export function DocsModelAccordion() {
   const [search, setSearch] = useState("");
-  const [openCategories, setOpenCategories] = useState<string[]>(["codexai"]);
+  const [openCategories, setOpenCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<ModelCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchModels() {
+      try {
+        const response = await fetch("/api/models");
+        const json = await response.json();
+        
+        if (json.data) {
+          const models = json.data;
+          // Group models by family
+          const grouped: Record<string, string[]> = {};
+          models.forEach((m: Record<string, unknown>) => {
+            const family = String(m.apiFamily);
+            if (!grouped[family]) grouped[family] = [];
+            grouped[family].push(String(m.publicName));
+          });
+
+          const catArray = Object.entries(grouped).map(([family, models]) => ({
+            id: family.toLowerCase(),
+            name: family.charAt(0).toUpperCase() + family.slice(1).toLowerCase(),
+            models: models as string[]
+          }));
+
+          setCategories(catArray);
+          if (catArray.length > 0) setOpenCategories([catArray[0].id]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch models for docs:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchModels();
+  }, []);
 
   const toggleCategory = (id: string) => {
     setOpenCategories(prev =>
@@ -62,10 +58,19 @@ export function DocsModelAccordion() {
     );
   };
 
-  const filteredCategories = MODEL_CATEGORIES.map(cat => ({
+  const filteredCategories = categories.map(cat => ({
     ...cat,
     models: cat.models.filter(m => m.toLowerCase().includes(search.toLowerCase()))
   })).filter(cat => cat.models.length > 0);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
+        <Loader2 className="h-10 w-10 text-emerald-500 animate-spin mb-4" />
+        <p className="text-sm font-bold text-slate-500">Đang tải danh sách model...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -125,7 +130,7 @@ export function DocsModelAccordion() {
 
         {filteredCategories.length === 0 && (
           <div className="text-center py-12 bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
-            <p className="text-sm font-bold text-slate-500">Không tìm thấy model nào phù hợp.</p>
+            <p className="text-sm font-bold text-slate-500">Không tìm thấy model nào phù hợp hoặc hiện chưa có model nào khả dụng.</p>
           </div>
         )}
       </div>

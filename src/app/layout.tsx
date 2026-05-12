@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "react-loading-skeleton/dist/skeleton.css";
-import { SkeletonTheme } from "react-loading-skeleton";
+
 
 import { Providers } from "@/components/providers";
 

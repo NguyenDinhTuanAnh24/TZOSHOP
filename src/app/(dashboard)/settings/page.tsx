@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 
 import { type FormEvent, useState, useCallback, useEffect } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ToastMessage } from "@/components/ui/toast-message";
@@ -20,7 +19,6 @@ import {
   LogOut,
   Info,
   KeyRound,
-  CheckCircle2,
   Link as LinkIcon,
   LockKeyhole
 } from "lucide-react";
@@ -117,7 +115,7 @@ function SettingsContent() {
       showToast("Email Google không trùng với tài khoản hiện tại.", "error");
       window.history.replaceState({}, "", "/settings");
     }
-  }, [searchParams]);
+  }, [searchParams, showToast]);
 
   const handleLinkGoogle = () => {
     setIsLinkingGoogle(true);

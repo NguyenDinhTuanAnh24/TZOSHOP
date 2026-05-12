@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, Key, Zap, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { DocsCopyButton } from "./copy-button";
 
 interface IdeConfigProps {

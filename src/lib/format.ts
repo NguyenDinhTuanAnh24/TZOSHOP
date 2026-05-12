@@ -51,3 +51,32 @@ export function formatDuration(days: number | null) {
 
   return `${days} ngày`;
 }
+
+export function translateStatus(status: string) {
+  const statusMap: Record<string, string> = {
+    SUCCESS: "Thành công",
+    FAILED: "Thất bại",
+    PAID: "Đã thanh toán",
+    PENDING: "Chờ thanh toán",
+    CANCELLED: "Đã hủy",
+    EXPIRED: "Hết hạn",
+    OPEN: "Đang mở",
+    IN_PROGRESS: "Đang xử lý",
+    RESOLVED: "Đã giải quyết",
+    CLOSED: "Đã đóng",
+    URGENT: "Khẩn cấp",
+    HIGH: "Cao",
+    NORMAL: "Bình thường",
+    MEDIUM: "Trung bình",
+    LOW: "Thấp",
+    CREATE: "Tạo mới",
+    UPDATE: "Cập nhật",
+    DELETE: "Xóa",
+    DISABLE: "Vô hiệu hóa",
+    ENABLE: "Kích hoạt",
+    LOGIN: "Đăng nhập",
+    LOGOUT: "Đăng xuất",
+    VIEW: "Xem",
+  };
+  return statusMap[status.toUpperCase()] || status;
+}

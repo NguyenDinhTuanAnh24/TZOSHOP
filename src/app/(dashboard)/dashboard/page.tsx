@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { translateStatus } from "@/lib/format";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -15,7 +16,6 @@ import {
   ChevronRight,
   BarChart3,
   CheckCircle2,
-  AlertCircle,
   ArrowRight
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
@@ -92,7 +92,7 @@ type DashboardData = {
   }[];
 };
 
-function formatCredits(value: string | number) {
+function formatCreditsValue(value: string | number) {
   const num = typeof value === "string" ? Number(value) : value;
   return new Intl.NumberFormat("vi-VN").format(num);
 }
@@ -140,7 +140,7 @@ export default function DashboardPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error?.message ?? "Lỗi tải dashboard.");
       setData(json.data);
-    } catch (error) {
+    } catch {
       showToast("Không thể tải dữ liệu tổng quan.", "error");
     } finally {
       setIsLoading(false);
@@ -148,7 +148,10 @@ export default function DashboardPage() {
   }, [showToast]);
 
   useEffect(() => {
-    loadDashboard();
+    const timer = window.setTimeout(() => {
+      void loadDashboard();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadDashboard]);
 
   const btnPrimary = "rounded-full bg-emerald-600 text-white hover:bg-emerald-700 px-5 py-2 text-sm font-bold transition-all flex items-center gap-2";
@@ -218,7 +221,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Credits còn lại</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-emerald-600">{formatCredits(data?.credits.remaining ?? "0")}</p>
+          <p className="text-2xl sm:text-3xl font-black text-emerald-600">{formatCreditsValue(data?.credits.remaining ?? "0")}</p>
         </div>
         <div className="rounded-[32px] border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -227,7 +230,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Credits đã dùng</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-slate-900">{formatCredits(data?.credits.used ?? "0")}</p>
+          <p className="text-2xl sm:text-3xl font-black text-slate-900">{formatCreditsValue(data?.credits.used ?? "0")}</p>
         </div>
         <div className="rounded-[32px] border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -297,8 +300,8 @@ export default function DashboardPage() {
                       />
                     </div>
                     <div className="flex items-center justify-between text-xs font-black">
-                      <span className="text-emerald-600">{formatCredits(plan.creditsRemaining)}</span>
-                      <span className="text-slate-300">/ {formatCredits(plan.creditsTotal)}</span>
+                      <span className="text-emerald-600">{formatCreditsValue(plan.creditsRemaining)}</span>
+                      <span className="text-slate-300">/ {formatCreditsValue(plan.creditsTotal)}</span>
                     </div>
                   </div>
                 </div>
@@ -320,28 +323,31 @@ export default function DashboardPage() {
             <Link href="/usage" className={btnSecondary}>Chi tiết</Link>
           </div>
           <div className="space-y-3">
-            {data?.recentUsageLogs.length === 0 ? (
+            {!data?.recentUsageLogs || data.recentUsageLogs.length === 0 ? (
               <div className="rounded-[32px] border border-dashed border-slate-200 bg-slate-50/50 p-10 text-center">
                 <p className="text-slate-400 font-bold text-sm">Chưa có lịch sử sử dụng.</p>
                 <Link href="/usage" className="mt-2 text-emerald-600 font-bold text-xs hover:underline">Xem lịch sử sử dụng</Link>
               </div>
             ) : (
-              data?.recentUsageLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-hover hover:border-emerald-200">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-black text-slate-900">{log.model}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${getStatusBadgeClass(log.status)}`}>
-                        {log.status}
-                      </span>
+              [...data.recentUsageLogs]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 3)
+                .map((log) => (
+                  <div key={log.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-hover hover:border-emerald-200">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-black text-slate-900">{log.model}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${getStatusBadgeClass(log.status)}`}>
+                          {translateStatus(log.status)}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                        {new Date(log.createdAt).toLocaleString("vi-VN")}
+                      </p>
                     </div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                      {new Date(log.createdAt).toLocaleString("vi-VN")}
-                    </p>
+                    <p className="text-sm font-black text-emerald-600">{formatCreditsValue(log.creditsCharged)}</p>
                   </div>
-                  <p className="text-sm font-black text-emerald-600">{formatCredits(log.creditsCharged)}</p>
-                </div>
-              ))
+                ))
             )}
           </div>
         </section>
@@ -367,7 +373,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-black text-slate-900 truncate max-w-[150px]">{order.product?.name ?? "Gói nạp"}</span>
                       <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${getStatusBadgeClass(order.status)}`}>
-                        {order.status}
+                        {translateStatus(order.status)}
                       </span>
                     </div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">

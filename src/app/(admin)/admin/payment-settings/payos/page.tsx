@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   CreditCard, 
   ShieldCheck, 
   KeyRound, 
   Save, 
   Activity,
-  ChevronRight,
   Info,
   Shield,
   Zap
@@ -35,7 +34,7 @@ export default function PayOSSettingsPage() {
 
   const { toast, showToast, clearToast } = useToast();
 
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/payment-settings/payos");
@@ -47,16 +46,19 @@ export default function PayOSSettingsPage() {
           checksumKey: "",
         });
       }
-    } catch (error) {
+    } catch {
       showToast("Không thể tải cấu hình.", "error");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
-    fetchConfig();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchConfig();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchConfig]);
 
   const handleSave = async () => {
     try {
@@ -80,15 +82,13 @@ export default function PayOSSettingsPage() {
       } else {
         throw new Error(result.error?.message || "Lỗi lưu cấu hình.");
       }
-    } catch (error: any) {
-      showToast(error.message, "error");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Lỗi lưu cấu hình", "error");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const inputClasses = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 placeholder:text-slate-300 placeholder:font-medium";
-  const labelClasses = "text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1";
 
   if (isLoading) {
     return (

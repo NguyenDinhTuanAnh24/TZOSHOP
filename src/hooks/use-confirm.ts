@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-type ConfirmType = "danger" | "warning" | "info" | "primary";
+type ConfirmType = "danger" | "warning" | "info" | "primary" | "success";
 
-type ConfirmState = {
+export type ConfirmState = {
   title: string;
   description: string;
   confirmLabel?: string;

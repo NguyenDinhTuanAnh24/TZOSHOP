@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { 
   X, 
   Clock, 
-  ExternalLink, 
+
   CheckCircle2, 
   AlertCircle,
   Copy,
   ChevronRight,
-  ShieldCheck,
-  Zap
+  Zap,
+  ShieldCheck
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
 
@@ -32,7 +32,7 @@ type PaymentModalProps = {
   onClose: () => void;
   onSuccess: () => void;
   onCancel: (orderId: string) => Promise<void>;
-  askConfirm: (options: any) => void;
+  askConfirm: (config: import("@/hooks/use-confirm").ConfirmState) => void;
 };
 
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +73,7 @@ export function PaymentModal({ payment, onClose, onSuccess, onCancel, askConfirm
     };
   }, [payment.paymentExpiredAt]);
 
-  const checkStatus = async () => {
+  const checkStatus = useCallback(async () => {
     if (status === "EXPIRED" || status === "PAID") return;
     
     try {
@@ -101,7 +101,7 @@ export function PaymentModal({ payment, onClose, onSuccess, onCancel, askConfirm
     } finally {
       setIsChecking(false);
     }
-  };
+  }, [status, payment.orderId, onSuccess, onClose]);
 
   useEffect(() => {
     // Tự động kiểm tra mỗi 5 giây
@@ -109,7 +109,7 @@ export function PaymentModal({ payment, onClose, onSuccess, onCancel, askConfirm
     return () => {
       if (pollInterval.current) clearInterval(pollInterval.current);
     };
-  }, []);
+  }, [checkStatus]);
 
   const handleCancel = async () => {
     if (status === "EXPIRED") {
@@ -119,7 +119,7 @@ export function PaymentModal({ payment, onClose, onSuccess, onCancel, askConfirm
 
     askConfirm({
       title: "Hủy thanh toán?",
-      description: "Đơn hàng này sẽ bị hủy trên hệ thống PayOS và website.",
+      description: "Đơn hàng này sẽ bị hủy trên hệ thống và website.",
       confirmLabel: "Hủy thanh toán",
       cancelLabel: "Quay lại",
       type: "danger",

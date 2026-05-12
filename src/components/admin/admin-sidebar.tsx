@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { 
   LayoutDashboard, 
   Users, 
@@ -15,12 +15,13 @@ import {
   LogOut, 
   ShieldCheck,
   Activity,
-  BarChart3
+  BarChart3,
+  TicketPercent
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
 import { useConfirm } from "@/hooks/use-confirm";
 import { ConfirmDialog } from "@/components/ui/confirm-toast";
-import Image from "next/image";
+
 
 const menuGroups = [
   {
@@ -36,6 +37,7 @@ const menuGroups = [
       { href: "/admin/users", label: "Người dùng", icon: Users },
       { href: "/admin/orders", label: "Đơn hàng", icon: ShoppingCart },
       { href: "/admin/products", label: "Gói Credits", icon: Package },
+      { href: "/admin/coupons", label: "Mã giảm giá", icon: TicketPercent },
     ]
   },
   {
@@ -63,7 +65,6 @@ const menuGroups = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
   const { confirmState, isConfirming, askConfirm, closeConfirm, handleConfirm } = useConfirm();
 
   const handleLogout = () => {

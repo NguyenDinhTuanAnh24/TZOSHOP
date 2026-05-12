@@ -11,9 +11,9 @@ function maskKey(key: string | null | undefined) {
   return "••••••••••" + key.slice(-4);
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const setting = await prisma.paymentProviderSetting.findUnique({
       where: { provider: "PAYOS" },
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const body = await request.json();
     const { clientId, apiKey, checksumKey, environment, isActive } = body;
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const updateData: any = {
+    const updateData: { clientId?: string; environment?: string; isActive?: boolean; encryptedApiKey?: string; encryptedChecksumKey?: string } = {
       clientId,
       environment,
       isActive,

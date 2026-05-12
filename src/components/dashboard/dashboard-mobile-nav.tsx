@@ -14,8 +14,7 @@ import {
   UserRound,
   Zap,
   ArrowRight,
-  LogOut,
-  ShieldCheck
+  LogOut
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
 

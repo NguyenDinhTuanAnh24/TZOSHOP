@@ -1,5 +1,5 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 
 import { prisma } from "@/lib/prisma";
@@ -166,9 +166,10 @@ export async function POST(request: NextRequest) {
         id: creditBucketId,
         userId: user.id,
         isActive: true,
-        expiresAt: {
-          gt: new Date(),
-        },
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } }
+        ]
       },
       include: {
         product: true,
@@ -176,6 +177,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (!creditBucket) {
+      // Debug logging
+      const allUserBuckets = await prisma.creditBucket.findMany({
+        where: { userId: user.id },
+        select: { id: true, isActive: true, expiresAt: true }
+      });
+      console.log("[API Key Create Debug]", {
+        userId: user.id,
+        requestedBucketId: creditBucketId,
+        foundActiveBucketsCount: allUserBuckets.filter(b => b.isActive).length,
+        allBuckets: allUserBuckets,
+        now: new Date().toISOString()
+      });
+
       return NextResponse.json(
         {
           error: {
@@ -210,7 +224,7 @@ export async function POST(request: NextRequest) {
     }
 
     const fullKey = createApiKeyValue();
-    const keyHash = require("crypto").createHash("sha256").update(fullKey).digest("hex");
+    const keyHash = createHash("sha256").update(fullKey).digest("hex");
     const keyPrefix = getKeyPrefix(fullKey);
 
     const apiKey = await prisma.apiKey.create({

@@ -1,3 +1,4 @@
+import { Prisma, TicketStatus, TicketPriority } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -7,17 +8,18 @@ export const runtime = "nodejs";
 // Lấy danh sách support ticket
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get("status") || undefined;
-    const priority = searchParams.get("priority") || undefined;
+    const status = searchParams.get("status") as TicketStatus | null;
+    const priority = searchParams.get("priority") as TicketPriority | null;
+
+    const where: Prisma.SupportTicketWhereInput = {};
+    if (status && (status as string) !== "ALL") where.status = status;
+    if (priority && (priority as string) !== "ALL") where.priority = priority;
 
     const tickets = await prisma.supportTicket.findMany({
-      where: {
-        status: status as any,
-        priority: priority as any,
-      },
+      where,
       orderBy: {
         createdAt: "desc",
       },
@@ -56,7 +58,7 @@ export async function GET(request: NextRequest) {
 // Cập nhật trạng thái ticket
 export async function PATCH(request: NextRequest) {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const body = await request.json();
     const { ticketId, status, adminNotes } = body;
@@ -68,8 +70,8 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const updateData: any = {};
-    if (status) updateData.status = status;
+    const updateData: Prisma.SupportTicketUpdateInput = {};
+    if (status) updateData.status = status as TicketStatus;
     if (adminNotes !== undefined) updateData.adminNotes = adminNotes;
 
     const updatedTicket = await prisma.supportTicket.update({

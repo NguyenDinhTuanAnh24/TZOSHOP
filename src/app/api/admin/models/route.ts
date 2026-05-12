@@ -1,3 +1,4 @@
+import { ApiFamily, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -61,16 +62,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newModel = await prisma.aiModel.create({
-      data: {
-        publicName,
-        upstreamModel,
-        apiFamily,
-        providerId,
-        inputCreditRate: Number(inputCreditRate) || 1,
-        outputCreditRate: Number(outputCreditRate) || 1,
-        isActive: isActive ?? true,
+    const createData: Prisma.AiModelCreateInput = {
+      publicName,
+      upstreamModel,
+      apiFamily: apiFamily as ApiFamily,
+      provider: {
+        connect: { id: providerId }
       },
+      inputCreditRate: Number(inputCreditRate) || 1,
+      outputCreditRate: Number(outputCreditRate) || 1,
+      isActive: isActive ?? true,
+    };
+
+    const type = (body.upstreamEndpointType === "RESPONSES" || body.upstreamEndpointType === "responses")
+      ? "RESPONSES"
+      : "CHAT_COMPLETIONS";
+    
+    (createData as Record<string, unknown>).upstreamEndpointType = type;
+
+    const newModel = await prisma.aiModel.create({
+      data: createData,
       include: {
         provider: { select: { name: true } }
       }

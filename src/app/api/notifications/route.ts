@@ -1,11 +1,10 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/server/current-user";
 import { checkCreditAlertsForUser } from "@/lib/server/notifications";
 
 export const runtime = "nodejs";
-
-
 
 export async function GET() {
   try {
@@ -21,7 +20,7 @@ export async function GET() {
 
     const isAdmin = user.role === "ADMIN";
 
-    const where: any = {};
+    const where: Prisma.NotificationWhereInput = {};
     if (isAdmin) {
       where.OR = [
         { userId: user.id },
@@ -32,12 +31,12 @@ export async function GET() {
     }
 
     const [notifications, unreadCount] = await Promise.all([
-      (prisma as any).notification.findMany({
+      prisma.notification.findMany({
         where,
         orderBy: { createdAt: "desc" },
         take: 30,
       }),
-      (prisma as any).notification.count({
+      prisma.notification.count({
         where: {
           ...where,
           isRead: false
@@ -67,7 +66,7 @@ export async function PATCH(request: NextRequest) {
     
     if (action === "read-all") {
       const isAdmin = user.role === "ADMIN";
-      const where: any = {};
+      const where: Prisma.NotificationWhereInput = {};
       
       if (isAdmin) {
         where.OR = [
@@ -80,7 +79,7 @@ export async function PATCH(request: NextRequest) {
       
       where.isRead = false;
 
-      await (prisma as any).notification.updateMany({
+      await prisma.notification.updateMany({
         where,
         data: {
           isRead: true,

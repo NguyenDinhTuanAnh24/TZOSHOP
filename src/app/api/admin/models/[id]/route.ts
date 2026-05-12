@@ -1,6 +1,8 @@
+import { ApiFamily } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
+import type { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -17,20 +19,42 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const updateData: any = {};
+    const { 
+      publicName, 
+      upstreamModel, 
+      apiFamily, 
+      providerId, 
+      inputCreditRate, 
+      outputCreditRate, 
+      upstreamEndpointType, 
+      isActive 
+    } = body;
 
-    if (body.publicName !== undefined) updateData.publicName = body.publicName;
-    if (body.upstreamModel !== undefined) updateData.upstreamModel = body.upstreamModel;
-    if (body.apiFamily !== undefined) updateData.apiFamily = body.apiFamily;
-    if (body.providerId !== undefined) updateData.providerId = body.providerId;
-    if (body.inputCreditRate !== undefined) updateData.inputCreditRate = Number(body.inputCreditRate);
-    if (body.outputCreditRate !== undefined) updateData.outputCreditRate = Number(body.outputCreditRate);
-    if (body.isActive !== undefined) updateData.isActive = body.isActive;
+    const updateData: Prisma.AiModelUpdateInput = {};
 
-    if (updateData.publicName) {
+    if (publicName !== undefined) updateData.publicName = publicName;
+    if (upstreamModel !== undefined) updateData.upstreamModel = upstreamModel;
+    if (apiFamily !== undefined) updateData.apiFamily = apiFamily as ApiFamily;
+    if (inputCreditRate !== undefined) updateData.inputCreditRate = Number(inputCreditRate);
+    if (outputCreditRate !== undefined) updateData.outputCreditRate = Number(outputCreditRate);
+    if (upstreamEndpointType !== undefined) {
+      const type = (upstreamEndpointType === "RESPONSES" || upstreamEndpointType === "responses")
+          ? "RESPONSES"
+          : "CHAT_COMPLETIONS";
+      (updateData as Record<string, unknown>).upstreamEndpointType = type;
+    }
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    if (providerId) {
+      updateData.provider = {
+        connect: { id: providerId }
+      };
+    }
+
+    if (publicName) {
       const existing = await prisma.aiModel.findFirst({
         where: {
-          publicName: updateData.publicName,
+          publicName: publicName,
           id: { not: id }
         }
       });
@@ -46,7 +70,7 @@ export async function PATCH(
       where: { id },
       data: updateData,
       include: {
-        provider: { select: { name: true } }
+        provider: true
       }
     });
 

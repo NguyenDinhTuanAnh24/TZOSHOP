@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import DashboardBrand from "./dashboard-brand";
-import { buttonStyles } from "@/lib/ui-styles";
 
 import { useSession, signOut } from "next-auth/react";
 import { 
@@ -13,7 +12,7 @@ import {
   CreditCard, 
   UserRound,
   LogOut,
-  ShieldCheck
+  TicketPercent
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
 
@@ -41,6 +40,12 @@ const menuItems = [
     label: "Thanh toán", 
     icon: CreditCard,
     activePaths: ["/billing"]
+  },
+  { 
+    href: "/coupons", 
+    label: "Mã giảm giá", 
+    icon: TicketPercent,
+    activePaths: ["/coupons"]
   },
   { 
     href: "/settings", 

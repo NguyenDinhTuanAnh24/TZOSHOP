@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   Key, 
   Search, 
   Filter, 
-  User, 
-  Clock, 
-  CheckCircle2, 
-  XCircle,
-  MoreVertical,
+  User,
   Activity,
-  ChevronRight,
-  ShieldCheck,
   RefreshCw
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
@@ -44,7 +38,7 @@ export default function AdminApiKeysPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  const fetchKeys = async () => {
+  const fetchKeys = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/api-keys");
@@ -55,11 +49,14 @@ export default function AdminApiKeysPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchKeys();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchKeys();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchKeys]);
 
   const filteredKeys = keys.filter(k => 
     k.name.toLowerCase().includes(search.toLowerCase()) || 

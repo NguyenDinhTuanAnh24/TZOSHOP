@@ -78,6 +78,16 @@ const FAQS = [
   }
 ];
 
+export interface TicketItem {
+  id: string;
+  status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
+  category: string;
+  createdAt: string;
+  subject: string;
+  message: string;
+  adminNotes?: string | null;
+}
+
 export default function SupportPage() {
   const { toast, showToast, clearToast } = useToast(4000);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,7 +102,7 @@ export default function SupportPage() {
     reference: ""
   });
 
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
 
   const fetchMyTickets = async () => {
@@ -109,7 +119,10 @@ export default function SupportPage() {
   };
 
   useEffect(() => {
-    fetchMyTickets();
+    const timer = window.setTimeout(() => {
+      void fetchMyTickets();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {

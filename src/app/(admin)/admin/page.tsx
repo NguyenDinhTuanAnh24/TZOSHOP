@@ -4,27 +4,21 @@ import { useEffect, useState } from "react";
 import {
   Users,
   DollarSign,
-  Clock,
-  CheckCircle2,
-  Wallet,
   Key,
   Zap,
   Bot,
   Server,
   LifeBuoy,
   ShoppingCart,
-  AlertCircle,
-  Activity,
   ArrowRight,
   Inbox,
   LayoutDashboard
 } from "lucide-react";
-import { AppButton } from "@/components/ui/app-button";
 import { AppCard } from "@/components/ui/app-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/lib/ui-tokens";
 import { cn } from "@/lib/utils";
-import { formatVnd } from "@/lib/format";
+import { formatVnd, translateStatus } from "@/lib/format";
 import Link from "next/link";
 
 
@@ -107,12 +101,9 @@ export default function AdminOverviewPage() {
   }
 
   // Logic hiển thị Credits Sold vs Credits Granted
-  const sold = Number(stats?.creditsSold || 0);
-  const granted = Number(stats?.creditsGranted || 0);
-  
-  const creditsLabel = (sold === 0 && granted > 0) ? "Credits đã cấp" : "Credits đã bán";
-  const creditsValue = (sold === 0 && granted > 0) ? granted : sold;
-  const creditsDesc = (sold === 0 && granted > 0) ? "Tổng credits trong hệ thống" : "Tổng credits nạp qua đơn hàng";
+  const creditsValue = Number(stats?.creditsSold || 0);
+  const creditsLabel = "Credits đã bán";
+  const creditsDesc = "Tổng credits đã cấp thành công";
 
   const statCards = [
     {
@@ -248,8 +239,12 @@ export default function AdminOverviewPage() {
                   <div className="text-right">
                     <p className="text-sm font-black text-slate-900">{formatVnd(order.amountVnd)}</p>
                     <div className="mt-1 flex items-center justify-end gap-2">
-                      <span className={`inline-flex h-1.5 w-1.5 rounded-full ${order.status === 'PAID' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{order.status}</span>
+                      <span className={`inline-flex h-1.5 w-1.5 rounded-full ${
+                        order.status === 'PAID' ? 'bg-emerald-500' : 
+                        order.status === 'CANCELLED' ? 'bg-rose-500' : 
+                        'bg-amber-500'
+                      }`} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{translateStatus(order.status)}</span>
                     </div>
                   </div>
                 </div>
@@ -293,7 +288,7 @@ export default function AdminOverviewPage() {
                         ticket.priority === 'HIGH' ? 'bg-amber-100 text-amber-600' :
                           'bg-slate-200 text-slate-600'
                       }`}>
-                      {ticket.priority}
+                      {translateStatus(ticket.priority)}
                     </span>
                     <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
                       {new Date(ticket.createdAt).toLocaleDateString('vi-VN')}

@@ -43,7 +43,7 @@ export async function isPayOSActive() {
     });
     
     if (setting) return setting.isActive;
-  } catch (error) {}
+  } catch {}
   
   return !!(payosClientId && payosApiKey && payosChecksumKey);
 }

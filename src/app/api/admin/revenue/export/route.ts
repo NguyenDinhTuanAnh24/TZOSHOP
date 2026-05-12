@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -13,6 +14,17 @@ import { format } from "date-fns";
 
 export const runtime = "nodejs";
 
+interface OrderWithRelations {
+  id: string;
+  orderCode: string;
+  amountVnd: number;
+  status: string;
+  createdAt: Date;
+  paidAt: Date | null;
+  user: { email: string; name: string | null };
+  product: { name: string; credits: bigint; apiFamily: string } | null;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdminUser();
@@ -24,7 +36,7 @@ export async function GET(request: NextRequest) {
     const fromStr = searchParams.get("from");
     const toStr = searchParams.get("to");
 
-    const where: any = {};
+    const where: Prisma.OrderWhereInput = {};
 
     if (q) {
       where.OR = [
@@ -34,7 +46,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (statusFilter && statusFilter !== "ALL") {
-      where.status = statusFilter;
+      where.status = statusFilter as import("@prisma/client").OrderStatus;
     }
 
     if (fromStr && toStr) {
@@ -55,11 +67,11 @@ export async function GET(request: NextRequest) {
         user: { select: { email: true, name: true } },
         product: { select: { name: true, credits: true, apiFamily: true } },
       },
-    });
+    }) as unknown as OrderWithRelations[];
 
     let filteredOrders = orders;
     if (familyFilter && familyFilter !== "ALL") {
-       filteredOrders = orders.filter((o: any) => o.product?.apiFamily === familyFilter);
+       filteredOrders = orders.filter((o) => o.product?.apiFamily === familyFilter);
     }
 
     const now = new Date();
@@ -74,7 +86,7 @@ export async function GET(request: NextRequest) {
     
     const familyStats: Record<string, { count: number, revenue: number, credits: bigint }> = {};
 
-    filteredOrders.forEach((o: any) => {
+    filteredOrders.forEach((o) => {
       if (o.status === "PAID") {
         totalRevenue += o.amountVnd;
         paidCount++;
@@ -140,7 +152,7 @@ export async function GET(request: NextRequest) {
     lines.push(blankLine());
 
     lines.push(sectionTitle("CHI TIẾT ĐƠN HÀNG"));
-    const orderRows = filteredOrders.map((o: any, idx: number) => ({
+    const orderRows = filteredOrders.map((o, idx: number) => ({
       stt: (idx + 1).toString(),
       orderCode: o.orderCode || "",
       userEmail: o.user?.email || "",

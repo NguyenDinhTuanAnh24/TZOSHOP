@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
 
 export const runtime = "nodejs";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await requireAdminUser();
 
@@ -43,8 +43,16 @@ export async function GET(request: NextRequest) {
       process.env.SMTP_FROM
     );
 
-    let resendStatus: any = {
+    interface StatusInfo {
+      status: string;
+      label: string;
+      message: string;
+    }
+
+    let resendStatus: StatusInfo = {
       label: "Dịch vụ Email",
+      status: "MISSING",
+      message: "Thiếu RESEND_API_KEY."
     };
 
     if (hasResendApiKey && hasFromEmail) {

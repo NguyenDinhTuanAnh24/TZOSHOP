@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export function DocsCodeBlock({ code, language = "text", title }: { code: string; language?: string; title?: string }) {
+export function DocsCodeBlock({ code, title }: { code: string; language?: string; title?: string }) {
   const [isCopied, setIsCopied] = useState(false);
   const { showToast } = useToast();
 
@@ -14,7 +14,7 @@ export function DocsCodeBlock({ code, language = "text", title }: { code: string
       setIsCopied(true);
       showToast("Đã copy", "success");
       setTimeout(() => setIsCopied(false), 3000);
-    } catch (err) {
+    } catch {
       showToast("Không thể copy. Vui lòng thử lại.", "error");
     }
   };

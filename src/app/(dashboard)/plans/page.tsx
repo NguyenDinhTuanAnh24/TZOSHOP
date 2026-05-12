@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
-import { buttonStyles } from "@/lib/ui-styles";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -12,21 +11,18 @@ import {
   Clock3, 
   KeyRound, 
   ArrowUpDown, 
-  Filter, 
-  CheckCircle2, 
   ChevronDown, 
   ChevronUp,
   Sparkles,
   Search,
-  ChevronRight,
   RefreshCw,
   XCircle,
-  Plus
+  TicketPercent
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
-import Skeleton from "react-loading-skeleton";
 import { CardListSkeleton } from "@/components/ui/page-skeleton";
 import DashboardSubNav from "@/components/dashboard/dashboard-sub-nav";
+import { cn } from "@/lib/utils";
 
 type ApiPlan = {
   id: string;
@@ -137,6 +133,27 @@ function PlansPageContent() {
   const searchParams = useSearchParams();
   const [hasHandledProductQuery, setHasHandledProductQuery] = useState(false);
 
+  const [couponCode, setCouponCode] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponData, setCouponData] = useState<{
+    valid: boolean;
+    discountAmount: number;
+    finalAmount: number;
+    message?: string;
+    code?: string;
+  } | null>(null);
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+  type UserCoupon = {
+    id: string;
+    code: string;
+    name: string;
+    discountPercent: number;
+    minOrderAmount: number;
+  };
+
+  const [myCoupons, setMyCoupons] = useState<UserCoupon[]>([]);
+  const [isLoadingCoupons, setIsLoadingCoupons] = useState(false);
+
   const loadPlans = useCallback(async () => {
     try {
       setIsLoadingPlans(true);
@@ -145,7 +162,7 @@ function PlansPageContent() {
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error?.message ?? "Lỗi tải gói credits.");
       setPlans(data.data ?? []);
-    } catch (error) {
+    } catch {
       setPlansError("Không thể tải danh sách gói credits.");
     } finally {
       setIsLoadingPlans(false);
@@ -153,7 +170,10 @@ function PlansPageContent() {
   }, []);
 
   useEffect(() => {
-    loadPlans();
+    const timer = window.setTimeout(() => {
+      void loadPlans();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadPlans]);
 
   // Xử lý query param product từ trang pricing công cộng
@@ -166,16 +186,20 @@ function PlansPageContent() {
     const targetPlan = plans.find((p) => p.id === productIdFromPricing);
     if (!targetPlan) return;
 
-    // Chuyển sang tab family tương ứng
-    setSelectedFamily(getFamilyLabel(targetPlan.apiFamily));
-    
-    // Mở modal xác nhận mua
-    setSelectedPlanToBuy(targetPlan);
-    setIsConfirmBuyOpen(true);
-    
-    // Đánh dấu đã xử lý
-    setHasHandledProductQuery(true);
-  }, [hasHandledProductQuery, isLoadingPlans, plans, searchParams, setSelectedFamily]);
+    const timer = window.setTimeout(() => {
+      // Chuyển sang tab family tương ứng
+      setSelectedFamily(getFamilyLabel(targetPlan.apiFamily));
+      
+      // Mở modal xác nhận mua
+      setSelectedPlanToBuy(targetPlan);
+      setIsConfirmBuyOpen(true);
+      
+      // Đánh dấu đã xử lý
+      setHasHandledProductQuery(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [hasHandledProductQuery, isLoadingPlans, plans, searchParams]);
 
   const filteredPlans = useMemo(() => {
     return plans.filter((plan) => {
@@ -220,8 +244,86 @@ function PlansPageContent() {
       return;
     }
     setSelectedPlanToBuy(plan);
+    setCouponCode("");
+    setCouponData(null);
     setIsConfirmBuyOpen(true);
   }
+
+  const handleValidateCoupon = useCallback(async () => {
+    if (!couponCode || !selectedPlanToBuy || isValidatingCoupon) return;
+
+    try {
+      setIsValidatingCoupon(true);
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode,
+          productId: selectedPlanToBuy.id
+        })
+      });
+      type CouponValidateResponse = {
+        valid?: boolean;
+        message?: string;
+        code?: string;
+        discountPercent?: number;
+        originalAmount?: number;
+        discountAmount?: number;
+        finalAmount?: number;
+      };
+
+      const result = (await res.json()) as CouponValidateResponse;
+      setCouponData({
+        valid: !!result.valid,
+        discountAmount: result.discountAmount || 0,
+        finalAmount: result.finalAmount || 0,
+        message: result.message,
+        code: result.code
+      });
+      if (result.valid) {
+        showToast("Áp dụng mã giảm giá thành công!", "success");
+      } else {
+        showToast(result.message || "Mã giảm giá không hợp lệ.", "error");
+      }
+    } catch {
+      showToast("Lỗi kiểm tra mã giảm giá.", "error");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  }, [couponCode, selectedPlanToBuy, isValidatingCoupon, showToast]);
+
+  async function loadMyCoupons() {
+    try {
+      setIsLoadingCoupons(true);
+      const res = await fetch("/api/coupons/my");
+      const result = await res.json();
+      if (result.success) {
+        setMyCoupons(result.data.available);
+      }
+    } catch {
+      showToast("Không thể tải kho mã.", "error");
+    } finally {
+      setIsLoadingCoupons(false);
+    }
+  }
+
+  function handleSelectCoupon(code: string) {
+    setCouponCode(code);
+    setIsCouponModalOpen(false);
+    // Tự động validate sau khi chọn
+    // Cần dùng setTimeout hoặc useEffect để đảm bảo state updated
+  }
+
+  // Effect để tự động validate khi couponCode thay đổi từ modal chọn mã
+  useEffect(() => {
+    if (!couponCode || !isConfirmBuyOpen || couponData) return;
+
+    const timer = window.setTimeout(() => {
+      void handleValidateCoupon();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [couponCode, isConfirmBuyOpen, couponData, handleValidateCoupon]);
 
   async function handleConfirmBuyPlan() {
     if (!selectedPlanToBuy || isCreatingOrder) return;
@@ -236,6 +338,7 @@ function PlansPageContent() {
         },
         body: JSON.stringify({
           productId: selectedPlanToBuy.id,
+          couponCode: couponData?.valid ? couponData.code : undefined
         }),
       });
 
@@ -243,6 +346,20 @@ function PlansPageContent() {
 
       if (!response.ok) {
         throw new Error(result?.error?.message ?? "Cannot create order");
+      }
+
+      if (result.data?.freeOrder) {
+        showToast("Mua gói thành công! Gói đã được kích hoạt.", "success");
+        setIsConfirmBuyOpen(false);
+        setSelectedPlanToBuy(null);
+        
+        // Chuyển sang trang API keys với bucket mới
+        if (result.data.creditBucketId) {
+          router.push(`/api-keys?bucketId=${result.data.creditBucketId}`);
+        } else {
+          router.push("/my-plans");
+        }
+        return;
       }
 
       showToast("Đơn hàng đã được tạo.", "success");
@@ -443,23 +560,32 @@ function PlansPageContent() {
 
                   <div className="min-w-[420px] flex-1">
                     <div className="flex flex-wrap gap-2">
-                      {plan.allowedModels.slice(0, expandedModelPlans.includes(plan.id) ? undefined : DEFAULT_VISIBLE_MODELS).map((m) => (
-                        <span
-                          key={m}
-                          title={m}
-                          className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-[13px] font-semibold text-slate-700"
-                        >
-                          {m}
+                      {plan.allowedModels.length > 0 ? (
+                        <>
+                          {plan.allowedModels.slice(0, expandedModelPlans.includes(plan.id) ? undefined : DEFAULT_VISIBLE_MODELS).map((m) => (
+                            <span
+                              key={m}
+                              title={m}
+                              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-[13px] font-semibold text-slate-700"
+                            >
+                              {m}
+                            </span>
+                          ))}
+                          {plan.allowedModels.length > DEFAULT_VISIBLE_MODELS && (
+                            <button
+                              onClick={() => setExpandedModelPlans(prev => prev.includes(plan.id) ? prev.filter(id => id !== plan.id) : [...prev, plan.id])}
+                              className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-[13px] font-bold text-emerald-700"
+                            >
+                              <AppIcon icon={expandedModelPlans.includes(plan.id) ? ChevronUp : ChevronDown} className="h-3 w-3 mr-1" />
+                              {expandedModelPlans.includes(plan.id) ? "Thu gọn" : `+${plan.allowedModels.length - DEFAULT_VISIBLE_MODELS}`}
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-[13px] font-black text-amber-700">
+                          <AppIcon icon={Clock3} className="h-3.5 w-3.5" />
+                          Đang cập nhật model...
                         </span>
-                      ))}
-                      {plan.allowedModels.length > DEFAULT_VISIBLE_MODELS && (
-                        <button
-                          onClick={() => setExpandedModelPlans(prev => prev.includes(plan.id) ? prev.filter(id => id !== plan.id) : [...prev, plan.id])}
-                          className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-[13px] font-bold text-emerald-700"
-                        >
-                          <AppIcon icon={expandedModelPlans.includes(plan.id) ? ChevronUp : ChevronDown} className="h-3 w-3 mr-1" />
-                          {expandedModelPlans.includes(plan.id) ? "Thu gọn" : `+${plan.allowedModels.length - DEFAULT_VISIBLE_MODELS}`}
-                        </button>
                       )}
                     </div>
                   </div>
@@ -468,12 +594,21 @@ function PlansPageContent() {
                     <p className="text-xl font-black text-slate-900">{isContactPlan(plan) ? "Liên hệ" : formatCurrency(plan.priceVnd)}</p>
                     <button 
                       onClick={() => handleChoosePlan(plan)} 
-                      className={btnPrimary}
+                      disabled={plan.allowedModels.length === 0 && !isContactPlan(plan)}
+                      className={cn(
+                        btnPrimary,
+                        plan.allowedModels.length === 0 && !isContactPlan(plan) && "opacity-50 cursor-not-allowed grayscale"
+                      )}
                     >
                       {isContactPlan(plan) ? (
                         <>
                           <AppIcon icon={Clock3} className="h-4 w-4" />
                           Liên hệ tư vấn
+                        </>
+                      ) : plan.allowedModels.length === 0 ? (
+                        <>
+                          <XCircle className="h-4 w-4" />
+                          Tạm ngưng
                         </>
                       ) : (
                         <>
@@ -538,7 +673,9 @@ function PlansPageContent() {
             </div>
 
             <p className="text-sm font-medium leading-6 text-slate-500">
-              Sau khi xác nhận, hệ thống sẽ tạo đơn hàng chờ thanh toán.
+              {couponData?.valid && couponData.finalAmount === 0 
+                ? "Bạn đang sử dụng mã giảm giá 100%. Gói credits sẽ được kích hoạt ngay lập tức." 
+                : "Sau khi xác nhận, hệ thống sẽ tạo đơn hàng chờ thanh toán."}
             </p>
 
             <div className="mt-6 space-y-3.5 rounded-3xl bg-slate-50 p-6 ring-1 ring-slate-100">
@@ -578,11 +715,64 @@ function PlansPageContent() {
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
-                <span className="text-sm font-black text-slate-600">Giá thanh toán</span>
-                <span className="text-2xl font-black text-emerald-600">
+                <span className="text-sm font-black text-slate-600">Giá gốc</span>
+                <span className={cn("text-lg font-black", couponData?.valid ? "text-slate-400 line-through" : "text-slate-900")}>
                   {formatCurrency(selectedPlanToBuy.priceVnd)}
                 </span>
               </div>
+
+              {couponData?.valid && (
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-black text-emerald-600">Giảm giá ({couponData.code})</span>
+                  <span className="text-lg font-black text-emerald-600">
+                    -{formatCurrency(couponData.discountAmount)}
+                  </span>
+                </div>
+              )}
+
+              <div className="mt-2 flex items-center justify-between gap-4 border-t border-dashed border-slate-200 pt-4">
+                <span className="text-base font-black text-slate-900">Tổng thanh toán</span>
+                <span className="text-2xl font-black text-emerald-600">
+                  {couponData?.valid && couponData.finalAmount === 0 
+                    ? "Miễn phí" 
+                    : formatCurrency(couponData?.valid ? couponData.finalAmount : selectedPlanToBuy.priceVnd)}
+                </span>
+              </div>
+            </div>
+
+            {/* Coupon Input */}
+            <div className="mt-6 space-y-3">
+              <label className="ml-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Mã giảm giá (nếu có)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text"
+                  placeholder="Nhập mã ưu đãi..."
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase());
+                    setCouponData(null);
+                  }}
+                  className={cn("w-full rounded-2xl border border-[#dfe5e1] bg-white px-5 py-3.5 text-sm font-bold text-[#0b0f0d] outline-none focus:border-[#00d4a4] focus:ring-1 focus:ring-[#00d4a4] transition-all placeholder:text-[#8a9690]", "h-11 text-sm font-black uppercase tracking-widest")}
+                />
+                <button
+                  type="button"
+                  onClick={handleValidateCoupon}
+                  disabled={!couponCode || isValidatingCoupon}
+                  className="rounded-2xl bg-slate-900 px-4 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all shrink-0"
+                >
+                  {isValidatingCoupon ? "..." : "ÁP DỤNG"}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCouponModalOpen(true);
+                  loadMyCoupons();
+                }}
+                className="text-[11px] font-black text-emerald-600 hover:text-emerald-700 transition-colors uppercase tracking-widest ml-1"
+              >
+                Chọn từ kho mã giảm giá của tôi →
+              </button>
             </div>
 
             <div className="mt-8 flex items-center justify-end gap-3">
@@ -607,12 +797,72 @@ function PlansPageContent() {
                 {isCreatingOrder ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Đang tạo...
+                    Đang xử lý...
                   </>
                 ) : (
-                  "Xác nhận mua"
+                  couponData?.valid && couponData.finalAmount === 0 ? "Nhận gói ngay" : "Xác nhận mua"
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* My Coupons Selection Modal */}
+      {isCouponModalOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[32px] bg-white p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                  <TicketPercent className="h-4 w-4" />
+                </div>
+                <h2 className="text-xl font-black text-slate-950 tracking-tight">
+                  Mã giảm giá của tôi
+                </h2>
+              </div>
+              <button 
+                onClick={() => setIsCouponModalOpen(false)}
+                className="rounded-full p-2 hover:bg-slate-100 transition-colors"
+              >
+                <XCircle className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="max-h-[400px] overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+              {isLoadingCoupons ? (
+                [1, 2, 3].map(i => <div key={i} className="h-24 w-full animate-pulse rounded-2xl bg-slate-50" />)
+              ) : myCoupons.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-sm font-bold text-slate-400">Bạn chưa có mã giảm giá nào.</p>
+                </div>
+              ) : (
+                myCoupons.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleSelectCoupon(c.code)}
+                    className="w-full text-left p-4 rounded-2xl border border-slate-100 bg-slate-50 hover:border-emerald-200 hover:bg-emerald-50 transition-all group"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black text-slate-900">{c.name}</p>
+                        <p className="text-xs font-black text-emerald-600 uppercase tracking-widest mt-0.5">{c.code}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-lg font-black text-emerald-600">-{c.discountPercent}%</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-slate-400">
+                        Đơn từ {formatCurrency(c.minOrderAmount)}
+                      </p>
+                      <span className="text-[10px] font-black text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        DÙNG NGAY →
+                      </span>
+                    </div>
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </div>

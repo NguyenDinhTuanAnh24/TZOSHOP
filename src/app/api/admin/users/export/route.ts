@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -23,6 +24,19 @@ type UserRow = {
   totalRevenueVnd: string;
 };
 
+interface UserWithRelations {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  lockedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  apiKeys: { id: string; isActive: boolean }[];
+  creditBuckets: { id: string; isActive: boolean; expiresAt: Date | null; creditsRemaining: bigint; creditsTotal: bigint }[];
+  orders: { id: string; amountVnd: number; status: string }[];
+}
+
 export async function GET(request: NextRequest) {
   try {
     await requireAdminUser();
@@ -32,7 +46,7 @@ export async function GET(request: NextRequest) {
     const roleFilter = searchParams.get("role");
     const statusFilter = searchParams.get("status");
 
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (q) {
       where.OR = [
@@ -42,7 +56,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (roleFilter && roleFilter !== "ALL") {
-      where.role = roleFilter;
+      where.role = roleFilter as import("@prisma/client").UserRole; // Cast as UserRole because role is an enum and we need to match searching string
     }
 
     if (statusFilter === "LOCKED") {
@@ -61,7 +75,7 @@ export async function GET(request: NextRequest) {
           where: { status: "PAID" },
         },
       },
-    });
+    }) as unknown as UserWithRelations[];
 
     const headers: CsvHeader<UserRow>[] = [
       { key: "userId", label: "User ID" },
@@ -80,32 +94,32 @@ export async function GET(request: NextRequest) {
       { key: "totalRevenueVnd", label: "Tổng doanh thu VND" },
     ];
 
-    const rows: UserRow[] = users.map((user: any) => {
-      const activeApiKeys = user.apiKeys.filter((k: any) => k.isActive).length;
+    const rows: UserRow[] = users.map((user) => {
+      const activeApiKeys = user.apiKeys.filter((k) => k.isActive).length;
       
       const now = new Date();
       const activeBuckets = user.creditBuckets.filter(
-        (b: any) => b.isActive && new Date(b.expiresAt) > now
+        (b) => b.isActive && (b.expiresAt === null || new Date(b.expiresAt) > now)
       ).length;
 
       const creditsRemaining = user.creditBuckets.reduce(
-        (sum: number, b: any) => sum + Number(b.creditsRemaining),
+        (sum, b) => sum + Number(b.creditsRemaining),
         0
       );
 
       const creditsUsed = user.creditBuckets.reduce(
-        (sum: number, b: any) => sum + (Number(b.creditsTotal) - Number(b.creditsRemaining)),
+        (sum, b) => sum + (Number(b.creditsTotal) - Number(b.creditsRemaining)),
         0
       );
 
       const totalRevenueVnd = user.orders.reduce(
-        (sum: number, o: any) => sum + Number(o.amountVnd),
+        (sum, o) => sum + Number(o.amountVnd),
         0
       );
 
       return {
         userId: user.id,
-        name: user.name,
+        name: user.name || "",
         email: user.email,
         role: user.role,
         status: user.lockedAt ? "LOCKED" : "ACTIVE",

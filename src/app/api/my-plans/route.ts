@@ -38,15 +38,70 @@ export async function GET() {
           },
           select: {
             id: true,
+            name: true,
+            keyPrefix: true,
+            encryptedKey: true,
+            isActive: true,
+            createdAt: true,
           },
         },
       },
     });
 
-    type BucketItem = (typeof buckets)[number];
+    const { decryptText } = await import("@/lib/crypto");
 
-    const data = buckets.map((bucket: BucketItem) => {
+    const activeModels = await prisma.aiModel.findMany({
+      where: { isActive: true },
+      select: {
+        publicName: true,
+        upstreamModel: true,
+        apiFamily: true,
+        inputCreditRate: true,
+        outputCreditRate: true,
+        isActive: true,
+      },
+    });
+    
+    const activeModelsMap = new Map(activeModels.map(m => [m.publicName, m]));
+
+    const data = buckets.map((bucket) => {
       const usedCredits = bucket.creditsTotal - bucket.creditsRemaining;
+
+      // Use product's allowedModels if available to reflect admin changes, fallback to bucket's own allowedModels
+      const baseAllowedModels = bucket.product?.allowedModels || bucket.allowedModels;
+
+      // Filter and map active models for the bucket
+      const activeAllowedModels = baseAllowedModels
+        .map(name => {
+          const model = activeModelsMap.get(name);
+          if (!model) return null;
+          return {
+            ...model,
+            inputCreditRate: model.inputCreditRate.toNumber(),
+            outputCreditRate: model.outputCreditRate.toNumber(),
+          };
+        })
+        .filter((m): m is NonNullable<typeof m> => !!m);
+
+      const apiKeys = bucket.apiKeys.map((ak) => {
+        let key = null;
+        if (ak.encryptedKey) {
+          try {
+            key = decryptText(ak.encryptedKey);
+          } catch (e) {
+            console.error("Failed to decrypt key in my-plans:", e);
+          }
+        }
+        return {
+          id: ak.id,
+          name: ak.name,
+          keyPrefix: ak.keyPrefix,
+          key: key,
+          maskedKey: key ? `${key.slice(0, 12)}...${key.slice(-6)}` : ak.keyPrefix,
+          isActive: ak.isActive,
+          createdAt: ak.createdAt
+        };
+      });
 
       return {
         id: bucket.id,
@@ -55,8 +110,9 @@ export async function GET() {
         creditsRemaining: bucket.creditsRemaining.toString(),
         usedCredits: usedCredits.toString(),
         apiKeyLimit: bucket.apiKeyLimit,
-        activeApiKeys: bucket.apiKeys.length,
-        allowedModels: bucket.allowedModels,
+        activeApiKeys: apiKeys.length,
+        apiKeys: apiKeys,
+        allowedModels: activeAllowedModels, // Detailed objects now
         allowedReasoning: bucket.allowedReasoning,
         startsAt: bucket.startsAt,
         expiresAt: bucket.expiresAt,
@@ -66,6 +122,7 @@ export async function GET() {
           ? {
               ...bucket.product,
               credits: bucket.product.credits.toString(),
+              allowedModels: bucket.product.allowedModels.filter(m => activeModelsMap.has(m)),
             }
           : null,
       };

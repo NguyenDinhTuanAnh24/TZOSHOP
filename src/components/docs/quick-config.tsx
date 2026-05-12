@@ -1,9 +1,9 @@
 "use client";
 
-import { Terminal, Zap, Key, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { DocsCopyButton } from "./copy-button";
 import { AppCard } from "@/components/ui/app-card";
-import { ui } from "@/lib/ui-tokens";
+
 
 interface QuickConfigProps {
   baseUrl: string;
@@ -58,6 +58,11 @@ export function DocsQuickConfig({ baseUrl }: QuickConfigProps) {
             <DocsCopyButton text="Authorization: Bearer YOUR_TZOSHOP_API_KEY" className="bg-white border border-slate-200 shadow-sm" />
           </div>
         </div>
+      </div>
+      <div className="mt-8 p-5 rounded-[24px] bg-emerald-50 border border-emerald-100/50">
+        <p className="text-sm font-bold text-emerald-800 leading-relaxed">
+          <span className="font-black">Lưu ý:</span> Tất cả model đều dùng chung endpoint OpenAI-compatible của TzoShop. Một số model có thể được TzoShop tự động chuyển tiếp sang endpoint nội bộ phù hợp, người dùng không cần cấu hình riêng.
+        </p>
       </div>
     </AppCard>
   );

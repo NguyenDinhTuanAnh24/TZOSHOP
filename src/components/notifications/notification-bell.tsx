@@ -3,14 +3,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { 
   Bell, 
-  CheckCheck, 
   ShoppingCart, 
   CreditCard, 
   LifeBuoy, 
   UserPlus, 
   Info, 
-  Circle,
-  X,
   ChevronRight,
   CheckCircle2,
   XCircle,
@@ -50,19 +47,20 @@ export function NotificationBell() {
     try {
       const res = await fetch("/api/notifications");
       const result = await res.json();
-      let allNotifications: Notification[] = (result.notifications || []).map((n: any) => ({
+      let allNotifications: Notification[] = (result.notifications || []).map((n: Notification) => ({
         ...n,
         isAlert: false,
       }));
-      let dbUnread: number = result.unreadCount || 0;
+      const dbUnread: number = result.unreadCount || 0;
 
       // Admin: fetch realtime alerts (separate from DB notifications)
-      if ((session?.user as any)?.role === "ADMIN") {
+      const user = session?.user as { role?: string } | undefined;
+      if (user?.role === "ADMIN") {
         try {
           const alertRes = await fetch("/api/admin/alerts");
           const alertData = await alertRes.json();
           if (alertData.success && alertData.alerts?.length > 0) {
-            const mappedAlerts: Notification[] = alertData.alerts.slice(0, 10).map((a: any) => ({
+            const mappedAlerts: Notification[] = alertData.alerts.slice(0, 10).map((a: Notification) => ({
               ...a,
               isRead: false,
               isAlert: true, // Mark as realtime alert — not in DB, no mark-read
@@ -87,9 +85,16 @@ export function NotificationBell() {
 
   // Initial fetch + polling
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    const timer = window.setTimeout(() => {
+      void fetchNotifications();
+    }, 0);
+    const interval = setInterval(() => {
+      void fetchNotifications();
+    }, 30000);
+    return () => {
+      window.clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, [fetchNotifications]);
 
   // Close on outside click

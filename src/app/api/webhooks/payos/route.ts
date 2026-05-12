@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
     
     // 1. Xác thực webhook từ PayOS
     const payos = getPayOSClient();
-    const webhookData = (payos as any).webhooks.verify(body);
+    // @ts-expect-error payos client typing is incomplete
+    const webhookData = payos.verifyPaymentWebhookData(body);
 
     if (!webhookData) {
       return NextResponse.json({ success: false, message: "Sai chữ ký." }, { status: 400 });
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PayOS Webhook Error:", error);
     // Trả về 200 để PayOS dừng retry trừ khi có lỗi hạ tầng thực sự
     return NextResponse.json({ success: false, message: "Lỗi xử lý." }, { status: 200 });

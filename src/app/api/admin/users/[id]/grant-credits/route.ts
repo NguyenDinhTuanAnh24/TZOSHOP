@@ -23,7 +23,7 @@ export async function POST(
     }
 
     // Fetch product or use default
-    let apiFamily: any = "CODEXAI";
+    let apiFamily: import("@prisma/client").ApiFamily = "CODEXAI";
     if (productId) {
       const product = await prisma.product.findUnique({
         where: { id: productId },
@@ -45,7 +45,7 @@ export async function POST(
           apiFamily,
           creditsTotal: BigInt(credits),
           creditsRemaining: BigInt(credits),
-          expiresAt: expiresAt as any,
+          expiresAt,
           isActive: true
         }
       });
@@ -58,7 +58,7 @@ export async function POST(
       const balanceAfter = currentBuckets.reduce((sum, b) => sum + b.creditsRemaining, BigInt(0));
 
       // 3. Log to CreditLedger
-      await (tx as any).creditLedger.create({
+      await tx.creditLedger.create({
         data: {
           userId: id,
           amount: BigInt(credits),

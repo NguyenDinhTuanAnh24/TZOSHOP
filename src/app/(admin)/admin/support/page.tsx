@@ -1,31 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   LifeBuoy, 
   Search, 
-  Filter, 
-  CheckCircle2, 
   Clock, 
   AlertCircle,
-  Activity,
   MessageSquare,
   ChevronRight,
-  User,
-  Mail,
-  ArrowRight,
   Hash,
   ShoppingBag,
   Flag,
-  Tag,
   Save,
   RotateCcw
 } from "lucide-react";
-import { AppButton } from "@/components/ui/app-button";
 import { AppCard } from "@/components/ui/app-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ui } from "@/lib/ui-tokens";
+import { translateStatus } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
@@ -61,7 +54,7 @@ export default function AdminSupportPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [filterPriority, setFilterPriority] = useState("ALL");
-  const [filterCategory, setFilterCategory] = useState("ALL");
+  const [filterCategory] = useState("ALL");
 
   const [detailData, setDetailData] = useState({
     status: "",
@@ -70,7 +63,7 @@ export default function AdminSupportPage() {
 
   const { toast, showToast, clearToast } = useToast();
 
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/support");
@@ -83,22 +76,29 @@ export default function AdminSupportPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchTickets();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void fetchTickets();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchTickets]);
 
   const selectedTicket = tickets.find(t => t.id === selectedTicketId);
 
   useEffect(() => {
+    let timer: number;
     if (selectedTicket) {
-      setDetailData({
-        status: selectedTicket.status,
-        adminNotes: selectedTicket.adminNotes || ""
-      });
+      timer = window.setTimeout(() => {
+        setDetailData({
+          status: selectedTicket.status,
+          adminNotes: selectedTicket.adminNotes || ""
+        });
+      }, 0);
     }
-  }, [selectedTicketId]);
+    return () => window.clearTimeout(timer);
+  }, [selectedTicketId, selectedTicket]);
 
   const handleUpdateTicket = async () => {
     if (!selectedTicketId) return;
@@ -118,7 +118,7 @@ export default function AdminSupportPage() {
         showToast("Đã cập nhật ticket.", "success");
         fetchTickets();
       }
-    } catch (error) {
+    } catch {
       showToast("Không thể cập nhật.", "error");
     } finally {
       setIsUpdating(false);
@@ -154,8 +154,6 @@ export default function AdminSupportPage() {
       default: return null;
     }
   };
-
-  const categories = Array.from(new Set(tickets.map(t => t.category)));
 
   const filteredTickets = tickets.filter(t => {
     const matchesSearch = t.email.toLowerCase().includes(search.toLowerCase()) || 
@@ -336,7 +334,7 @@ export default function AdminSupportPage() {
                                'bg-white border-slate-200 text-slate-500'
                             )}>
                                {getPriorityIcon(selectedTicket.priority)}
-                               {selectedTicket.priority}
+                               {translateStatus(selectedTicket.priority)}
                             </div>
                          </div>
                       </div>

@@ -43,7 +43,7 @@ export async function completePaidOrder(orderId: string, paidAt: Date = new Date
         allowedModels: order.product.allowedModels,
         allowedReasoning: order.product.allowedReasoning,
         startsAt: paidAt,
-        expiresAt: expiresAt as any,
+        expiresAt: expiresAt,
         isActive: true,
       },
     });

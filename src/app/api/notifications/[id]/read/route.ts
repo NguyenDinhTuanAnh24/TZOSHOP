@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/server/current-user";
@@ -20,7 +21,7 @@ export async function PATCH(
     }
 
     const isAdmin = user.role === "ADMIN";
-    const where: any = { id };
+    const where: Prisma.NotificationWhereInput = { id };
 
     if (!isAdmin) {
       where.userId = user.id;

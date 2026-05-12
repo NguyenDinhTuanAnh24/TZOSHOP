@@ -4,9 +4,9 @@ import { requireAdminUser } from "@/lib/server/current-user";
 
 export const runtime = "nodejs";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const user = await requireAdminUser();
+    await requireAdminUser();
 
     const users = await prisma.user.findMany({
       where: {

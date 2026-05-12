@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, ElementType } from "react";
 import { 
   Activity, 
   Database, 
@@ -9,15 +9,11 @@ import {
   CheckCircle2, 
   XCircle, 
   Mail, 
-  Globe, 
-  Key, 
   RefreshCw, 
-  Clock, 
   Layers, 
   Zap, 
-  ArrowRight,
-  Settings,
   Cpu,
+  Globe,
   CreditCard
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
@@ -47,21 +43,111 @@ type SystemData = {
     googleOAuth: boolean;
     encryptionSecret: boolean;
   };
-  details?: {
-    database: StatusInfo;
-    payos: StatusInfo;
-    resend: StatusInfo;
-    googleAuth: StatusInfo;
-    keyEncryption: StatusInfo;
-  };
+  details?: Record<string, StatusInfo | undefined>;
   dbConnected: boolean;
   stats: {
     activeProviders: number;
     activeModels: number;
   };
-  recentOrders: any[];
-  recentUsage: any[];
+  recentOrders: {
+    id: string;
+    amountVnd: number;
+    updatedAt: string;
+    user: { email: string };
+    product: { name: string };
+  }[];
+  recentUsage: {
+    id: string;
+    model: string;
+    status: string;
+    createdAt: string;
+    user: { email: string };
+  }[];
 };
+
+type ConfigCardProps = {
+  title: string;
+  status: boolean;
+  icon: ElementType;
+  description: string;
+  detailKey: string;
+  details?: Record<string, StatusInfo | undefined>;
+  onSelect: (info: StatusInfo) => void;
+};
+
+function ConfigCard({
+  title,
+  status,
+  icon: Icon,
+  description,
+  detailKey,
+  details,
+  onSelect,
+}: ConfigCardProps) {
+  const detail = details?.[detailKey] ?? null;
+  const currentStatus = detail?.status || (status ? "CONFIGURED" : "MISSING");
+
+  return (
+    <AppCard
+      onClick={() => detail && onSelect(detail)}
+      className={cn(
+        "p-6 flex items-start gap-4 transition-all hover:border-[#00d4a4]/30 hover:shadow-lg cursor-pointer group",
+        !detail && "opacity-80"
+      )}
+    >
+      <div
+        className={cn(
+          "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110",
+          currentStatus === "CONFIGURED"
+            ? "bg-[#e7fff7] text-[#00d4a4]"
+            : currentStatus === "WARNING"
+            ? "bg-amber-50 text-amber-600"
+            : currentStatus === "ERROR"
+            ? "bg-rose-50 text-rose-600"
+            : "bg-amber-50 text-amber-600"
+        )}
+      >
+        <Icon className="h-6 w-6" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-sm font-black text-[#0b0f0d] truncate">{title}</h3>
+          {currentStatus === "CONFIGURED" ? (
+            <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" />
+          ) : currentStatus === "WARNING" || currentStatus === "MISSING" ? (
+            <ShieldAlert className="h-4 w-4 text-amber-500" />
+          ) : (
+            <XCircle className="h-4 w-4 text-rose-500" />
+          )}
+        </div>
+        <p className={cn(ui.pMuted, "text-[11px] mb-2")}>{description}</p>
+        <div className="flex items-center justify-between">
+          <StatusBadge
+            status={
+              currentStatus === "CONFIGURED"
+                ? "Đã cấu hình"
+                : currentStatus === "WARNING"
+                ? "Cần bổ sung"
+                : currentStatus === "ERROR"
+                ? "Lỗi kết nối"
+                : "Thiếu cấu hình"
+            }
+            variant={
+              currentStatus === "CONFIGURED"
+                ? "success"
+                : currentStatus === "ERROR"
+                ? "danger"
+                : "warning"
+            }
+          />
+          <span className="text-[9px] font-bold text-slate-400 group-hover:text-emerald-500 transition-colors uppercase tracking-tighter">
+            Chi tiết
+          </span>
+        </div>
+      </div>
+    </AppCard>
+  );
+}
 
 export default function AdminSystemPage() {
   const [data, setData] = useState<SystemData | null>(null);
@@ -70,11 +156,10 @@ export default function AdminSystemPage() {
   const [selectedConfig, setSelectedConfig] = useState<StatusInfo | null>(null);
   const { toast, showToast, clearToast } = useToast();
 
-  const fetchSystemStatus = async (showLoading = true) => {
+  const fetchSystemStatus = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setIsLoading(true);
       
-      // Fetch both stats and detailed status
       const [resSystem, resStatus] = await Promise.all([
         fetch("/api/admin/system"),
         fetch("/api/admin/system-status")
@@ -86,7 +171,7 @@ export default function AdminSystemPage() {
       ]);
 
       if (resultSystem.success) {
-        let combinedData = { ...resultSystem.data };
+        const combinedData = { ...resultSystem.data };
         if (resultStatus.success) {
           combinedData.details = resultStatus.data;
         }
@@ -95,13 +180,14 @@ export default function AdminSystemPage() {
         showToast(resultSystem.message || "Lỗi khi tải trạng thái", "error");
       }
     } catch (error) {
+      console.error("fetchSystemStatus failed:", error);
       showToast("Lỗi hệ thống", "error");
     } finally {
       if (showLoading) setIsLoading(false);
     }
-  };
+  }, [showToast]);
 
-  const fetchDetailedStatus = async () => {
+  const fetchDetailedStatus = useCallback(async () => {
     try {
       setIsChecking(true);
       const res = await fetch("/api/admin/system-status");
@@ -113,63 +199,19 @@ export default function AdminSystemPage() {
         showToast(result.message || "Lỗi khi kiểm tra", "error");
       }
     } catch (error) {
+      console.error("fetchDetailedStatus failed:", error);
       showToast("Lỗi khi kết nối API kiểm tra", "error");
     } finally {
       setIsChecking(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
-    fetchSystemStatus();
-  }, []);
-
-  const ConfigCard = ({ title, status, icon: Icon, description, detailKey }: any) => {
-    const detail = data?.details ? (data.details as any)[detailKey] : null;
-    const currentStatus = detail?.status || (status ? "CONFIGURED" : "MISSING");
-    
-    return (
-      <AppCard 
-        onClick={() => detail && setSelectedConfig(detail)}
-        className={cn(
-          "p-6 flex items-start gap-4 transition-all hover:border-[#00d4a4]/30 hover:shadow-lg cursor-pointer group",
-          !detail && "opacity-80"
-        )}
-      >
-        <div className={cn(
-          "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110",
-          currentStatus === "CONFIGURED" ? "bg-[#e7fff7] text-[#00d4a4]" : 
-          currentStatus === "WARNING" ? "bg-amber-50 text-amber-600" :
-          currentStatus === "ERROR" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600"
-        )}>
-          <Icon className="h-6 w-6" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm font-black text-[#0b0f0d] truncate">{title}</h3>
-            {currentStatus === "CONFIGURED" ? (
-              <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" />
-            ) : currentStatus === "WARNING" || currentStatus === "MISSING" ? (
-              <ShieldAlert className="h-4 w-4 text-amber-500" />
-            ) : (
-              <XCircle className="h-4 w-4 text-rose-500" />
-            )}
-          </div>
-          <p className={cn(ui.pMuted, "text-[11px] mb-2")}>{description}</p>
-          <div className="flex items-center justify-between">
-            <StatusBadge 
-              status={
-                currentStatus === "CONFIGURED" ? "Đã cấu hình" : 
-                currentStatus === "WARNING" ? "Cần bổ sung" :
-                currentStatus === "ERROR" ? "Lỗi kết nối" : "Thiếu cấu hình"
-              }
-              variant={currentStatus === "CONFIGURED" ? "success" : currentStatus === "ERROR" ? "danger" : "warning"}
-            />
-            <span className="text-[9px] font-bold text-slate-400 group-hover:text-emerald-500 transition-colors uppercase tracking-tighter">Chi tiết</span>
-          </div>
-        </div>
-      </AppCard>
-    );
-  };
+    const timer = window.setTimeout(() => {
+      void fetchSystemStatus();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchSystemStatus]);
 
   return (
     <div className="space-y-8 pb-12">
@@ -217,6 +259,8 @@ export default function AdminSystemPage() {
               icon={Database} 
               description="Kết nối cơ sở dữ liệu chính."
               detailKey="database"
+              details={data.details}
+              onSelect={setSelectedConfig}
             />
             <ConfigCard 
               title="Cổng thanh toán PayOS" 
@@ -224,6 +268,8 @@ export default function AdminSystemPage() {
               icon={CreditCard} 
               description="Thanh toán trực tuyến."
               detailKey="payos"
+              details={data.details}
+              onSelect={setSelectedConfig}
             />
             <ConfigCard 
               title="Dịch vụ Email" 
@@ -231,6 +277,8 @@ export default function AdminSystemPage() {
               icon={Mail} 
               description="Dịch vụ gửi thông báo (Resend)."
               detailKey="resend"
+              details={data.details}
+              onSelect={setSelectedConfig}
             />
             <ConfigCard 
               title="Đăng nhập Google" 
@@ -238,6 +286,8 @@ export default function AdminSystemPage() {
               icon={Globe} 
               description="Google OAuth Login."
               detailKey="googleAuth"
+              details={data.details}
+              onSelect={setSelectedConfig}
             />
             <ConfigCard 
               title="Mã hóa API Key" 
@@ -245,6 +295,8 @@ export default function AdminSystemPage() {
               icon={ShieldCheck} 
               description="Bảo mật dữ liệu nhạy cảm."
               detailKey="keyEncryption"
+              details={data.details}
+              onSelect={setSelectedConfig}
             />
           </div>
 

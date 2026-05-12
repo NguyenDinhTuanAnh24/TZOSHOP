@@ -11,6 +11,11 @@ enum UserRole {
   ADMIN
 }
 
+enum CouponScope {
+  GLOBAL
+  ASSIGNED
+}
+
 enum ApiFamily {
   CODEXAI
   CLAUDE
@@ -28,6 +33,11 @@ enum OrderStatus {
 enum ProviderStatus {
   ACTIVE
   DISABLED
+}
+
+enum UpstreamEndpointType {
+  CHAT_COMPLETIONS
+  RESPONSES
 }
 
 enum CreditLedgerType {
@@ -59,6 +69,11 @@ model User {
   auditLogs      AuditLog[]
   notifications  Notification[]
   lockedAt       DateTime?
+
+  couponAssignments CouponAssignment[] @relation("UserCouponAssignments")
+  couponRedemptions  CouponRedemption[] @relation("UserCouponRedemptions")
+  createdCoupons     Coupon[] @relation("CouponCreatedBy")
+  assignedCoupons    CouponAssignment[] @relation("CouponAssignedBy")
 }
 
 enum TicketStatus {
@@ -154,16 +169,89 @@ model Order {
   payosStatus        String?
   paymentExpiredAt   DateTime?
 
+  couponId       String?
+  couponCode     String?
+  discountAmount Int     @default(0)
+  originalAmount Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
 
+  couponRedemptions CouponRedemption[]
+
   @@index([userId])
   @@index([productId])
   @@index([status])
   @@index([createdAt])
+}
+
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  description     String?
+  discountPercent Int
+  minOrderAmount  Int      @default(0)
+  maxDiscountVnd   Int?
+  startsAt        DateTime?
+  endsAt          DateTime?
+  isActive        Boolean  @default(true)
+
+  // GLOBAL: user nào cũng có thể dùng nếu đủ điều kiện
+  // ASSIGNED: chỉ user được cấp mới dùng được
+  scope           CouponScope @default(GLOBAL)
+
+  usageLimitTotal Int?
+  usageLimitPerUser Int @default(1)
+
+  createdById     String?
+  createdBy       User?    @relation("CouponCreatedBy", fields: [createdById], references: [id])
+
+  assignments     CouponAssignment[]
+  redemptions      CouponRedemption[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model CouponAssignment {
+  id          String   @id @default(cuid())
+  couponId    String
+  userId      String
+  assignedById String?
+  usedAt      DateTime?
+
+  coupon      Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user        User     @relation("UserCouponAssignments", fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy  User?    @relation("CouponAssignedBy", fields: [assignedById], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  @@unique([couponId, userId])
+}
+
+model CouponRedemption {
+  id              String   @id @default(cuid())
+  couponId        String
+  userId          String
+  orderId         String?
+
+  originalAmount  Int
+  discountAmount  Int
+  finalAmount     Int
+
+  coupon          Coupon   @relation(fields: [couponId], references: [id])
+  user            User     @relation("UserCouponRedemptions", fields: [userId], references: [id])
+  order           Order?   @relation(fields: [orderId], references: [id])
+
+  createdAt       DateTime @default(now())
+
+  @@index([couponId])
+  @@index([userId])
+  @@index([orderId])
 }
 
 model CreditBucket {
@@ -258,6 +346,7 @@ model AiModel {
   upstreamModel    String
   inputCreditRate  Decimal   @default(1)
   outputCreditRate Decimal   @default(1)
+  upstreamEndpointType UpstreamEndpointType @default(CHAT_COMPLETIONS)
   isActive         Boolean   @default(true)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt

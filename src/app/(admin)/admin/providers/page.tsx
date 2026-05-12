@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   Server,
   Search,
   Plus,
   Edit,
-  Power,
-  PowerOff,
-  Key,
   Globe,
-  MoreHorizontal,
-  ChevronRight,
   ShieldCheck,
   Zap,
-  AlertCircle,
   Clock,
-  ShieldAlert,
-  Terminal,
-  Activity,
   Lock,
-  ExternalLink
+  Key
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
 import { AppCard } from "@/components/ui/app-card";
@@ -65,7 +56,7 @@ export default function AdminProvidersPage() {
   const { toast, showToast, clearToast } = useToast();
   const { confirmState, isConfirming, askConfirm, closeConfirm, handleConfirm } = useConfirm();
 
-  const fetchProviders = async () => {
+  const fetchProviders = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/providers");
@@ -76,11 +67,14 @@ export default function AdminProvidersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProviders();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchProviders();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchProviders]);
 
   const handleOpenModal = (provider?: AiProvider) => {
     if (provider) {
@@ -133,7 +127,7 @@ export default function AdminProvidersPage() {
       } else {
         showToast(result.error?.message || result.message || "Lỗi khi lưu.", "error");
       }
-    } catch (error) {
+    } catch {
       showToast("Lỗi hệ thống.", "error");
     }
   };
@@ -182,40 +176,41 @@ export default function AdminProvidersPage() {
         actions={
           <div className="flex items-center gap-6">
              <div className="text-right mr-4 hidden md:block">
-                <p className={ui.label}>Đang kết nối</p>
-                <p className="text-xl font-black text-[#00d4a4]">
+                <p className="text-xs font-black uppercase tracking-wider text-slate-500 mb-0.5">Đang kết nối</p>
+                <p className="text-2xl font-black text-[#00d4a4]">
                   {providers.filter(p => p.isActive).length} / {providers.length}
                 </p>
              </div>
              <AppButton 
                 onClick={() => handleOpenModal()}
                 variant="accent"
+                className="h-12 px-8 text-sm font-black"
              >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-5 w-5 mr-2" />
                 Thêm Provider
              </AppButton>
           </div>
         }
       />
 
-      <div className="flex items-center gap-4 bg-[#e7fff7] border border-[#00d4a4]/20 p-4 rounded-3xl">
-         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#00d4a4] shadow-sm">
-            <ShieldCheck className="h-5 w-5" />
+      <div className="flex items-center gap-5 bg-emerald-50/50 border border-emerald-200/50 p-5 rounded-[32px]">
+         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#00d4a4] shadow-sm border border-emerald-100">
+            <ShieldCheck className="h-6 w-6" />
          </div>
-         <p className={cn(ui.label, "lowercase first-letter:uppercase text-[#0b0f0d]")}>
+         <p className="text-sm font-semibold leading-6 text-slate-700">
             API key provider được mã hóa bằng AES-256 và không bao giờ hiển thị công khai trên giao diện người dùng.
          </p>
       </div>
 
       <AppCard className="p-8">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8a9690]" />
+        <div className="relative flex-1 max-w-xl">
+          <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Tìm theo tên provider hoặc API family..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className={cn(ui.input, "pl-12")}
+            className={cn(ui.input, "h-12 pl-14 text-base")}
           />
         </div>
       </AppCard>
@@ -224,14 +219,14 @@ export default function AdminProvidersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#fbfbf8] border-b border-[#edf1ee]">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Tên Provider</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Dòng AI</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Base URL / Endpoint</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">API Key (Đã ẩn)</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Trạng thái</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Cập nhật</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-right">Hành động</th>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Tên Provider</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500 text-center">Dòng AI</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Base URL / Endpoint</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500 text-center">API Key (Đã ẩn)</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500 text-center">Trạng thái</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Cập nhật</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500 text-center">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -248,29 +243,30 @@ export default function AdminProvidersPage() {
                 filteredProviders.map((provider) => (
                   <tr key={provider.id} className={`group transition-colors ${!provider.isActive ? "bg-[#fbfbf8] grayscale opacity-75" : "hover:bg-[#fbfbf8]"}`}>
                     <td className="px-8 py-6">
-                       <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fbfbf8] text-[#8a9690] group-hover:bg-white group-hover:text-[#00d4a4] transition-all shadow-sm ring-1 ring-[#edf1ee]">
-                             <Zap className="h-5 w-5" />
+                       <div className="flex items-center gap-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 group-hover:bg-white group-hover:text-[#00d4a4] transition-all shadow-sm ring-1 ring-slate-100">
+                             <Zap className="h-6 w-6" />
                           </div>
-                          <p className="text-sm font-black text-[#0b0f0d] group-hover:text-[#00d4a4] transition-colors">{provider.name}</p>
+                          <p className="text-base font-black text-slate-950 group-hover:text-[#00d4a4] transition-colors">{provider.name}</p>
                        </div>
                     </td>
                     <td className="px-8 py-6 text-center">
                        <StatusBadge 
                          status={provider.apiFamily} 
                          variant={provider.apiFamily === 'CODEXAI' ? 'success' : provider.apiFamily === 'CLAUDE' ? 'warning' : provider.apiFamily === 'GEMINI' ? 'info' : 'neutral'} 
+                         className="text-xs font-black px-3 py-1.5"
                        />
                     </td>
                     <td className="px-8 py-6 max-w-xs">
-                       <div className="flex items-center gap-2 text-[#8a9690]">
-                          <Globe className="h-3.5 w-3.5" />
-                          <p className="text-sm font-bold truncate">{provider.baseUrl}</p>
+                       <div className="flex items-center gap-2.5 text-slate-600">
+                          <Globe className="h-4 w-4 text-slate-400" />
+                          <p className="text-sm font-semibold truncate">{provider.baseUrl}</p>
                        </div>
                     </td>
                     <td className="px-8 py-6 text-center">
-                       <div className="flex items-center justify-center gap-2 text-[#8a9690] bg-[#fbfbf8] py-1.5 px-3 rounded-xl border border-[#edf1ee] group-hover:bg-white transition-all">
-                          <Lock className="h-3 w-3" />
-                          <code className="text-[10px] font-mono tracking-widest">{provider.encryptedApiKey}</code>
+                       <div className="flex items-center justify-center gap-2.5 text-slate-500 bg-slate-50 h-9 px-4 rounded-xl border border-slate-100 group-hover:bg-white transition-all">
+                          <Lock className="h-4 w-4 text-slate-400" />
+                          <code className="text-sm font-mono tracking-wider">{provider.encryptedApiKey}</code>
                        </div>
                     </td>
                     <td className="px-8 py-6 text-center">
@@ -283,24 +279,23 @@ export default function AdminProvidersPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                       <div className="flex items-center gap-2 text-[#8a9690]">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span className={cn(ui.pMuted, "text-[12px]")}>
+                       <div className="flex items-center gap-2.5 text-slate-500">
+                          <Clock className="h-4 w-4 text-slate-400" />
+                          <span className="text-sm font-semibold">
                              {format(new Date(provider.updatedAt), "HH:mm dd/MM", { locale: vi })}
                           </span>
                        </div>
                     </td>
-                    <td className="px-8 py-6 text-right">
-                        <div className="flex justify-end gap-2.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                          <AppButton 
+                    <td className="px-8 py-6 text-center">
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                             type="button"
                              onClick={() => handleOpenModal(provider)}
-                             variant="accent"
-                             size="sm"
-                             className="h-10 w-10 p-0"
                              title="Chỉnh sửa"
+                             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-all duration-150 ease-out hover:bg-slate-50 hover:text-slate-950 hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
                           >
-                             <Edit className="h-4 w-4" />
-                          </AppButton>
+                             <Edit className="h-5 w-5 shrink-0" />
+                          </button>
                         </div>
                     </td>
                   </tr>

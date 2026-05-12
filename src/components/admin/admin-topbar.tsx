@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useConfirm } from "@/hooks/use-confirm";
 
 const routeConfigs: Record<string, { title: string; description: string }> = {

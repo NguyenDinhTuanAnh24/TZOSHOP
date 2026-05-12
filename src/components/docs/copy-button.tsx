@@ -16,7 +16,7 @@ export function DocsCopyButton({ text, className = "" }: { text: string; classNa
       setIsCopied(true);
       showToast("Đã copy", "success");
       setTimeout(() => setIsCopied(false), 3000);
-    } catch (err) {
+    } catch {
       showToast("Không thể copy. Vui lòng thử lại.", "error");
     }
   };

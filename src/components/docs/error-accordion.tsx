@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, AlertCircle, Info } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 interface ErrorItem {
   code: string;

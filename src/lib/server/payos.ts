@@ -39,7 +39,7 @@ export function assertPayOSConfigured() {
 }
 
 // Singleton để dùng chung (optional, nhưng export ANY để tránh lỗi type)
-export const payos = new Proxy({} as any, {
+export const payos = new Proxy({} as PayOS, {
   get: () => {
     throw new Error("Vui lòng dùng getPayOSClient() để khởi tạo instance.");
   }
