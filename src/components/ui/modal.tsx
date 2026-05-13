@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
-import { IconButton } from "./icon-button";
 
 type ModalProps = {
   open: boolean;
@@ -26,38 +25,26 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm">
-      <div
-        className={`w-full ${maxWidthClassName} overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl`}
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]">
+      <div className={`w-full max-w-[calc(100vw-2rem)] ${maxWidthClassName} max-h-[90vh] overflow-y-auto border-4 border-black bg-[#FFFDF5] shadow-[10px_10px_0px_0px_#000]`}>
+        <div className="flex items-center justify-between gap-4 border-b-4 border-black p-5">
           <div>
-            {title ? (
-              <h2 className="text-lg font-black text-slate-950">{title}</h2>
-            ) : null}
-
-            {description ? (
-              <p className="mt-1 text-sm text-slate-500">{description}</p>
-            ) : null}
+            {title ? <h2 className="text-xl font-black text-black md:text-2xl">{title}</h2> : null}
+            {description ? <p className="mt-1 text-sm font-bold text-black/70">{description}</p> : null}
           </div>
 
-          <IconButton
+          <button
             onClick={onClose}
             aria-label="Đóng"
-            variant="ghost"
-            className="h-10 w-10 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            className="inline-flex h-10 w-10 items-center justify-center border-4 border-black bg-white text-black shadow-[3px_3px_0px_0px_#000] transition-all duration-100 hover:bg-[#FFD93D] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             <X className="h-5 w-5" />
-          </IconButton>
+          </button>
         </div>
 
-        <div className="max-h-[80vh] overflow-y-auto px-6 py-5">{children}</div>
+        <div className="space-y-4 p-5 md:p-6">{children}</div>
 
-        {footer ? (
-          <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4">
-            {footer}
-          </div>
-        ) : null}
+        {footer ? <div className="flex flex-col-reverse gap-3 border-t-4 border-black p-5 sm:flex-row sm:justify-end">{footer}</div> : null}
       </div>
     </div>
   );

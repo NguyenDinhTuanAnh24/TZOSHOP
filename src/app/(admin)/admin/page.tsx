@@ -16,6 +16,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import AdminStatCard from "@/components/admin/admin-stat-card";
 import { formatVnd, translateStatus } from "@/lib/format";
 
 type AdminStats = {
@@ -120,56 +121,56 @@ export default function AdminOverviewPage() {
 
   const statCards = [
     {
-      label: "TỔNG NGƯỜI DÙNG",
+      label: "Tổng người dùng",
       value: (stats?.totalUsers || 0).toLocaleString(),
       desc: "Người dùng đã đăng ký",
       icon: Users,
       iconBg: "bg-[#93C5FD]",
     },
     {
-      label: "DOANH THU",
+      label: "Doanh thu",
       value: formatVnd(stats?.revenueVnd || 0),
       desc: "Tổng doanh thu đã thanh toán",
       icon: DollarSign,
       iconBg: "bg-[#C7F0D8]",
     },
     {
-      label: "ĐƠN CHỜ NẠP",
+      label: "Đơn chờ nạp",
       value: (stats?.pendingOrders || 0).toLocaleString(),
       desc: "Đơn hàng đang chờ xử lý",
       icon: ShoppingCart,
       iconBg: "bg-[#FFD93D]",
     },
     {
-      label: "TICKET ĐANG MỞ",
+      label: "Ticket đang mở",
       value: (stats?.openTickets || 0).toLocaleString(),
       desc: "Yêu cầu cần hỗ trợ",
       icon: LifeBuoy,
       iconBg: "bg-[#FF6B6B]",
     },
     {
-      label: "CREDITS ĐÃ BÁN",
+      label: "Credits đã bán",
       value: Number(stats?.creditsSold || 0).toLocaleString(),
       desc: "Credits đã cấp thành công",
       icon: Zap,
       iconBg: "bg-[#A78BFA]",
     },
     {
-      label: "API KEYS",
+      label: "API keys",
       value: (stats?.activeApiKeys || 0).toLocaleString(),
       desc: "API key đang hoạt động",
       icon: Key,
       iconBg: "bg-[#E9E1D0]",
     },
     {
-      label: "MODELS",
+      label: "Models",
       value: (stats?.activeModels || 0).toLocaleString(),
       desc: "Model đang được phục vụ",
       icon: Bot,
       iconBg: "bg-[#C084FC]",
     },
     {
-      label: "PROVIDERS",
+      label: "Providers",
       value: (stats?.activeProviders || 0).toLocaleString(),
       desc: "Nhà cung cấp đang hoạt động",
       icon: Server,
@@ -208,19 +209,14 @@ export default function AdminOverviewPage() {
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {statCards.map((card) => (
-          <article
+          <AdminStatCard
             key={card.label}
-            className="flex min-h-[150px] flex-col justify-between border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_#000] transition-all duration-100 ease-linear hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_#000]"
-          >
-            <div className={`flex h-12 w-12 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.iconBg}`}>
-              <card.icon className="h-6 w-6 text-black" />
-            </div>
-            <div className="mt-5">
-              <p className="text-xs font-black uppercase tracking-[0.08em] text-black/70">{card.label}</p>
-              <p className="mt-3 text-3xl font-black leading-none text-black md:text-4xl">{card.value}</p>
-              <p className="mt-3 break-words text-sm font-bold leading-snug text-black/70">{card.desc}</p>
-            </div>
-          </article>
+            label={card.label}
+            value={card.value}
+            description={card.desc}
+            icon={card.icon}
+            iconBgClass={card.iconBg}
+          />
         ))}
       </section>
 

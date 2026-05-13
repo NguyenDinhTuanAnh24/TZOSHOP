@@ -227,7 +227,7 @@ export default function HomePage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-[#FFFDF5] text-black">
+    <div className="min-h-screen overflow-x-clip bg-[#FFFDF5] text-black">
       <ScrollToTopOnLoad />
       <div className="w-full overflow-hidden border-y-4 border-black bg-[#FF6B6B]">
         <div className="animate-marquee-left flex w-max whitespace-nowrap py-3 [animation-duration:28s]">

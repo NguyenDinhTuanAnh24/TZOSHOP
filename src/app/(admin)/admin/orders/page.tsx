@@ -15,6 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { formatVnd } from "@/lib/format";
+import AdminStatCard from "@/components/admin/admin-stat-card";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
@@ -213,23 +214,20 @@ export default function AdminOrdersPage() {
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "TỔNG ĐƠN HÀNG", value: totalOrders, sub: "Tất cả đơn", bg: "bg-[#DBEAFE]", icon: ReceiptText },
-          { label: "ĐÃ THANH TOÁN", value: paidOrders, sub: "Đơn hàng đã thanh toán", bg: "bg-[#C7F0D8]", icon: CheckCircle2 },
-          { label: "CHỜ THANH TOÁN", value: pendingOrders, sub: "Đơn hàng đang chờ thanh toán", bg: "bg-[#FFD93D]", icon: CreditCard },
-          { label: "ĐÃ HỦY / HẾT HẠN", value: cancelledExpired, sub: "Đơn hàng đã hủy hoặc hết hạn", bg: "bg-[#FF6B6B]", icon: XCircle },
+          { label: "Tổng đơn hàng", value: totalOrders, sub: "Tất cả đơn mua credits", bg: "bg-[#DBEAFE]", icon: ReceiptText },
+          { label: "Đã thanh toán", value: paidOrders, sub: "Đơn hàng đã thanh toán", bg: "bg-[#C7F0D8]", icon: CheckCircle2 },
+          { label: "Chờ thanh toán", value: pendingOrders, sub: "Đơn hàng đang chờ thanh toán", bg: "bg-[#FFD93D]", icon: CreditCard },
+          { label: "Đã hủy / Hết hạn", value: cancelledExpired, sub: "Đơn hàng đã hủy hoặc hết hạn", bg: "bg-[#FF6B6B]", icon: XCircle },
         ].map((card) => (
-          <article key={card.label} className="min-h-[110px] border-4 border-black bg-[#FFFDF5] p-4 shadow-[5px_5px_0px_0px_#000]">
-            <div className="flex items-center gap-4">
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.bg}`}>
-                <card.icon className="h-5 w-5 text-black" />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-black/60">{card.label}</p>
-                <p className="mt-1 text-2xl font-black leading-none text-black">{card.value.toLocaleString("vi-VN")}</p>
-                <p className="mt-1 text-sm font-bold text-black/60">{card.sub}</p>
-              </div>
-            </div>
-          </article>
+          <AdminStatCard
+            key={card.label}
+            label={card.label}
+            value={card.value.toLocaleString("vi-VN")}
+            description={card.sub}
+            icon={card.icon}
+            iconBgClass={card.bg}
+            mini
+          />
         ))}
       </section>
 

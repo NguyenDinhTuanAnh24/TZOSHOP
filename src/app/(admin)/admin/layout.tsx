@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 import AdminTopbar from "@/components/admin/admin-topbar";
@@ -37,7 +39,7 @@ export default function AdminLayout({
 
       <div
         className={[
-          "flex min-h-screen flex-1 flex-col transition-[padding] duration-200 ease-linear",
+          "flex min-h-screen min-w-0 flex-1 flex-col transition-[padding] duration-200 ease-linear",
           collapsed ? "lg:pl-[88px]" : "lg:pl-[260px]",
         ].join(" ")}
       >
@@ -51,17 +53,17 @@ export default function AdminLayout({
         </div>
 
         <header className="sticky top-0 z-40 flex h-20 items-center justify-between border-b-4 border-black bg-[#FFFDF5] px-4 lg:hidden">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center border-4 border-black bg-[#FFD93D] shadow-[3px_3px_0px_0px_#000]">
-              <span className="text-sm font-black text-black">TZ</span>
-            </div>
-            <span className="text-sm font-black uppercase tracking-[0.12em] text-black">Admin</span>
+          <div className="flex items-center gap-3">
+            <Link href="/admin" aria-label="TzoShop Admin Panel" title="TzoShop Admin Panel" className="inline-flex items-center justify-center">
+              <Image src="/logo.png" alt="TzoShop" width={36} height={36} className="h-9 w-9 object-contain" priority />
+            </Link>
+            <span className="text-base font-black uppercase tracking-[0.1em] text-black">Admin</span>
           </div>
           <AdminMobileNav />
         </header>
 
-        <main className="flex-1 px-4 pb-5 pt-4 md:px-6 md:pb-6 md:pt-5 lg:px-8 lg:pb-8 lg:pt-24">
-          <div className="mx-auto w-full">{children}</div>
+        <main className="min-w-0 flex-1 px-4 pb-5 pt-4 md:px-6 md:pb-6 md:pt-5 lg:px-8 lg:pb-8 lg:pt-24">
+          <div className="mx-auto w-full min-w-0 max-w-full">{children}</div>
         </main>
       </div>
     </div>

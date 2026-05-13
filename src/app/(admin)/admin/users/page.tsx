@@ -24,6 +24,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
+import AdminStatCard from "@/components/admin/admin-stat-card";
 import { Modal } from "@/components/ui/modal";
 import { ui } from "@/lib/ui-tokens";
 import { cn } from "@/lib/utils";
@@ -287,10 +288,10 @@ export default function AdminUsersPage() {
   const totalCreditsRemaining = users.reduce((sum, u) => sum + Number(u.totalCredits), 0);
 
   const summaryCards = [
-    { label: "TỔNG KHÁCH HÀNG", value: totalUsers.toLocaleString("vi-VN"), sub: "Tài khoản", icon: Users, bg: "bg-[#FFD93D]" },
-    { label: "ADMIN", value: totalAdmins.toLocaleString("vi-VN"), sub: "Quản trị viên", icon: Shield, bg: "bg-[#C7F0D8]" },
-    { label: "USER THƯỜNG", value: totalNormalUsers.toLocaleString("vi-VN"), sub: "Người dùng", icon: User, bg: "bg-[#93C5FD]" },
-    { label: "CREDITS CÒN LẠI", value: new Intl.NumberFormat("vi-VN").format(totalCreditsRemaining), sub: "Tổng số dư", icon: Wallet, bg: "bg-[#A78BFA]" },
+    { label: "Tổng khách hàng", value: totalUsers.toLocaleString("vi-VN"), sub: "Tài khoản", icon: Users, bg: "bg-[#FFD93D]" },
+    { label: "Admin", value: totalAdmins.toLocaleString("vi-VN"), sub: "Quản trị viên", icon: Shield, bg: "bg-[#C7F0D8]" },
+    { label: "User thường", value: totalNormalUsers.toLocaleString("vi-VN"), sub: "Người dùng", icon: User, bg: "bg-[#93C5FD]" },
+    { label: "Credits còn lại", value: new Intl.NumberFormat("vi-VN").format(totalCreditsRemaining), sub: "Tổng số dư", icon: Wallet, bg: "bg-[#A78BFA]" },
   ];
 
   const roleTabs = [
@@ -385,18 +386,15 @@ export default function AdminUsersPage() {
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => (
-          <article key={card.label} className="min-h-[110px] border-4 border-black bg-[#FFFDF5] p-4 shadow-[5px_5px_0px_0px_#000]">
-            <div className="flex items-center gap-4">
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.bg}`}>
-                <card.icon className="h-5 w-5 text-black" />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-black/60">{card.label}</p>
-                <p className="mt-1 text-2xl font-black leading-none text-black">{card.value}</p>
-                <p className="mt-1 text-sm font-bold text-black/60">{card.sub}</p>
-              </div>
-            </div>
-          </article>
+          <AdminStatCard
+            key={card.label}
+            label={card.label}
+            value={card.value}
+            description={card.sub}
+            icon={card.icon}
+            iconBgClass={card.bg}
+            mini
+          />
         ))}
       </section>
 
@@ -435,7 +433,7 @@ export default function AdminUsersPage() {
         </section>
       ) : (
         <>
-          <section className="hidden overflow-hidden border-4 border-black bg-white shadow-[8px_8px_0px_0px_#000] lg:block">
+      <section className="min-w-0 hidden overflow-hidden border-4 border-black bg-white shadow-[8px_8px_0px_0px_#000] lg:block">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[980px] border-collapse text-left">
                 <thead>
@@ -550,7 +548,7 @@ export default function AdminUsersPage() {
             </div>
           </section>
 
-          <section className="grid gap-4 lg:hidden">
+          <section className="grid min-w-0 gap-4 lg:hidden">
             {filteredUsers.map((user) => {
               const isAdminAccount = normalizeRole(user.role) === "ADMIN";
               return (
@@ -633,8 +631,8 @@ function BrutalModalShell({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className={`max-h-[90vh] w-full overflow-y-auto border-4 border-black bg-[#FFFDF5] shadow-[10px_10px_0px_0px_#000] ${maxWidthClassName}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]">
+      <div className={`max-h-[90vh] w-full max-w-[calc(100vw-2rem)] overflow-y-auto border-4 border-black bg-[#FFFDF5] shadow-[10px_10px_0px_0px_#000] ${maxWidthClassName}`}>
         <div className="flex items-center justify-between gap-4 border-b-4 border-black px-5 py-4">
           <h2 className="text-xl font-black text-black md:text-2xl">{title}</h2>
           <button

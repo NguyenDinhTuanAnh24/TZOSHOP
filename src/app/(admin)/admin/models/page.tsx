@@ -430,7 +430,7 @@ export default function AdminModelsPage() {
         </div>
       </section>
 
-      <section className="hidden overflow-hidden border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
+      <section className="min-w-0 hidden overflow-hidden border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
         <div className="max-w-full overflow-x-auto">
           <table className="w-full min-w-[1100px] border-collapse text-left">
             <thead>
@@ -551,7 +551,7 @@ export default function AdminModelsPage() {
               <span className="font-black text-black">{Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredModels.length)}</span> trong tổng{" "}
               <span className="font-black text-black">{filteredModels.length}</span> models
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <AppButton
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={safeCurrentPage === 1}

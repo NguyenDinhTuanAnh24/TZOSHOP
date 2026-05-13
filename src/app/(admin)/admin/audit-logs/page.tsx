@@ -83,6 +83,10 @@ const SENSITIVE_KEYS = [
   "database_url",
   "resend_api_key",
   "payos_",
+  "openai",
+  "gemini",
+  "claude",
+  "deepseek",
 ];
 
 function mapAuditAction(action: string) {
@@ -215,7 +219,7 @@ export default function AuditLogsPage() {
   if (isLoading && logs.length === 0) return <AuditSkeleton />;
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 overflow-x-hidden pb-10">
       <section className="relative overflow-visible border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
         <div className="pointer-events-none absolute -right-3 -top-3 h-10 w-10 border-4 border-black bg-[#A78BFA]" />
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -324,7 +328,7 @@ export default function AuditLogsPage() {
         </div>
       </section>
 
-      <section className="hidden overflow-hidden border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
+      <section className="min-w-0 hidden overflow-hidden border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] border-collapse text-left">
             <thead>
@@ -507,4 +511,3 @@ export default function AuditLogsPage() {
     </div>
   );
 }
-

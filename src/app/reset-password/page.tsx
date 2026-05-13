@@ -62,9 +62,9 @@ function ResetPasswordForm() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f8f6] text-[#0b0f0d]">
-      <section className="flex min-h-screen items-center justify-center p-4 md:p-6">
-        <div className="grid min-h-[720px] w-full max-w-7xl overflow-hidden rounded-[36px] border border-[#dfe5e1] bg-white shadow-[0_24px_80px_rgba(11,15,13,0.12)] lg:grid-cols-[1fr_1fr]">
+    <main className="min-h-screen overflow-x-clip bg-[#f7f8f6] text-[#0b0f0d]">
+      <section className="flex min-h-screen items-center justify-center overflow-x-clip p-4 md:p-6">
+        <div className="grid min-h-[680px] w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-[24px] border border-[#dfe5e1] bg-white shadow-[0_24px_80px_rgba(11,15,13,0.12)] sm:max-w-7xl sm:rounded-[36px] lg:grid-cols-[1fr_1fr]">
           {/* Bên trái */}
           <div className="relative overflow-hidden bg-[linear-gradient(145deg,#064c3f_0%,#0b7a63_45%,#00b894_100%)] px-8 py-10 text-white md:px-14 md:py-14">
             <div className="relative z-10 flex h-full flex-col">

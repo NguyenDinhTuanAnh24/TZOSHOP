@@ -74,8 +74,8 @@ function RegisterForm() {
   };
 
   return (
-    <main className="auth-grid-pattern relative min-h-screen w-full overflow-x-hidden bg-[#FFFDF5] text-black">
-      <section className="relative min-h-screen px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+    <main className="auth-grid-pattern relative min-h-screen w-full overflow-x-clip bg-[#FFFDF5] text-black">
+      <section className="relative min-h-screen overflow-x-clip px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
         <div className="pointer-events-none absolute -left-10 top-20 hidden h-20 w-20 rotate-12 border-4 border-black bg-[#FFD93D] md:block" />
         <div className="pointer-events-none absolute right-10 top-24 hidden h-16 w-16 -rotate-12 border-4 border-black bg-[#FF6B6B] md:block" />
         <div className="pointer-events-none absolute bottom-12 left-10 hidden h-14 w-14 -rotate-6 border-4 border-black bg-[#C4B5FD] shadow-[4px_4px_0px_0px_#000] animate-brutal-wiggle sm:block" />
@@ -96,7 +96,7 @@ function RegisterForm() {
         <Sparkles className="pointer-events-none absolute bottom-14 right-1/4 hidden h-8 w-8 text-black animate-brutal-wiggle sm:block" />
 
         <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] items-center justify-center">
-          <div className="grid w-full max-w-6xl overflow-hidden border-4 border-black bg-white shadow-[12px_12px_0px_0px_#000] animate-auth-pop-in lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="grid w-full max-w-[calc(100vw-2rem)] overflow-hidden border-4 border-black bg-white shadow-[12px_12px_0px_0px_#000] animate-auth-pop-in sm:max-w-6xl lg:grid-cols-[0.95fr_1.05fr]">
             <aside className="border-b-4 border-black bg-[#C4B5FD] p-6 lg:border-b-0 lg:border-r-4 lg:p-10">
               <div className="mb-8 flex flex-wrap items-center gap-3">
                 <Link
@@ -239,16 +239,6 @@ function RegisterForm() {
                   </svg>
                   ĐĂNG KÝ BẰNG GOOGLE
                 </button>
-
-                <p className="mt-6 text-center text-sm font-bold">
-                  ĐÃ CÓ TÀI KHOẢN?{" "}
-                  <Link
-                    href={`/login${searchParams.get("callbackUrl") ? `?callbackUrl=${encodeURIComponent(searchParams.get("callbackUrl")!)}` : ""}`}
-                    className="font-black uppercase underline underline-offset-4 transition-all duration-100 ease-linear hover:bg-[#FFD93D]"
-                  >
-                    ĐĂNG NHẬP
-                  </Link>
-                </p>
 
                 <p className="mt-6 border-4 border-black bg-[#FFD93D] px-3 py-2 text-center text-xs font-bold">
                   Bằng việc tạo tài khoản, bạn đồng ý sử dụng dịch vụ theo chính sách và điều khoản của TzoShop.

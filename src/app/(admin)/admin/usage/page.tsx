@@ -344,7 +344,7 @@ export default function AdminUsagePage() {
         </div>
       </section>
 
-      <section className="hidden overflow-hidden border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
+      <section className="min-w-0 hidden overflow-hidden border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
         <div className="max-w-full overflow-x-auto">
           <table className="w-full min-w-[1100px] border-collapse text-left">
             <thead>
@@ -394,7 +394,7 @@ export default function AdminUsagePage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-black text-black">{log.user?.name || "Không xác định"}</p>
-                          <p className="max-w-[220px] truncate text-xs font-bold text-black/60">{log.user?.email || "—"}</p>
+                          <p className="max-w-[220px] truncate text-xs font-bold text-black/60" title={log.user?.email || "—"}>{log.user?.email || "—"}</p>
                         </div>
                       </div>
                     </td>
@@ -402,7 +402,7 @@ export default function AdminUsagePage() {
                     <td className="px-4 py-4">
                       {log.apiKey ? (
                         <div className="space-y-1">
-                          <p className="text-xs font-black text-black">{log.apiKey.name}</p>
+                          <p className="max-w-[220px] truncate text-xs font-black text-black" title={log.apiKey.name}>{log.apiKey.name}</p>
                           <span className="inline-flex items-center gap-2 border-2 border-black bg-[#FFFDF5] px-3 py-1 font-mono text-xs font-bold text-black shadow-[2px_2px_0px_0px_#000]">
                             <Key className="h-3.5 w-3.5" />
                             {log.apiKey.keyPrefix}****

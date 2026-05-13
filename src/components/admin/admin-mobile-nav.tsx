@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -15,7 +16,6 @@ import {
   Package,
   ScrollText,
   ServerCog,
-  ShieldCheck,
   ShoppingCart,
   TicketPercent,
   Users,
@@ -103,8 +103,8 @@ export function AdminMobileNav() {
           <aside className="relative z-10 flex h-dvh w-[86vw] max-w-[320px] flex-col border-r-4 border-black bg-[#FFFDF5]">
             <div className="flex items-center justify-between border-b-4 border-black p-4">
               <div className="inline-flex items-center gap-2 border-4 border-black bg-[#FFD93D] px-3 py-2 shadow-[4px_4px_0px_0px_#000]">
-                <span className="flex h-8 w-8 items-center justify-center border-2 border-black bg-[#C7F0D8]">
-                  <ShieldCheck className="h-4 w-4 text-black" />
+                <span className="flex h-8 w-8 items-center justify-center border-2 border-black bg-white">
+                  <Image src="/logo.png" alt="TzoShop" width={24} height={24} className="h-6 w-6 object-contain" priority />
                 </span>
                 <span className="text-xs font-black uppercase tracking-[0.12em] text-black">Admin</span>
               </div>
@@ -165,4 +165,3 @@ export function AdminMobileNav() {
     </>
   );
 }
-

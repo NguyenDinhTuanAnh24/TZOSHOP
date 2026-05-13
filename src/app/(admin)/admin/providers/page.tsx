@@ -264,7 +264,7 @@ export default function AdminProvidersPage() {
         </div>
       </section>
 
-      <section className="flex items-start gap-4 border-4 border-black bg-[#C7F0D8] p-4 shadow-[6px_6px_0px_0px_#000] md:p-5">
+      <section className="flex min-w-0 items-start gap-4 border-4 border-black bg-[#C7F0D8] p-4 shadow-[6px_6px_0px_0px_#000] md:p-5">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center border-4 border-black bg-white shadow-[3px_3px_0px_0px_#000]">
           <ShieldCheck className="h-5 w-5 text-black" />
         </div>
@@ -350,7 +350,7 @@ export default function AdminProvidersPage() {
         </div>
       </section>
 
-      <section className="hidden overflow-hidden border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
+      <section className="min-w-0 hidden overflow-hidden border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
         <div className="max-w-full overflow-x-auto">
           <table className="w-full min-w-[1100px] border-collapse text-left">
             <thead>
@@ -393,7 +393,7 @@ export default function AdminProvidersPage() {
                         <div className={cn("h-10 w-10 shrink-0", familyIconBoxClass(provider.apiFamily))}>
                           <AiFamilyLogo family={provider.apiFamily} className="h-6 w-6 object-contain" />
                         </div>
-                        <p className="break-words text-base font-black text-black">{provider.name}</p>
+                        <p className="break-all text-base font-black text-black">{provider.name}</p>
                       </div>
                     </td>
 
@@ -406,7 +406,7 @@ export default function AdminProvidersPage() {
                     <td className="px-4 py-4">
                       <span
                         title={provider.baseUrl}
-                        className="inline-flex max-w-[280px] items-center gap-2 truncate border-2 border-black bg-[#FFFDF5] px-3 py-1.5 font-mono text-xs font-bold text-black shadow-[2px_2px_0px_0px_#000]"
+                        className="inline-flex max-w-[280px] min-w-0 items-center gap-2 truncate border-2 border-black bg-[#FFFDF5] px-3 py-1.5 font-mono text-xs font-bold text-black shadow-[2px_2px_0px_0px_#000]"
                       >
                         <Globe className="h-3.5 w-3.5" />
                         {provider.baseUrl}

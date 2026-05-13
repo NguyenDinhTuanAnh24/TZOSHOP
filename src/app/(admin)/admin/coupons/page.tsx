@@ -61,6 +61,85 @@ function scopeStyle(scope: Coupon["scope"]) {
   return "bg-[#C7F0D8]";
 }
 
+function CouponsSkeleton() {
+  return (
+    <div className="space-y-8 overflow-x-hidden">
+      <section className="border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
+        <div className="flex animate-pulse flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-14 w-14 border-4 border-black bg-[#E9E1D0]" />
+              <div className="h-6 w-28 border-2 border-black bg-[#E9E1D0]" />
+            </div>
+            <div className="h-10 w-72 max-w-full bg-[#E9E1D0]" />
+            <div className="h-4 w-[420px] max-w-full bg-[#E9E1D0]" />
+          </div>
+          <div className="h-12 w-36 border-4 border-black bg-[#E9E1D0]" />
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <article key={index} className="min-h-[150px] border-4 border-black bg-[#FFFDF5] p-5 shadow-[6px_6px_0px_0px_#000]">
+            <div className="h-full animate-pulse">
+              <div className="h-12 w-12 border-4 border-black bg-[#E9E1D0]" />
+              <div className="mt-5 h-3 w-28 bg-[#E9E1D0]" />
+              <div className="mt-3 h-9 w-20 bg-[#E9E1D0]" />
+              <div className="mt-3 h-4 w-36 bg-[#E9E1D0]" />
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="border-4 border-black bg-[#FFFDF5] p-4 shadow-[7px_7px_0px_0px_#000] md:p-5">
+        <div className="grid animate-pulse grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_190px_190px_auto]">
+          <div className="h-12 border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+          <div className="h-12 border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+          <div className="h-12 border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+          <div className="h-12 border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+        </div>
+      </section>
+
+      <section className="hidden overflow-hidden border-4 border-black bg-[#FFFDF5] p-4 shadow-[8px_8px_0px_0px_#000] lg:block md:p-5">
+        <div className="max-w-full overflow-x-auto">
+          <div className="min-w-[980px] animate-pulse space-y-3">
+            <div className="grid grid-cols-7 gap-3 border-b-4 border-black pb-4">
+              {Array.from({ length: 7 }).map((__, idx) => (
+                <div key={idx} className="h-4 bg-[#E9E1D0]" />
+              ))}
+            </div>
+            {Array.from({ length: 6 }).map((__, row) => (
+              <div key={row} className="grid grid-cols-7 gap-3 border-b-2 border-black/10 py-3">
+                <div className="h-8 w-40 bg-[#E9E1D0]" />
+                <div className="h-8 w-24 bg-[#E9E1D0]" />
+                <div className="h-8 w-36 bg-[#E9E1D0]" />
+                <div className="h-8 w-28 bg-[#E9E1D0]" />
+                <div className="h-8 w-24 bg-[#E9E1D0]" />
+                <div className="h-8 w-28 bg-[#E9E1D0]" />
+                <div className="h-10 w-24 bg-[#E9E1D0]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:hidden">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <article key={index} className="space-y-4 border-4 border-black bg-[#FFFDF5] p-4 shadow-[6px_6px_0px_0px_#000]">
+            <div className="h-8 w-36 animate-pulse bg-[#E9E1D0]" />
+            <div className="h-5 w-40 animate-pulse bg-[#E9E1D0]" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-16 border-2 border-black bg-[#E9E1D0]" />
+              <div className="h-16 border-2 border-black bg-[#E9E1D0]" />
+            </div>
+            <div className="h-10 w-24 border-2 border-black bg-[#E9E1D0]" />
+          </article>
+        ))}
+      </section>
+    </div>
+  );
+}
+
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -283,6 +362,10 @@ export default function AdminCouponsPage() {
 
   const brutalInput =
     "h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black placeholder:text-black/45 shadow-[3px_3px_0px_0px_#000] outline-none";
+
+  if (isLoading) {
+    return <CouponsSkeleton />;
+  }
 
   return (
     <div className="space-y-8 overflow-x-hidden">

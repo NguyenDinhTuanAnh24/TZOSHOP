@@ -55,6 +55,73 @@ function familyStyle(apiFamily: string) {
   return "bg-[#93C5FD]";
 }
 
+function ProductsSkeleton() {
+  return (
+    <div className="space-y-8 overflow-x-hidden">
+      <section className="border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
+        <div className="flex animate-pulse flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-14 w-14 border-4 border-black bg-[#E9E1D0]" />
+              <div className="h-6 w-28 border-2 border-black bg-[#E9E1D0]" />
+            </div>
+            <div className="h-10 w-72 max-w-full bg-[#E9E1D0]" />
+            <div className="h-4 w-[420px] max-w-full bg-[#E9E1D0]" />
+          </div>
+          <div className="h-12 w-36 border-4 border-black bg-[#E9E1D0]" />
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <article key={index} className="min-h-[150px] border-4 border-black bg-[#FFFDF5] p-5 shadow-[6px_6px_0px_0px_#000]">
+            <div className="h-full animate-pulse">
+              <div className="h-12 w-12 border-4 border-black bg-[#E9E1D0]" />
+              <div className="mt-5 h-3 w-28 bg-[#E9E1D0]" />
+              <div className="mt-3 h-9 w-20 bg-[#E9E1D0]" />
+              <div className="mt-3 h-4 w-36 bg-[#E9E1D0]" />
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="border-4 border-black bg-[#FFFDF5] p-4 shadow-[7px_7px_0px_0px_#000] md:p-5">
+        <div className="grid animate-pulse grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_180px_auto]">
+          <div className="h-12 border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+          <div className="h-12 border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+          <div className="h-12 border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+          <div className="h-12 border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+          <div className="h-12 w-full border-4 border-black bg-[#E9E1D0] shadow-[3px_3px_0px_0px_#000]" />
+        </div>
+      </section>
+
+      <section className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <article key={index} className="min-h-[280px] border-4 border-black bg-[#FFFDF5] p-5 shadow-[7px_7px_0px_0px_#000]">
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 w-12 border-4 border-black bg-[#E9E1D0]" />
+              <div className="h-6 w-44 bg-[#E9E1D0]" />
+              <div className="h-6 w-20 bg-[#E9E1D0]" />
+              <div className="h-20 border-2 border-black bg-[#E9E1D0]" />
+              <div className="h-20 border-2 border-black bg-[#E9E1D0]" />
+              <div className="h-11 border-4 border-black bg-[#E9E1D0]" />
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="flex animate-pulse flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="h-4 w-56 bg-[#E9E1D0]" />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="h-11 w-24 border-4 border-black bg-[#E9E1D0]" />
+          <div className="h-11 w-28 border-4 border-black bg-[#E9E1D0]" />
+          <div className="h-11 w-24 border-4 border-black bg-[#E9E1D0]" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [models, setModels] = useState<AiModel[]>([]);
@@ -352,6 +419,10 @@ export default function AdminProductsPage() {
   const brutalInput =
     "h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black placeholder:text-black/45 shadow-[3px_3px_0px_0px_#000] outline-none";
 
+  if (isLoading) {
+    return <ProductsSkeleton />;
+  }
+
   return (
     <div className="space-y-8 overflow-x-hidden">
       <section className="relative overflow-visible border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
@@ -596,7 +667,7 @@ export default function AdminProductsPage() {
                   <span className="text-right font-black">Hỗ trợ {p.allowedModels.length} model</span>
                 </div>
               </div>
-              <div className="mt-auto grid grid-cols-[1fr_auto] gap-3 pt-4">
+              <div className="mt-auto grid grid-cols-1 gap-3 pt-4 sm:grid-cols-[1fr_auto]">
                 <AppButton onClick={() => handleOpenModal(p)} variant="secondary" className="h-11 border-4 border-black bg-white font-black uppercase text-black shadow-[4px_4px_0px_0px_#000] hover:bg-[#FFD93D]">
                   <Pencil className="mr-2 h-4 w-4" />
                   SỬA
@@ -605,7 +676,7 @@ export default function AdminProductsPage() {
                   onClick={() => handleToggleActive(p.id, p.isActive)}
                   variant="secondary"
                   className={cn(
-                    "h-11 w-11 border-4 border-black p-0 font-black text-black shadow-[4px_4px_0px_0px_#000]",
+                    "h-11 w-full border-4 border-black p-0 font-black text-black shadow-[4px_4px_0px_0px_#000] sm:w-11",
                     p.isActive ? "bg-[#FF6B6B]" : "bg-[#C7F0D8]",
                   )}
                   title={p.isActive ? "Tắt gói" : "Bật gói"}

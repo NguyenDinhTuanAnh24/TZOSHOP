@@ -74,7 +74,7 @@ function SupportSkeleton() {
         <div className="h-8 w-64 animate-pulse bg-[#E9E1D0]" />
         <div className="mt-3 h-4 w-full max-w-[520px] animate-pulse bg-[#E9E1D0]" />
       </section>
-      <section className="grid min-h-[620px] grid-cols-1 gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <section className="grid min-h-[620px] min-w-0 grid-cols-1 gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
         <div className="border-4 border-black bg-[#FFFDF5] p-4 shadow-[7px_7px_0px_0px_#000]">
           <div className="h-14 animate-pulse bg-[#E9E1D0]" />
           <div className="mt-4 space-y-3">

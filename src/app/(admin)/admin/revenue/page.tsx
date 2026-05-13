@@ -20,6 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
+import AdminStatCard from "@/components/admin/admin-stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
@@ -168,28 +169,28 @@ export default function AdminRevenuePage() {
 
   const mainStats = [
     {
-      label: "TỔNG DOANH THU",
+      label: "Tổng doanh thu",
       value: formatVnd(data.summary.totalRevenueVnd),
       desc: "Toàn bộ thời gian",
       icon: Wallet,
       iconBg: "bg-[#FFD93D]",
     },
     {
-      label: "DOANH THU HÔM NAY",
+      label: "Doanh thu hôm nay",
       value: formatVnd(data.summary.todayRevenueVnd),
       desc: format(new Date(), "dd/MM").replace(/^/, "Ngày "),
       icon: DollarSign,
       iconBg: "bg-[#C7F0D8]",
     },
     {
-      label: "DOANH THU THÁNG NÀY",
+      label: "Doanh thu tháng này",
       value: formatVnd(data.summary.monthRevenueVnd),
       desc: format(new Date(), "MM/yyyy").replace(/^/, "Tháng "),
       icon: TrendingUp,
       iconBg: "bg-[#93C5FD]",
     },
     {
-      label: "GIÁ TRỊ ĐƠN TB",
+      label: "Giá trị đơn TB",
       value: formatVnd(data.summary.averageOrderValueVnd),
       desc: "Trung bình mỗi đơn đã thanh toán",
       icon: Target,
@@ -199,30 +200,30 @@ export default function AdminRevenuePage() {
 
   const miniStats = [
     {
-      label: "ĐƠN ĐÃ THANH TOÁN",
+      label: "Đơn đã thanh toán",
       value: `${formatNum(data.summary.paidOrders)} đơn`,
       sub: "Đơn hàng đã thanh toán",
       icon: ShoppingCart,
       iconBg: "bg-[#C7F0D8]",
     },
     {
-      label: "ĐƠN CHỜ THANH TOÁN",
+      label: "Chờ thanh toán",
       value: `${formatNum(data.summary.pendingOrders)} đơn`,
-      sub: "Đơn hàng đang chờ",
+      sub: "Đơn hàng đang chờ thanh toán",
       icon: Calendar,
       iconBg: "bg-[#FFD93D]",
     },
     {
-      label: "CREDITS ĐÃ BÁN",
-      value: `${formatNum(data.summary.creditsSold)} bán`,
+      label: "Credits đã bán",
+      value: formatNum(data.summary.creditsSold),
       sub: "Credits từ đơn đã thanh toán",
       icon: Zap,
       iconBg: "bg-[#C7F0D8]",
     },
     {
-      label: "CREDITS ĐÃ CẤP",
-      value: `${formatNum(data.summary.creditsGranted)} tổng`,
-      sub: "Credits đã cấp cho người dùng",
+      label: "Credits đã cấp",
+      value: formatNum(data.summary.creditsGranted),
+      sub: "Credits đã cộng vào tài khoản",
       icon: TrendingUp,
       iconBg: "bg-[#DBEAFE]",
     },
@@ -271,31 +272,28 @@ export default function AdminRevenuePage() {
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {mainStats.map((card) => (
-          <article key={card.label} className="relative flex min-h-[160px] flex-col justify-between overflow-hidden border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_#000]">
-            <div className={`flex h-12 w-12 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.iconBg}`}>
-              <card.icon className="h-6 w-6 text-black" />
-            </div>
-            <div className="mt-5">
-              <p className="text-xs font-black uppercase tracking-[0.08em] text-black/70">{card.label}</p>
-              <p className="mt-3 text-3xl font-black leading-none text-black md:text-4xl">{card.value}</p>
-              <p className="mt-3 break-words text-sm font-bold leading-snug text-black/70">{card.desc}</p>
-            </div>
-          </article>
+          <AdminStatCard
+            key={card.label}
+            label={card.label}
+            value={card.value}
+            description={card.desc}
+            icon={card.icon}
+            iconBgClass={card.iconBg}
+          />
         ))}
       </section>
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {miniStats.map((card) => (
-          <article key={card.label} className="flex min-h-[110px] items-center gap-4 border-4 border-black bg-[#FFFDF5] p-4 shadow-[5px_5px_0px_0px_#000]">
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.iconBg}`}>
-              <card.icon className="h-5 w-5 text-black" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.08em] text-black/70">{card.label}</p>
-              <p className="mt-3 text-3xl font-black leading-none text-black">{card.value}</p>
-              <p className="mt-3 break-words text-sm font-bold leading-snug text-black/70">{card.sub}</p>
-            </div>
-          </article>
+          <AdminStatCard
+            key={card.label}
+            label={card.label}
+            value={card.value}
+            description={card.sub}
+            icon={card.icon}
+            iconBgClass={card.iconBg}
+            mini
+          />
         ))}
       </section>
 
