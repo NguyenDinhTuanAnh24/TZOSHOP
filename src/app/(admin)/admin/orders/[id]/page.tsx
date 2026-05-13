@@ -66,13 +66,15 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
       setIsLoading(true);
       const res = await fetch(`/api/admin/orders/${params.id}`);
       const result = await res.json();
-      if (result.success) {
-        setOrder(result.data);
-      } else {
-        showToast(result.error?.message || "Không thể tải thông tin.", "error");
+      if (!res.ok || result?.success !== true || result?.data == null) {
+        setOrder(null);
+        showToast(result?.error?.message || "Khng th ti thng tin.", "error");
+        return;
       }
+      setOrder(result.data);
     } catch {
-      showToast("Lỗi kết nối.", "error");
+      setOrder(null);
+      showToast("Li kt ni.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +90,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
   const handleVerifyPayment = async () => {
     if (!order) return;
     try {
-      showToast("Đang kiểm tra với PayOS...", "info");
+      showToast("Đang kim tra vi PayOS...", "info");
       const res = await fetch(`/api/admin/orders/${order.id}/verify`, {
         method: "POST"
       });
@@ -100,13 +102,14 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
         showToast(result.message, "error");
       }
     } catch {
-      showToast("Lỗi khi gọi API kiểm tra.", "error");
+      setOrder(null);
+      showToast("Li kt ni.", "error");
     }
   };
 
   const handleManualApprove = async () => {
     if (!order) return;
-    if (!window.confirm("Bạn có chắc chắn muốn duyệt đơn hàng này thủ công? Hệ thống sẽ kích hoạt gói credits cho khách hàng ngay lập tức.")) return;
+    if (!window.confirm("Bạn c chắc chắn mun duyt ơn hng ny thủ cng? H thng sẽ kch hoạt gi credits cho khch hng ngay lập tức.")) return;
 
     try {
       const res = await fetch("/api/admin/orders", {
@@ -116,17 +119,18 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
       });
       const result = await res.json();
       if (result.success) {
-        showToast("Đã duyệt đơn hàng thành công.", "success");
+        showToast("Đ duyt ơn hng thnh cng.", "success");
         fetchOrder();
       }
     } catch {
-      showToast("Không thể duyệt đơn hàng.", "error");
+      setOrder(null);
+      showToast("Li kt ni.", "error");
     }
   };
 
   const handleCancelOrder = async () => {
     if (!order) return;
-    if (!window.confirm("Bạn có chắc chắn muốn HỦY đơn hàng này?")) return;
+    if (!window.confirm("Bạn c chắc chắn mun HỦY ơn hng ny?")) return;
 
     try {
       const res = await fetch("/api/admin/orders", {
@@ -136,11 +140,12 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
       });
       const result = await res.json();
       if (result.success) {
-        showToast("Đã hủy đơn hàng.", "success");
+        showToast("Đ hủy ơn hng.", "success");
         fetchOrder();
       }
     } catch {
-      showToast("Không thể hủy đơn hàng.", "error");
+      setOrder(null);
+      showToast("Li kt ni.", "error");
     }
   };
 
@@ -155,9 +160,9 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
   if (!order) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-2xl font-black text-slate-900">Không tìm thấy đơn hàng.</h2>
+        <h2 className="text-2xl font-black text-slate-900">Khng tm thấy ơn hng.</h2>
         <Link href="/admin/orders" className="mt-4 inline-flex text-emerald-600 font-bold hover:underline">
-          Quay lại danh sách
+          Quay lại danh sch
         </Link>
       </div>
     );
@@ -167,9 +172,9 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
 
 
   const statusConfig: Record<string, { label: string, color: string, bg: string, icon: React.ElementType }> = {
-    PAID: { label: "Đã thanh toán", color: "text-emerald-600", bg: "bg-emerald-50", icon: CheckCircle2 },
-    PENDING: { label: "Chờ thanh toán", color: "text-amber-600", bg: "bg-amber-50", icon: Clock },
-    CANCELLED: { label: "Đã hủy", color: "text-rose-600", bg: "bg-rose-50", icon: XCircle },
+    PAID: { label: "Đ thanh ton", color: "text-emerald-600", bg: "bg-emerald-50", icon: CheckCircle2 },
+    PENDING: { label: "Chờ thanh ton", color: "text-amber-600", bg: "bg-amber-50", icon: Clock },
+    CANCELLED: { label: "Đ hủy", color: "text-rose-600", bg: "bg-rose-50", icon: XCircle },
     EXPIRED: { label: "Hết hạn", color: "text-slate-500", bg: "bg-slate-100", icon: AlertCircle },
   };
 
@@ -189,11 +194,11 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-400">
               <Link href="/admin" className="hover:text-emerald-600">Admin</Link>
               <ChevronLeft className="h-3 w-3 rotate-180" />
-              <Link href="/admin/orders" className="hover:text-emerald-600">Đơn hàng</Link>
+              <Link href="/admin/orders" className="hover:text-emerald-600">Đơn hng</Link>
               <ChevronLeft className="h-3 w-3 rotate-180" />
               <span className="text-slate-900">Chi tiết</span>
            </div>
-           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Chi tiết đơn hàng #{order.orderCode}</h1>
+           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Chi tiết ơn hng #{order.orderCode}</h1>
         </div>
       </div>
 
@@ -204,7 +209,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
               <currentStatus.icon className="h-10 w-10" />
            </div>
            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Trạng thái hiện tại</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Trạng thi hin tại</p>
               <h2 className={`text-4xl font-black ${currentStatus.color} tracking-tight`}>{currentStatus.label}</h2>
            </div>
         </div>
@@ -215,7 +220,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                  onClick={handleCancelOrder}
                  className="flex items-center gap-2 rounded-full bg-white border border-rose-200 px-6 py-4 text-sm font-black text-rose-600 hover:bg-rose-50 transition-all shadow-sm active:scale-95"
                >
-                 <XCircle className="h-4 w-4" /> Hủy đơn
+                 <XCircle className="h-4 w-4" /> Hủy ơn
                </button>
                <button 
                   onClick={handleVerifyPayment}
@@ -227,13 +232,13 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                   onClick={handleManualApprove}
                   className="flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-4 text-sm font-black text-white hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 active:scale-95"
                 >
-                  <CheckCircle2 className="h-4 w-4" /> Duyệt thủ công
+                  <CheckCircle2 className="h-4 w-4" /> Duyt thủ cng
                 </button>
              </>
            )}
            {order.status === "PAID" && (
               <div className="text-right">
-                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Thanh toán lúc</p>
+                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Thanh ton lc</p>
                 <p className="text-sm font-black text-slate-900">
                   {order.paidAt ? format(new Date(order.paidAt), "HH:mm, dd/MM/yyyy") : 'N/A'}
                 </p>
@@ -253,7 +258,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                       <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
                         <Zap className="h-5 w-5" />
                       </div>
-                      <h3 className="text-xl font-black text-slate-900">Gói Credits đã kích hoạt</h3>
+                      <h3 className="text-xl font-black text-slate-900">Gi Credits ģ kch hoạt</h3>
                    </div>
                    {order.creditBucket?.isActive ? (
                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-700 ring-1 ring-emerald-500/20">Active</span>
@@ -264,24 +269,24 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                 {order.creditBucket ? (
                   <div className="grid gap-6 sm:grid-cols-3">
                     <div className="p-5 rounded-[32px] bg-white border border-emerald-100 shadow-sm">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đã cấp</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đ cấp</p>
                        <p className="text-xl font-black text-slate-900">{new Intl.NumberFormat('vi-VN').format(Number(order.creditBucket.creditsTotal))}</p>
                     </div>
                     <div className="p-5 rounded-[32px] bg-white border border-emerald-100 shadow-sm">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Còn lại</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cn lại</p>
                        <p className="text-xl font-black text-emerald-600">{new Intl.NumberFormat('vi-VN').format(Number(order.creditBucket.creditsRemaining))}</p>
                     </div>
                     <div className="p-5 rounded-[32px] bg-white border border-emerald-100 shadow-sm">
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hết hạn</p>
                        <p className="text-sm font-black text-slate-900">
-                         {order.creditBucket.expiresAt ? format(new Date(order.creditBucket.expiresAt), "dd/MM/yyyy HH:mm") : "Không thời hạn"}
+                         {order.creditBucket.expiresAt ? format(new Date(order.creditBucket.expiresAt), "dd/MM/yyyy HH:mm") : "Khng thời hạn"}
                        </p>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 p-6 rounded-[32px] bg-rose-50 border border-rose-100 text-rose-600">
                     <AlertCircle className="h-5 w-5" />
-                    <p className="text-sm font-bold">Đơn đã PAID nhưng chưa thấy bản ghi CreditBucket. Vui lòng kiểm tra lại Ledger.</p>
+                    <p className="text-sm font-bold">Đơn ģ PAID nhưng chưa thấy bản ghi CreditBucket. Vui lng kim tra lại Ledger.</p>
                   </div>
                 )}
              </section>
@@ -291,12 +296,12 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                  <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                    <Package className="h-5 w-5" />
                  </div>
-                 <h3 className="text-xl font-black text-slate-900">Thông tin sản phẩm</h3>
+                 <h3 className="text-xl font-black text-slate-900">Thng tin sản phẩm</h3>
               </div>
               <div className="grid gap-8 sm:grid-cols-2">
                  <div className="space-y-6">
                     <div>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tên sản phẩm</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tn sản phẩm</p>
                        <p className="text-lg font-black text-slate-900">{order.product.name}</p>
                        <span className="inline-flex mt-2 rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-black text-slate-600 tracking-widest uppercase">
                           {order.product.apiFamily}
@@ -310,7 +315,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                        <div className="p-4 rounded-3xl bg-slate-50 border border-slate-100">
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Thời hạn</p>
                           <p className="text-lg font-black text-slate-900">
-                            {order.product.durationDays && order.product.durationDays > 0 ? `${order.product.durationDays} ngày` : "Không giới hạn"}
+                            {order.product.durationDays && order.product.durationDays > 0 ? `${order.product.durationDays} ngy` : "Khng gii hạn"}
                           </p>
                        </div>
                     </div>
@@ -319,11 +324,11 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                     <div className="absolute top-0 right-0 p-12 opacity-10">
                        <Zap className="h-32 w-32" />
                     </div>
-                    <p className="text-[11px] font-black uppercase tracking-widest opacity-60 mb-2">Tổng thanh toán</p>
+                    <p className="text-[11px] font-black uppercase tracking-widest opacity-60 mb-2">Tng thanh ton</p>
                     <p className="text-4xl font-black">{formatVnd(order.amountVnd)}</p>
                     <div className="mt-6 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-[10px] font-black uppercase tracking-widest">
                        <CreditCard className="h-3.5 w-3.5" /> 
-                       PayOS / Chuyển khoản
+                       PayOS / Chuyn khoản
                     </div>
                  </div>
               </div>
@@ -334,13 +339,13 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                  <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
                    <Hash className="h-5 w-5" />
                  </div>
-                 <h3 className="text-xl font-black text-slate-900">Chi tiết giao dịch</h3>
+                 <h3 className="text-xl font-black text-slate-900">Chi tiết giao dch</h3>
               </div>
               <div className="grid gap-6 sm:grid-cols-2">
                  {[
-                   { label: "Mã đơn hàng hệ thống", val: `#${order.orderCode}` },
-                   { label: "Mã giao dịch PayOS", val: order.payosOrderCode || "N/A" },
-                   { label: "Ngày tạo đơn", val: format(new Date(order.createdAt), "dd/MM/yyyy HH:mm:ss") },
+                   { label: "M ơn hng h thng", val: `#${order.orderCode}` },
+                   { label: "M giao dch PayOS", val: order.payosOrderCode || "N/A" },
+                   { label: "Ngy tạo ơn", val: format(new Date(order.createdAt), "dd/MM/yyyy HH:mm:ss") },
                    { label: "ID Sản phẩm", val: order.product.id },
                  ].map((item, i) => (
                    <div key={i} className="flex flex-col gap-1">
@@ -353,14 +358,14 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                  <div className="mt-8 pt-8 border-t border-slate-100 flex items-center justify-between bg-slate-50 -mx-8 -mb-8 px-8 py-6 rounded-b-[40px]">
                     <div className="flex items-center gap-3">
                        <AlertCircle className="h-5 w-5 text-amber-500" />
-                       <p className="text-xs font-bold text-slate-600">Đơn hàng đang chờ thanh toán qua cổng PayOS.</p>
+                       <p className="text-xs font-bold text-slate-600">Đơn hng ang chờ thanh ton qua cng PayOS.</p>
                     </div>
                     <a 
                        href={order.payosCheckoutUrl} 
                        target="_blank" 
                        className="flex items-center gap-2 text-sm font-black text-blue-600 hover:underline"
                     >
-                       Mở trang thanh toán <ExternalLink className="h-4 w-4" />
+                       M trang thanh ton <ExternalLink className="h-4 w-4" />
                     </a>
                  </div>
               )}
@@ -374,7 +379,7 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                  <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                    <User className="h-5 w-5" />
                  </div>
-                 <h3 className="text-xl font-black text-slate-900">Khách hàng</h3>
+                 <h3 className="text-xl font-black text-slate-900">Khch hng</h3>
               </div>
               <div className="flex flex-col items-center text-center">
                  <div className="h-20 w-20 flex items-center justify-center rounded-[28px] bg-slate-100 text-slate-900 text-2xl font-black mb-4 ring-4 ring-slate-50 shadow-sm">
@@ -388,24 +393,24 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
                     href={`/admin/users/${order.user.id}`}
                     className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3 text-sm font-black text-white hover:bg-black transition-all active:scale-95 shadow-lg shadow-slate-200"
                  >
-                    Hồ sơ khách hàng <ArrowRight className="h-4 w-4" />
+                    H sơ khch hng <ArrowRight className="h-4 w-4" />
                  </Link>
               </div>
            </section>
 
            <section className={`${sectionCard} bg-slate-900 text-white border-none`}>
-              <h4 className="text-lg font-black mb-4">Ghi chú hệ thống</h4>
+              <h4 className="text-lg font-black mb-4">Ghi ch h thng</h4>
               <div className="space-y-4">
                  <div className="flex items-start gap-3">
                     <div className="h-2 w-2 rounded-full bg-emerald-500 mt-1.5" />
                     <p className="text-xs font-medium text-slate-400 leading-relaxed">
-                       Đơn hàng này được xử lý thông qua cổng thanh toán PayOS Việt Nam.
+                       Đơn hng ny ược xử l thng qua cng thanh ton PayOS Vit Nam.
                     </p>
                  </div>
                  <div className="flex items-start gap-3">
                     <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
                     <p className="text-xs font-medium text-slate-400 leading-relaxed">
-                       Khi chuyển trạng thái sang PAID, hệ thống sẽ tự động gửi email thông báo và tạo thông báo in-app cho khách hàng.
+                       Khi chuyn trạng thi sang PAID, h thng sẽ tự ng gửi email thng bo v tạo thng bo in-app cho khch hng.
                     </p>
                  </div>
               </div>
@@ -423,3 +428,5 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
     </div>
   );
 }
+
+

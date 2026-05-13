@@ -9,6 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
   try {
     await requireAdminUser();
 
@@ -21,39 +22,41 @@ export async function GET(
             name: true,
             email: true,
             role: true,
-          }
+          },
         },
         product: true,
-      }
+      },
     });
 
-    if (!order) {
+    // Only treat as not found when the record is truly missing.
+    // Never use amount/price to determine existence.
+    if (order == null) {
       return NextResponse.json(
-        { error: { message: "Không tìm thấy đơn hàng." } },
+        { success: false, error: { message: "Không tìm thấy đơn hàng." } },
         { status: 404 }
       );
     }
 
-    // Find if credits were granted
     const ledger = await prisma.creditLedger.findFirst({
       where: {
         referenceId: order.id,
-        type: "PURCHASE"
+        type: "PURCHASE",
       },
       include: {
-        creditBucket: true
-      }
+        creditBucket: true,
+      },
     });
 
-    // Convert BigInt to String
     const data = {
       ...order,
       payosOrderCode: order.payosOrderCode?.toString(),
-      creditBucket: ledger?.creditBucket ? {
-        ...ledger.creditBucket,
-        creditsTotal: ledger.creditBucket.creditsTotal.toString(),
-        creditsRemaining: ledger.creditBucket.creditsRemaining.toString(),
-      } : null,
+      creditBucket: ledger?.creditBucket
+        ? {
+            ...ledger.creditBucket,
+            creditsTotal: ledger.creditBucket.creditsTotal.toString(),
+            creditsRemaining: ledger.creditBucket.creditsRemaining.toString(),
+          }
+        : null,
     };
 
     const { createAuditLog } = await import("@/lib/server/audit-log");
@@ -61,18 +64,17 @@ export async function GET(
       action: "ADMIN_VIEW_ORDER_DETAIL",
       entityType: "ORDER",
       entityId: order.id,
-      metadata: { orderCode: order.orderCode }
+      metadata: { orderCode: order.orderCode },
     });
 
     return NextResponse.json({
       success: true,
-      data
+      data,
     });
-
   } catch (error) {
     console.error(`GET /api/admin/orders/${id} failed:`, error);
     return NextResponse.json(
-      { error: { message: "Lỗi hệ thống." } },
+      { success: false, error: { message: "Lỗi hệ thống." } },
       { status: 500 }
     );
   }

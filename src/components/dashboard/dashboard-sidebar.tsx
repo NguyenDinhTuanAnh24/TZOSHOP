@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import type { MouseEvent } from "react";
 import {
   BookOpenText,
   ChartNoAxesColumnIncreasing,
@@ -102,7 +103,10 @@ export default function DashboardSidebar({
   const pathname = usePathname();
   const { confirmState, isConfirming, askConfirm, closeConfirm, handleConfirm } = useConfirm();
 
-  const handleRequestLogout = () => {
+  const handleRequestLogout = (event?: MouseEvent<HTMLButtonElement>, mobile = false) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    if (mobile) onCloseMobile();
     askConfirm({
       title: "Đăng xuất tài khoản?",
       description: "Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng dashboard.",
@@ -187,7 +191,7 @@ export default function DashboardSidebar({
         <button
           type="button"
           title={collapsed && !mobile ? "Đăng xuất" : undefined}
-          onClick={handleRequestLogout}
+          onClick={(event) => handleRequestLogout(event, mobile)}
           className={`border-4 border-black bg-[#FF6B6B] font-black uppercase text-black shadow-[4px_4px_0px_0px_#000] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
             collapsed && !mobile ? "mx-auto flex h-11 w-11 items-center justify-center" : "flex h-11 w-full items-center justify-center gap-2"
           }`}

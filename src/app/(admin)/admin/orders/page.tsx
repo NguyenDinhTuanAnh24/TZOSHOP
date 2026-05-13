@@ -181,7 +181,7 @@ export default function AdminOrdersPage() {
   if (isLoading && orders.length === 0) return <OrdersSkeleton />;
 
   return (
-    <div className="space-y-8 overflow-x-hidden">
+    <div className="w-full max-w-full min-w-0 space-y-8 overflow-x-clip">
       <section className="relative overflow-visible border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
         <div className="pointer-events-none absolute -right-3 -top-3 h-10 w-10 border-4 border-black bg-[#A78BFA]" />
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -231,34 +231,34 @@ export default function AdminOrdersPage() {
         ))}
       </section>
 
-      <section className="space-y-4 border-4 border-black bg-white p-4 shadow-[7px_7px_0px_0px_#000] md:p-5">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Tìm mã đơn</label>
-            <div className="relative">
+      <section className="w-full max-w-full min-w-0 overflow-hidden border-4 border-black bg-[#FFFDF5] p-4 shadow-[6px_6px_0px_0px_#000] md:p-5">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_220px_180px_180px]">
+          <div className="min-w-0 max-w-full space-y-2">
+            <label className="mb-2 block break-words text-xs font-black uppercase tracking-[0.12em] text-black/60">Tìm mã đơn</label>
+            <div className="relative min-w-0 max-w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/45" />
               <input
                 type="text"
                 placeholder="Nhập mã đơn..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-12 w-full border-4 border-black bg-white pl-10 pr-4 text-sm font-bold text-black placeholder:text-black/45 shadow-[3px_3px_0px_0px_#000] outline-none"
+                className="h-12 w-full min-w-0 max-w-full border-4 border-black bg-white pl-10 pr-4 text-sm font-black text-black placeholder:text-black/40 shadow-[3px_3px_0px_0px_#000] outline-none"
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Email khách hàng</label>
+          <div className="min-w-0 max-w-full space-y-2">
+            <label className="mb-2 block break-words text-xs font-black uppercase tracking-[0.12em] text-black/60">Email khách hàng</label>
             <input
               type="text"
               placeholder="Nhập email khách..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
-              className="h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black placeholder:text-black/45 shadow-[3px_3px_0px_0px_#000] outline-none"
+              className="h-12 w-full min-w-0 max-w-full border-4 border-black bg-white px-4 text-sm font-black text-black placeholder:text-black/40 shadow-[3px_3px_0px_0px_#000] outline-none"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Trạng thái</label>
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black shadow-[3px_3px_0px_0px_#000] outline-none">
+          <div className="min-w-0 max-w-full space-y-2">
+            <label className="mb-2 block break-words text-xs font-black uppercase tracking-[0.12em] text-black/60">Trạng thái</label>
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="h-12 w-full min-w-0 max-w-full border-4 border-black bg-white px-4 text-sm font-black text-black shadow-[3px_3px_0px_0px_#000] outline-none">
               <option value="ALL">Tất cả trạng thái</option>
               <option value="PENDING">Chờ thanh toán</option>
               <option value="PAID">Đã thanh toán</option>
@@ -266,18 +266,22 @@ export default function AdminOrdersPage() {
               <option value="EXPIRED">Hết hạn</option>
             </select>
           </div>
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Từ ngày</label>
-            <input type="date" value={filterStartDate} onChange={(e) => setFilterStartDate(e.target.value)} className="h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black shadow-[3px_3px_0px_0px_#000] outline-none" />
+          <div className="min-w-0 max-w-full space-y-2">
+            <label className="mb-2 block break-words text-xs font-black uppercase tracking-[0.12em] text-black/60">Từ ngày</label>
+            <div className="min-w-0 max-w-full overflow-hidden">
+              <input type="date" value={filterStartDate} onChange={(e) => setFilterStartDate(e.target.value)} className="h-12 w-full min-w-0 max-w-full appearance-none border-4 border-black bg-white px-4 text-sm font-black text-black shadow-[3px_3px_0px_0px_#000] outline-none" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Đến ngày</label>
-            <input type="date" value={filterEndDate} onChange={(e) => setFilterEndDate(e.target.value)} className="h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black shadow-[3px_3px_0px_0px_#000] outline-none" />
+          <div className="min-w-0 max-w-full space-y-2">
+            <label className="mb-2 block break-words text-xs font-black uppercase tracking-[0.12em] text-black/60">Đến ngày</label>
+            <div className="min-w-0 max-w-full overflow-hidden">
+              <input type="date" value={filterEndDate} onChange={(e) => setFilterEndDate(e.target.value)} className="h-12 w-full min-w-0 max-w-full appearance-none border-4 border-black bg-white px-4 text-sm font-black text-black shadow-[3px_3px_0px_0px_#000] outline-none" />
+            </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-black/60">Đang hiển thị <span className="text-black">{filteredOrders.length}</span> đơn hàng</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="mt-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="min-w-0 break-words text-xs font-black uppercase tracking-[0.1em] text-black/70">Đang hiển thị <span className="text-black">{filteredOrders.length}</span> đơn hàng</p>
+          <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2">
             <button
               onClick={() => {
                 setSearch("");
@@ -286,11 +290,11 @@ export default function AdminOrdersPage() {
                 setFilterStartDate("");
                 setFilterEndDate("");
               }}
-              className="h-11 border-4 border-black bg-white px-4 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]"
+              className="h-12 w-full border-4 border-black bg-white px-4 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_#000] sm:w-auto"
             >
               Xóa lọc
             </button>
-            <button onClick={fetchOrders} className="h-11 border-4 border-black bg-[#C7F0D8] px-4 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]">
+            <button onClick={fetchOrders} className="h-12 w-full border-4 border-black bg-[#C7F0D8] px-4 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_#000] sm:w-auto">
               Làm mới
             </button>
           </div>
@@ -368,8 +372,8 @@ export default function AdminOrdersPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <p className="text-lg font-black text-black">{formatVnd(order.amountVnd || 0)}</p>
-                        {order.couponCode ? <p className="mt-1 text-xs font-black text-black/60">-{formatVnd(order.discountAmount || 0)}</p> : null}
+                        <p className="text-lg font-black text-black">{formatVnd(order.amountVnd ?? 0)}</p>
+                        {order.couponCode ? <p className="mt-1 text-xs font-black text-black/60">-{formatVnd(order.discountAmount ?? 0)}</p> : null}
                       </td>
                       <td className="px-4 py-4 text-center">
                         <span className={`inline-flex h-8 items-center border-2 border-black px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] ${statusBg(order.status)}`}>
@@ -407,30 +411,30 @@ export default function AdminOrdersPage() {
             </div>
           </section>
 
-          <section className="grid gap-4 lg:hidden">
+          <section className="grid w-full max-w-full min-w-0 gap-4 lg:hidden">
             {filteredOrders.map((order) => (
-              <article key={order.id} className="space-y-4 border-4 border-black bg-[#FFFDF5] p-4 shadow-[6px_6px_0px_0px_#000]">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="inline-flex border-2 border-black bg-white px-2 py-1 text-xs font-black text-black shadow-[2px_2px_0px_0px_#000]">#{order.orderCode}</div>
+              <article key={order.id} className="w-full max-w-full min-w-0 overflow-hidden space-y-4 border-4 border-black bg-[#FFFDF5] p-4 shadow-[6px_6px_0px_0px_#000]">
+                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 max-w-full">
+                    <div className="inline-flex max-w-full min-w-0 break-all border-2 border-black bg-white px-2 py-1 text-xs font-black text-black shadow-[2px_2px_0px_0px_#000]">#{order.orderCode}</div>
                     <p className="mt-2 text-sm font-black text-black">{order.user.name || "Khách vãng lai"}</p>
                     <p className="break-all text-sm font-bold text-black/60">{order.user.email}</p>
                   </div>
-                  <span className={`inline-flex h-8 items-center border-2 border-black px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] ${statusBg(order.status)}`}>
+                  <span className={`inline-flex max-w-full break-words border-2 border-black px-3 py-2 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] ${statusBg(order.status)}`}>
                     {statusLabel(order.status)}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="border-2 border-black bg-white p-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="min-w-0 max-w-full overflow-hidden border-2 border-black bg-white p-2">
                     <p className="text-xs font-black uppercase text-black/60">Gói mua</p>
-                    <p className="text-sm font-bold text-black">{order.product?.name || "Không xác định"}</p>
+                    <p className="break-words text-sm font-bold text-black">{order.product?.name || "Không xác định"}</p>
                   </div>
-                  <div className="border-2 border-black bg-white p-2">
+                  <div className="min-w-0 max-w-full overflow-hidden border-2 border-black bg-white p-2">
                     <p className="text-xs font-black uppercase text-black/60">Số tiền</p>
-                    <p className="text-sm font-black text-black">{formatVnd(order.amountVnd || 0)}</p>
+                    <p className="text-sm font-black text-black">{formatVnd(order.amountVnd ?? 0)}</p>
                   </div>
-                  <div className="col-span-2 border-2 border-black bg-white p-2">
+                  <div className="min-w-0 max-w-full overflow-hidden border-2 border-black bg-white p-2 sm:col-span-2">
                     <p className="text-xs font-black uppercase text-black/60">Thời gian</p>
                     <p className="text-sm font-bold text-black">{format(new Date(order.createdAt), "dd/MM/yyyy HH:mm")}</p>
                   </div>

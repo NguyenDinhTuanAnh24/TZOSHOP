@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
 import { useConfirm } from "@/hooks/use-confirm";
+import { ConfirmDialog } from "@/components/ui/confirm-toast";
 
 const menuGroups = [
   {
@@ -66,7 +67,7 @@ export function AdminMobileNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
-  const { askConfirm } = useConfirm();
+  const { confirmState, isConfirming, askConfirm, closeConfirm, handleConfirm } = useConfirm();
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -75,21 +76,26 @@ export function AdminMobileNav() {
     };
   }, [open]);
 
-  const handleLogout = () => {
-    setOpen(false);
+  const handleLogout = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     askConfirm({
       title: "Đăng xuất?",
       description: "Bạn có chắc chắn muốn đăng xuất?",
       confirmLabel: "Đăng xuất",
       cancelLabel: "Hủy",
       type: "danger",
-      onConfirm: async () => signOut({ callbackUrl: "/login" }),
+      onConfirm: async () => {
+        setOpen(false);
+        await signOut({ callbackUrl: "/login" });
+      },
     });
   };
 
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
         className="inline-flex h-11 w-11 items-center justify-center border-4 border-black bg-white text-black shadow-[4px_4px_0px_0px_#000] transition-all duration-100 hover:bg-[#FFD93D] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
         aria-label="Mở menu admin"
@@ -99,7 +105,7 @@ export function AdminMobileNav() {
 
       {open && (
         <div className="fixed inset-0 z-[10000] lg:hidden">
-          <button className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} aria-label="Đóng menu" />
+          <button type="button" className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} aria-label="Đóng menu" />
           <aside className="relative z-10 flex h-dvh w-[86vw] max-w-[320px] flex-col border-r-4 border-black bg-[#FFFDF5]">
             <div className="flex items-center justify-between border-b-4 border-black p-4">
               <div className="inline-flex items-center gap-2 border-4 border-black bg-[#FFD93D] px-3 py-2 shadow-[4px_4px_0px_0px_#000]">
@@ -109,6 +115,7 @@ export function AdminMobileNav() {
                 <span className="text-xs font-black uppercase tracking-[0.12em] text-black">Admin</span>
               </div>
               <button
+                type="button"
                 onClick={() => setOpen(false)}
                 className="inline-flex h-10 w-10 items-center justify-center border-4 border-black bg-white shadow-[3px_3px_0px_0px_#000]"
                 aria-label="Đóng menu"
@@ -152,6 +159,7 @@ export function AdminMobileNav() {
                 <p className="truncate text-xs font-bold text-black/60">{session?.user?.email || "admin@tzoshop.io.vn"}</p>
               </div>
               <button
+                type="button"
                 onClick={handleLogout}
                 className="flex h-11 w-full items-center justify-center gap-2 border-4 border-black bg-[#FF6B6B] text-sm font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]"
               >
@@ -161,6 +169,20 @@ export function AdminMobileNav() {
             </div>
           </aside>
         </div>
+      )}
+
+      {confirmState && (
+        <ConfirmDialog
+          open={!!confirmState}
+          title={confirmState.title}
+          description={confirmState.description}
+          confirmLabel={confirmState.confirmLabel}
+          cancelLabel={confirmState.cancelLabel}
+          type={confirmState.type}
+          isLoading={isConfirming}
+          onConfirm={handleConfirm}
+          onCancel={closeConfirm}
+        />
       )}
     </>
   );
