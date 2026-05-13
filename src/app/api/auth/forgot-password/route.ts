@@ -1,8 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/server/email";
-import { createResetPasswordEmail } from "@/lib/server/email-templates/reset-password-email";
+import {
+  createResetPasswordEmail,
+  createResetPasswordEmailText,
+} from "@/lib/server/email-templates/reset-password-email";
 
 export const runtime = "nodejs";
 
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest) {
     const email = String(body?.email ?? "").toLowerCase().trim();
 
     if (!email || !email.includes("@")) {
-      return NextResponse.json({ message: "Email không hợp lệ." }, { status: 400 });
+      return NextResponse.json({ message: "Vui lòng nhập email hợp lệ." }, { status: 400 });
     }
 
     // Tìm user
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(SUCCESS_RESPONSE);
     }
 
-    // Nếu user chỉ dùng Google (không có passwordHash) → không cần tạo token
+    // Nếu user chỉ dùng Google (không có passwordHash) thì không cần tạo token
     if (!user.passwordHash) {
       return NextResponse.json(SUCCESS_RESPONSE);
     }
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Tạo reset URL
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
     const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
 
     // Gửi email (dev: console.log nếu không có RESEND_API_KEY)
@@ -67,6 +70,10 @@ export async function POST(request: NextRequest) {
         to: email,
         subject: "Đặt lại mật khẩu TzoShop",
         html: createResetPasswordEmail({
+          name: user.name,
+          resetUrl,
+        }),
+        text: createResetPasswordEmailText({
           name: user.name,
           resetUrl,
         }),
@@ -84,10 +91,10 @@ export async function POST(request: NextRequest) {
       
       // In terminal để test trong dev nếu gửi thật lỗi
       if (process.env.NODE_ENV !== "production") {
-        console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        console.log("🔗  [DEV EMAIL — Gửi lỗi, đây là link reset]");
+        console.log("\n----------------------------------------------------");
+        console.log("[DEV EMAIL - Gửi lỗi, đây là link reset]");
         console.log(`Link: ${resetUrl}`);
-        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+        console.log("----------------------------------------------------\n");
       }
     }
 
@@ -106,8 +113,9 @@ export async function POST(request: NextRequest) {
     }
     console.error("[forgot-password]", error);
     return NextResponse.json(
-      { message: "Đã có lỗi xảy ra. Vui lòng thử lại." },
+      { message: "Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại." },
       { status: 500 }
     );
   }
 }
+

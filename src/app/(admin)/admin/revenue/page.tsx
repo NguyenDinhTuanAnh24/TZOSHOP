@@ -1,30 +1,28 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { 
-  BarChart3, 
-  Wallet, 
-  LineChart, 
-  DollarSign, 
-  ShoppingCart, 
-  Package, 
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { format } from "date-fns";
+import {
+  ArrowRight,
+  BarChart3,
   Calendar,
+  ChartNoAxesColumnIncreasing,
+  CreditCard,
+  DollarSign,
+  Download,
+  Package,
   RefreshCw,
-  TrendingUp,
+  ShoppingCart,
   Target,
-  ArrowRight
+  TrendingUp,
+  Wallet,
+  Zap,
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
-import { IconButton } from "@/components/ui/icon-button";
-import { AppCard } from "@/components/ui/app-card";
-import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { ui } from "@/lib/ui-tokens";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
+import { useToast } from "@/hooks/use-toast";
 import { downloadCsv } from "@/lib/download-csv";
 
 type RevenueData = {
@@ -70,20 +68,67 @@ type RevenueData = {
   }[];
 };
 
+function RevenueSkeleton() {
+  return (
+    <div className="space-y-8" aria-hidden="true">
+      <section className="border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
+        <div className="h-8 w-72 bg-[#E9E1D0] animate-pulse" />
+        <div className="mt-3 h-4 w-full max-w-[520px] bg-[#E9E1D0] animate-pulse" />
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="min-h-[160px] border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_#000]">
+            <div className="h-12 w-12 border-4 border-black bg-[#E9E1D0] animate-pulse" />
+            <div className="mt-6 h-3 w-28 bg-[#E9E1D0] animate-pulse" />
+            <div className="mt-3 h-8 w-36 bg-[#E9E1D0] animate-pulse" />
+            <div className="mt-3 h-3 w-32 bg-[#E9E1D0] animate-pulse" />
+          </div>
+        ))}
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="min-h-[110px] border-4 border-black bg-[#FFFDF5] p-4 shadow-[5px_5px_0px_0px_#000]">
+            <div className="h-full w-full bg-[#E9E1D0] animate-pulse" />
+          </div>
+        ))}
+      </section>
+
+      <section className="min-h-[360px] border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_#000]">
+        <div className="h-7 w-72 bg-[#E9E1D0] animate-pulse" />
+        <div className="mt-3 h-[260px] border-2 border-black bg-[#E9E1D0] animate-pulse" />
+      </section>
+    </div>
+  );
+}
+
+function statusBg(status: string) {
+  if (status === "PAID") return "bg-[#C7F0D8]";
+  if (status === "PENDING") return "bg-[#FFD93D]";
+  return "bg-[#FF6B6B]";
+}
+
+function familyBg(name: string) {
+  if (name === "CODEXAI") return "bg-[#C7F0D8]";
+  if (name === "CLAUDE") return "bg-[#FFD93D]";
+  if (name === "GEMINI") return "bg-[#A78BFA]";
+  if (name === "DEEPSEEK") return "bg-[#FF6B6B]";
+  return "bg-[#93C5FD]";
+}
+
 export default function AdminRevenuePage() {
   const [data, setData] = useState<RevenueData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  const { toast, showToast, clearToast } = useToast();
+  const { toast, showToast, clearToast } = useToast(3000);
 
   const fetchRevenueData = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch("/api/admin/revenue");
       const result = await res.json();
-      if (result.success) {
-        setData(result);
-      }
+      if (result.success) setData(result);
     } catch (error) {
       console.error(error);
     } finally {
@@ -93,7 +138,7 @@ export default function AdminRevenuePage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchRevenueData();
+      void fetchRevenueData();
     }, 0);
     return () => clearTimeout(timer);
   }, [fetchRevenueData]);
@@ -101,11 +146,7 @@ export default function AdminRevenuePage() {
   const handleExportCsv = async () => {
     try {
       setIsExporting(true);
-      await downloadCsv(
-        "/api/admin/revenue/export",
-        `tzoshop-revenue-${format(new Date(), "yyyy-MM-dd")}.csv`
-      );
-      
+      await downloadCsv("/api/admin/revenue/export", `tzoshop-revenue-${format(new Date(), "yyyy-MM-dd")}.csv`);
       showToast("Đã xuất CSV thành công.", "success");
     } catch {
       showToast("Không thể xuất CSV.", "error");
@@ -114,338 +155,330 @@ export default function AdminRevenuePage() {
     }
   };
 
-  if (isLoading && !data) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#00d4a4] border-t-transparent" />
-        <p className={cn(ui.label, "animate-pulse")}>Đang tải dữ liệu doanh thu...</p>
-      </div>
-    );
-  }
-
-  if (!data) return null;
-
-  const formatVnd = (val: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val);
+  const formatVnd = (val: number) =>
+    `${new Intl.NumberFormat("vi-VN").format(val)} đ`;
   const formatNum = (val: string | number) => new Intl.NumberFormat("vi-VN").format(Number(val));
 
-  const maxDailyRevenue = Math.max(...data.revenueByDay.map(d => d.revenueVnd), 1);
+  const maxDailyRevenue = useMemo(() => Math.max(...(data?.revenueByDay.map((d) => d.revenueVnd) || [0]), 1), [data]);
+  const isRevenueEmpty = useMemo(() => (data?.revenueByDay || []).every((d) => d.revenueVnd === 0), [data]);
+
+  if (isLoading && !data) return <RevenueSkeleton />;
+  if (!data) return null;
+
+  const mainStats = [
+    {
+      label: "TỔNG DOANH THU",
+      value: formatVnd(data.summary.totalRevenueVnd),
+      desc: "Toàn bộ thời gian",
+      icon: Wallet,
+      iconBg: "bg-[#FFD93D]",
+    },
+    {
+      label: "DOANH THU HÔM NAY",
+      value: formatVnd(data.summary.todayRevenueVnd),
+      desc: format(new Date(), "'Ngày' dd/MM"),
+      icon: DollarSign,
+      iconBg: "bg-[#C7F0D8]",
+    },
+    {
+      label: "DOANH THU THÁNG NÀY",
+      value: formatVnd(data.summary.monthRevenueVnd),
+      desc: format(new Date(), "'Tháng' MM/yyyy"),
+      icon: TrendingUp,
+      iconBg: "bg-[#93C5FD]",
+    },
+    {
+      label: "GIÁ TRỊ ĐƠN TB",
+      value: formatVnd(data.summary.averageOrderValueVnd),
+      desc: "Revenue / Paid Orders",
+      icon: Target,
+      iconBg: "bg-[#A78BFA]",
+    },
+  ];
+
+  const miniStats = [
+    {
+      label: "ĐƠN ĐÃ THANH TOÁN",
+      value: formatNum(data.summary.paidOrders),
+      sub: "Đơn",
+      icon: ShoppingCart,
+      iconBg: "bg-[#C7F0D8]",
+    },
+    {
+      label: "ĐƠN CHỜ THANH TOÁN",
+      value: formatNum(data.summary.pendingOrders),
+      sub: "Đơn",
+      icon: Calendar,
+      iconBg: "bg-[#FFD93D]",
+    },
+    {
+      label: "CREDITS ĐÃ BÁN",
+      value: formatNum(data.summary.creditsSold),
+      sub: "Bán",
+      icon: Zap,
+      iconBg: "bg-[#C7F0D8]",
+    },
+    {
+      label: "CREDITS ĐÃ CẤP",
+      value: formatNum(data.summary.creditsGranted),
+      sub: "Tổng",
+      icon: TrendingUp,
+      iconBg: "bg-[#DBEAFE]",
+    },
+  ];
 
   return (
-    <div className="space-y-8 pb-12">
-      <PageHeader 
-        title="Thống kê doanh thu" 
-        description="Theo dõi doanh thu, đơn thanh toán và hiệu quả kinh doanh."
-        icon={<BarChart3 className="h-8 w-8" />}
-        actions={
-          <div className="flex items-center gap-3">
-             <StatusBadge status="Live System" variant="info" />
-             <AppButton 
-               variant="accent"
-               onClick={handleExportCsv}
-               disabled={isExporting}
-             >
-                {isExporting ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
-                {isExporting ? "Đang xuất..." : "Xuất CSV"}
-             </AppButton>
-             <IconButton 
-               onClick={fetchRevenueData}
-               isLoading={isLoading}
-               variant="outline"
-               title="Làm mới"
-             >
-               <RefreshCw className={cn("h-5 w-5", isLoading && "animate-spin")} />
-             </IconButton>
-          </div>
-        }
-      />
-
-      {/* Summary Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard 
-          label="Tổng doanh thu" 
-          value={formatVnd(data.summary.totalRevenueVnd)} 
-          subValue="Toàn bộ thời gian"
-          icon={Wallet}
-          color="bg-[#020c0a]"
-        />
-        <SummaryCard 
-          label="Doanh thu hôm nay" 
-          value={formatVnd(data.summary.todayRevenueVnd)} 
-          subValue={format(new Date(), "'Ngày' dd/MM")}
-          icon={DollarSign}
-          color="bg-[#00d4a4]"
-        />
-        <SummaryCard 
-          label="Doanh thu tháng này" 
-          value={formatVnd(data.summary.monthRevenueVnd)} 
-          subValue={format(new Date(), "'Tháng' MM/yyyy")}
-          icon={TrendingUp}
-          color="bg-blue-600"
-        />
-        <SummaryCard 
-          label="Giá trị đơn TB" 
-          value={formatVnd(data.summary.averageOrderValueVnd)} 
-          subValue="Revenue / Paid Orders"
-          icon={Target}
-          color="bg-purple-600"
-        />
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCardSmall 
-          label="Đơn đã thanh toán" 
-          value={formatNum(data.summary.paidOrders)} 
-          icon={ShoppingCart}
-          suffix="Đơn"
-        />
-        <SummaryCardSmall 
-          label="Đơn chờ thanh toán" 
-          value={formatNum(data.summary.pendingOrders)} 
-          icon={Clock}
-          suffix="Đơn"
-          textColor="text-amber-600"
-          bgColor="bg-amber-50"
-        />
-        <SummaryCardSmall 
-          label="Credits đã bán" 
-          value={formatNum(data.summary.creditsSold)} 
-          icon={Package}
-          suffix="Bán"
-          textColor="text-[#00d4a4]"
-          bgColor="bg-[#e7fff7]"
-        />
-        <SummaryCardSmall 
-          label="Credits đã cấp" 
-          value={formatNum(data.summary.creditsGranted)} 
-          icon={TrendingUp}
-          suffix="Tổng"
-          textColor="text-blue-600"
-          bgColor="bg-blue-50"
-        />
-      </div>
-
-      <AppCard className="p-8">
-        <div className="flex items-center justify-between mb-8">
-           <div>
-              <h3 className={ui.h3}>Doanh thu 30 ngày gần nhất</h3>
-              <p className={cn(ui.pMuted, "mt-1")}>Dữ liệu từ {data.revenueByDay[0].date} đến {data.revenueByDay[29].date}</p>
-           </div>
-           <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                 <div className="h-3 w-3 rounded-full bg-[#00d4a4]" />
-                 <span className={ui.label}>Doanh thu</span>
+    <div className="space-y-8 overflow-x-hidden pb-12">
+      <section className="relative overflow-visible border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
+        <div className="pointer-events-none absolute -right-3 -top-3 h-10 w-10 border-4 border-black bg-[#A78BFA]" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center border-4 border-black bg-[#FFD93D] shadow-[5px_5px_0px_0px_#000]">
+                <BarChart3 className="h-7 w-7 text-black" />
               </div>
-           </div>
+              <span className="inline-flex border-2 border-black bg-[#C7F0D8] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black">REVENUE</span>
+            </div>
+            <h1 className="text-3xl font-black uppercase tracking-tight text-black md:text-4xl">THỐNG KÊ DOANH THU</h1>
+            <p className="text-sm font-bold text-black/70 md:text-base">Theo dõi doanh thu, đơn thanh toán và hiệu quả kinh doanh.</p>
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end lg:w-auto">
+            <div className="inline-flex h-11 items-center justify-center gap-2 border-4 border-black bg-[#C7F0D8] px-4 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[4px_4px_0px_0px_#000]">
+              <ChartNoAxesColumnIncreasing className="h-4 w-4" />
+              LIVE SYSTEM
+            </div>
+            <AppButton
+              variant="accent"
+              onClick={handleExportCsv}
+              disabled={isExporting}
+              className="h-11 border-4 border-black bg-[#FFD93D] px-5 text-xs font-black uppercase text-black shadow-[5px_5px_0px_0px_#000] hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            >
+              {isExporting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              {isExporting ? "ĐANG XUẤT..." : "XUẤT CSV"}
+            </AppButton>
+            <button
+              onClick={fetchRevenueData}
+              className="inline-flex h-11 w-11 items-center justify-center border-4 border-black bg-white text-black shadow-[4px_4px_0px_0px_#000] hover:bg-[#FFD93D]"
+              title="Làm mới"
+              aria-label="Làm mới"
+            >
+              <RefreshCw className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
+      </section>
 
-        <div className="flex h-[300px] items-end gap-1.5 sm:gap-2">
-           {data.revenueByDay.map((day, idx) => (
-             <div key={idx} className="group relative flex flex-1 flex-col items-center">
-                <div 
-                  className="w-full rounded-t-lg bg-[#00d4a4]/10 hover:bg-[#00d4a4] transition-all duration-300 relative group"
-                  style={{ height: `${(day.revenueVnd / maxDailyRevenue) * 100}%`, minHeight: '4px' }}
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {mainStats.map((card) => (
+          <article key={card.label} className="relative flex min-h-[160px] flex-col justify-between overflow-hidden border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_#000]">
+            <div className={`flex h-12 w-12 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.iconBg}`}>
+              <card.icon className="h-6 w-6 text-black" />
+            </div>
+            <div className="mt-5">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">{card.label}</p>
+              <p className="mt-2 text-3xl font-black leading-none text-black md:text-4xl">{card.value}</p>
+              <p className="mt-2 text-sm font-bold text-black/70">{card.desc}</p>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {miniStats.map((card) => (
+          <article key={card.label} className="flex min-h-[110px] items-center gap-4 border-4 border-black bg-[#FFFDF5] p-4 shadow-[5px_5px_0px_0px_#000]">
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.iconBg}`}>
+              <card.icon className="h-5 w-5 text-black" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-black/60">{card.label}</p>
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <p className="text-2xl font-black leading-none text-black">{card.value}</p>
+                <span className="text-xs font-black uppercase text-black/60">{card.sub}</span>
+              </div>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="border-4 border-black bg-white p-5 shadow-[8px_8px_0px_0px_#000] md:p-6">
+        <header className="mb-5">
+          <h3 className="text-2xl font-black text-black">Doanh thu 30 ngày gần nhất</h3>
+          <p className="text-sm font-bold text-black/70">
+            Dữ liệu từ {data.revenueByDay[0]?.date ?? "-"} đến {data.revenueByDay[data.revenueByDay.length - 1]?.date ?? "-"}
+          </p>
+        </header>
+
+        <div className="relative min-h-[300px]">
+          <div className="flex h-[260px] items-end gap-1.5 border-2 border-black bg-[#FFFDF5] p-3 sm:gap-2">
+            {data.revenueByDay.map((day, idx) => (
+              <div key={idx} className="group relative flex flex-1 flex-col items-center">
+                <div
+                  className="w-full bg-[#C7F0D8] transition-all duration-200 hover:bg-[#93C5FD]"
+                  style={{ height: `${Math.max((day.revenueVnd / maxDailyRevenue) * 100, 1)}%` }}
                 >
-                   {/* Tooltip */}
-                   <div className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 group-hover:block z-20">
-                      <div className="rounded-xl bg-[#020c0a] px-3 py-2 shadow-xl whitespace-nowrap">
-                         <p className="text-[10px] font-bold text-white/50">{day.date}</p>
-                         <p className="text-xs font-black text-white">{formatVnd(day.revenueVnd)}</p>
-                         <p className="text-[10px] font-bold text-[#00d4a4]">{day.paidOrders} đơn hàng</p>
-                      </div>
-                      <div className="mx-auto h-2 w-2 -translate-y-1 rotate-45 bg-[#020c0a]" />
-                   </div>
+                  <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 group-hover:block">
+                    <div className="border-2 border-black bg-white px-2 py-1 text-[10px] font-black shadow-[3px_3px_0px_0px_#000]">
+                      <p>{day.date}</p>
+                      <p>{formatVnd(day.revenueVnd)}</p>
+                      <p>{day.paidOrders} đơn</p>
+                    </div>
+                  </div>
                 </div>
                 {idx % 5 === 0 && (
-                  <span className={cn(ui.label, "mt-4 rotate-45 sm:rotate-0")}>
-                    {day.date.split('-').slice(1).reverse().join('/')}
-                  </span>
+                  <span className="mt-2 text-[10px] font-black text-black/70">{day.date.split("-").slice(1).reverse().join("/")}</span>
                 )}
-             </div>
-           ))}
-        </div>
-      </AppCard>
-
-      {/* Family Breakdown */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-         {data.revenueByFamily.map((f, i) => (
-           <AppCard key={i} className="p-6 hover:border-[#00d4a4]/40 transition-all group">
-              <div className="flex items-center justify-between mb-4">
-                 <StatusBadge status={f.apiFamily} variant="neutral" />
-                 <LineChart className="h-4 w-4 text-[#dfe5e1] group-hover:text-[#00d4a4]" />
               </div>
-              <h4 className={cn(ui.h3, "text-lg")}>{formatVnd(f.revenueVnd)}</h4>
-              <div className="flex items-center justify-between mt-4">
-                 <div className="flex flex-col">
-                    <span className={ui.label}>Đơn hàng</span>
-                    <span className="text-sm font-black text-[#47524d]">{f.paidOrders}</span>
-                 </div>
-                 <div className="flex flex-col text-right">
-                    <span className={ui.label}>Credits</span>
-                    <span className="text-sm font-black text-[#47524d]">{formatNum(f.creditsSold)}</span>
-                 </div>
+            ))}
+          </div>
+          {isRevenueEmpty && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="border-4 border-black bg-[#FFFDF5] px-4 py-3 text-sm font-black text-black shadow-[4px_4px_0px_0px_#000]">
+                Chưa có doanh thu trong 30 ngày gần nhất
               </div>
-           </AppCard>
-         ))}
-      </div>
-
-      <AppCard className="overflow-hidden">
-        <div className="p-8 border-b border-[#edf1ee]">
-           <h3 className={ui.h3}>Top gói bán chạy nhất</h3>
-           <p className={ui.pMuted}>Dựa trên tổng doanh thu từ trước đến nay</p>
+            </div>
+          )}
         </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {data.revenueByFamily.map((f) => (
+          <article key={f.apiFamily} className="min-h-[140px] border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_#000]">
+            <div className="mb-4 flex items-center justify-between">
+              <span className={`inline-flex border-2 border-black px-2 py-1 text-xs font-black uppercase text-black ${familyBg(f.apiFamily)}`}>
+                {f.apiFamily}
+              </span>
+              <ChartNoAxesColumnIncreasing className="h-4 w-4 text-black" />
+            </div>
+            <p className="text-3xl font-black leading-none text-black">{formatVnd(f.revenueVnd)}</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs font-black uppercase text-black/60">Đơn hàng</p>
+                <p className="text-sm font-black text-black">{f.paidOrders}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-black uppercase text-black/60">Credits</p>
+                <p className="text-sm font-black text-black">{formatNum(f.creditsSold)}</p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="border-4 border-black bg-white p-5 shadow-[8px_8px_0px_0px_#000] md:p-6">
+        <header className="mb-5">
+          <h3 className="text-2xl font-black text-black">Top gói bán chạy nhất</h3>
+          <p className="text-sm font-bold text-black/70">Dựa trên tổng doanh thu từ trước đến nay</p>
+        </header>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full min-w-[760px] text-left">
             <thead>
-              <tr className="bg-[#fbfbf8] border-b border-[#edf1ee]">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Sản phẩm</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Family</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Số đơn</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-center">Doanh thu</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-right">Credits bán ra</th>
+              <tr className="border-b-2 border-black bg-[#FFFDF5]">
+                <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-black/60">Sản phẩm</th>
+                <th className="px-4 py-3 text-center text-xs font-black uppercase tracking-[0.14em] text-black/60">Family</th>
+                <th className="px-4 py-3 text-center text-xs font-black uppercase tracking-[0.14em] text-black/60">Số đơn</th>
+                <th className="px-4 py-3 text-center text-xs font-black uppercase tracking-[0.14em] text-black/60">Doanh thu</th>
+                <th className="px-4 py-3 text-right text-xs font-black uppercase tracking-[0.14em] text-black/60">Credits</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
-               {data.topProducts.map((p, i) => (
-                 <tr key={i} className="hover:bg-[#fbfbf8] transition-colors">
-                    <td className="px-8 py-6">
-                       <span className="text-sm font-black text-[#0b0f0d]">{p.productName}</span>
+            <tbody>
+              {data.topProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center">
+                    <div className="mx-auto flex w-fit flex-col items-center">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center border-4 border-black bg-[#E9E1D0]">
+                        <Package className="h-6 w-6 text-black" />
+                      </div>
+                      <p className="text-base font-black text-black">Chưa có dữ liệu bán chạy</p>
+                      <p className="text-sm font-bold text-black/60">Các gói sẽ xuất hiện khi có đơn thanh toán thành công.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                data.topProducts.map((p) => (
+                  <tr key={p.productId} className="border-b border-black/20">
+                    <td className="px-4 py-4 text-sm font-black text-black">{p.productName}</td>
+                    <td className="px-4 py-4 text-center">
+                      <StatusBadge status={p.apiFamily} variant="neutral" />
                     </td>
-                    <td className="px-8 py-6 text-center">
-                       <StatusBadge status={p.apiFamily} variant="neutral" />
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                       <span className="text-sm font-black text-[#47524d]">{p.paidOrders}</span>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                       <span className="text-sm font-black text-[#00d4a4]">{formatVnd(p.revenueVnd)}</span>
-                    </td>
-                    <td className="px-8 py-6 text-right font-mono text-xs font-bold text-[#8a9690]">
-                       {formatNum(p.creditsSold)}
-                    </td>
-                 </tr>
-               ))}
+                    <td className="px-4 py-4 text-center text-sm font-bold text-black">{p.paidOrders}</td>
+                    <td className="px-4 py-4 text-center text-sm font-black text-black">{formatVnd(p.revenueVnd)}</td>
+                    <td className="px-4 py-4 text-right text-sm font-bold text-black">{formatNum(p.creditsSold)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      </AppCard>
+      </section>
 
-      <AppCard className="overflow-hidden">
-        <div className="p-8 border-b border-[#edf1ee] flex items-center justify-between">
-           <div>
-              <h3 className={ui.h3}>Đơn hàng thanh toán mới nhất</h3>
-              <p className={ui.pMuted}>20 đơn hàng PAID gần đây nhất</p>
-           </div>
-           <Link href="/admin/orders?status=PAID" className="flex items-center gap-2 text-xs font-black text-[#00d4a4] hover:text-[#00d4a4]/80 transition-colors uppercase tracking-widest">
-              Xem tất cả <ArrowRight className="h-4 w-4" />
-           </Link>
-        </div>
+      <section className="border-4 border-black bg-white p-5 shadow-[8px_8px_0px_0px_#000] md:p-6">
+        <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-2xl font-black text-black">Đơn hàng thanh toán mới nhất</h3>
+            <p className="text-sm font-bold text-black/70">20 đơn hàng PAID gần đây nhất</p>
+          </div>
+          <Link
+            href="/admin/orders?status=PAID"
+            className="inline-flex h-10 items-center gap-2 border-4 border-black bg-[#FFD93D] px-4 text-xs font-black uppercase text-black shadow-[3px_3px_0px_0px_#000]"
+          >
+            Xem tất cả
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </header>
+
         <div className="overflow-x-auto">
-           <table className="w-full text-left">
-              <thead>
-                <tr className="bg-[#fbfbf8] border-b border-[#edf1ee]">
-                   <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Mã đơn</th>
-                   <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Khách hàng</th>
-                   <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690]">Gói mua</th>
-                   <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-right">Số tiền</th>
-                   <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-[#8a9690] text-right">Thời gian</th>
+          <table className="w-full min-w-[860px] text-left">
+            <thead>
+              <tr className="border-b-2 border-black bg-[#FFFDF5]">
+                <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-black/60">Mã đơn</th>
+                <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-black/60">Khách hàng</th>
+                <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-black/60">Gói mua</th>
+                <th className="px-4 py-3 text-right text-xs font-black uppercase tracking-[0.14em] text-black/60">Số tiền</th>
+                <th className="px-4 py-3 text-right text-xs font-black uppercase tracking-[0.14em] text-black/60">Thời gian</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.recentPaidOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center">
+                    <div className="mx-auto flex w-fit flex-col items-center">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center border-4 border-black bg-[#E9E1D0]">
+                        <CreditCard className="h-6 w-6 text-black" />
+                      </div>
+                      <p className="text-base font-black text-black">Chưa có đơn thanh toán</p>
+                      <p className="text-sm font-bold text-black/60">Các đơn PAID gần nhất sẽ hiển thị tại đây.</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                 {data.recentPaidOrders.map((o) => (
-                   <tr key={o.id} className="hover:bg-[#fbfbf8] transition-colors">
-                      <td className="px-8 py-6 font-mono text-xs font-bold text-[#8a9690] uppercase">
-                         #{o.orderCode}
-                      </td>
-                      <td className="px-8 py-6">
-                         <div className="flex flex-col">
-                            <span className="text-xs font-black text-[#0b0f0d]">{o.userEmail}</span>
-                         </div>
-                      </td>
-                      <td className="px-8 py-6">
-                         <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-[#47524d]">{o.productName}</span>
-                            <StatusBadge status={o.apiFamily} variant="neutral" />
-                         </div>
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                         <span className="text-sm font-black text-[#0b0f0d]">{formatVnd(o.amountVnd)}</span>
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                         <span className={cn(ui.pMuted, "text-[11px]")}>
-                            {o.paidAt ? format(new Date(o.paidAt), "dd/MM HH:mm") : '-'}
-                         </span>
-                      </td>
-                   </tr>
-                 ))}
-              </tbody>
-           </table>
+              ) : (
+                data.recentPaidOrders.map((o) => (
+                  <tr key={o.id} className="border-b border-black/20">
+                    <td className="px-4 py-4 text-xs font-black uppercase text-black">#{o.orderCode}</td>
+                    <td className="px-4 py-4">
+                      <p className="max-w-[220px] truncate text-sm font-bold text-black">{o.userEmail}</p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="max-w-[220px] truncate text-sm font-bold text-black">{o.productName}</span>
+                        <StatusBadge status={o.apiFamily} variant="neutral" />
+                        <span className={`inline-flex border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase text-black ${statusBg(o.status)}`}>
+                          {o.status}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right text-sm font-black text-black">{formatVnd(o.amountVnd)}</td>
+                    <td className="px-4 py-4 text-right text-xs font-bold text-black/70">
+                      {o.paidAt ? format(new Date(o.paidAt), "dd/MM HH:mm") : "-"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </AppCard>
+      </section>
 
-      {toast && (
-        <ToastMessage
-          message={toast.message}
-          type={toast.type}
-          onClose={clearToast}
-        />
-      )}
+      {toast && <ToastMessage message={toast.message} type={toast.type} onClose={clearToast} />}
     </div>
   );
-}
-
-function SummaryCard({ label, value, subValue, icon: Icon, color }: { label: string, value: string, subValue: string, icon: React.ElementType, color: string }) {
-  return (
-    <AppCard className="p-8 relative overflow-hidden group hover:shadow-xl hover:shadow-[#00d4a4]/10 transition-all border-[#edf1ee]">
-      <div className="relative z-10">
-        <div className={cn(`h-12 w-12 rounded-2xl ${color} flex items-center justify-center text-white mb-6 shadow-lg shadow-black/10`)}>
-          <Icon className="h-6 w-6" />
-        </div>
-        <p className={ui.label + " mb-1"}>{label}</p>
-        <h3 className="text-2xl font-black text-[#0b0f0d] tracking-tight">{value}</h3>
-        <p className={cn(ui.pMuted, "text-[10px] mt-2 flex items-center gap-1.5")}>
-           <Calendar className="h-3 w-3" /> {subValue}
-        </p>
-      </div>
-      <div className="absolute -right-4 -bottom-4 opacity-5 transform rotate-12 group-hover:scale-110 transition-transform text-[#0b0f0d]">
-         <Icon className="h-32 w-32" />
-      </div>
-    </AppCard>
-  );
-}
-
-function SummaryCardSmall({ label, value, icon: Icon, suffix, textColor = "text-[#0b0f0d]", bgColor = "bg-[#fbfbf8]" }: { label: string, value: string, icon: React.ElementType, suffix: string, textColor?: string, bgColor?: string }) {
-  return (
-    <AppCard className={cn("p-6 flex items-center gap-5 border-[#edf1ee]", bgColor)}>
-       <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center text-[#8a9690] shrink-0 shadow-sm border border-[#edf1ee]">
-          <Icon className="h-6 w-6" />
-       </div>
-       <div>
-          <p className={ui.label + " mb-0.5"}>{label}</p>
-          <div className="flex items-baseline gap-1.5">
-             <span className={`text-2xl font-black ${textColor}`}>{value}</span>
-             <span className={ui.label}>{suffix}</span>
-          </div>
-       </div>
-    </AppCard>
-  );
-}
-
-function Clock(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  )
 }

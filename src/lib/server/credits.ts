@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import { Prisma, ApiFamily } from "@prisma/client";
 
 /**
@@ -133,8 +133,11 @@ export async function consumeCredits(params: ConsumeCreditsParams) {
           
           if (bucket?.user?.email) {
             const { sendEmail } = await import("@/lib/server/email");
-            const { createLowCreditsEmail } = await import("@/lib/server/email-templates/low-credits-email");
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004";
+            const {
+              createLowCreditsEmail,
+              createLowCreditsEmailText,
+            } = await import("@/lib/server/email-templates/low-credits-email");
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
 
             await sendEmail({
               to: bucket.user.email,
@@ -144,7 +147,13 @@ export async function consumeCredits(params: ConsumeCreditsParams) {
                 productName: bucket.product?.name || "Gói dịch vụ AI",
                 creditsRemaining: new Intl.NumberFormat("vi-VN").format(Number(bucket.creditsRemaining)),
                 rechargeUrl: `${appUrl}/billing`
-              })
+              }),
+              text: createLowCreditsEmailText({
+                name: bucket.user.name,
+                productName: bucket.product?.name || "Gói dịch vụ AI",
+                creditsRemaining: new Intl.NumberFormat("vi-VN").format(Number(bucket.creditsRemaining)),
+                rechargeUrl: `${appUrl}/billing`
+              }),
             });
           }
         } catch (err) {
@@ -162,3 +171,4 @@ export async function consumeCredits(params: ConsumeCreditsParams) {
     throw error;
   }
 }
+

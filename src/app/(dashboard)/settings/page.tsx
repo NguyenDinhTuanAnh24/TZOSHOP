@@ -342,7 +342,7 @@ function SettingsContent() {
                   <div>
                     <p className="text-sm font-black text-black">Google</p>
                     {authMethods.googleLinked && authMethods.googleEmail ? (
-                      <p className="text-sm font-bold text-black/70">{authMethods.googleEmail}</p>
+                      <p className="break-all text-sm font-bold text-black/70">{authMethods.googleEmail}</p>
                     ) : (
                       <p className="text-sm font-bold text-black/70">Chưa liên kết</p>
                     )}

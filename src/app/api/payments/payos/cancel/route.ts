@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPayOSClient } from "@/lib/server/payos";
+import { sendEmail } from "@/lib/server/email";
+import {
+  createOrderCancelledEmail,
+  createOrderCancelledEmailText,
+} from "@/lib/server/email-templates/order-cancelled-email";
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +20,14 @@ export async function POST(request: Request) {
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
+      include: {
+        product: {
+          select: { name: true },
+        },
+        user: {
+          select: { email: true, name: true },
+        },
+      },
     });
 
     if (!order) {
@@ -49,6 +62,30 @@ export async function POST(request: Request) {
         },
       });
 
+      try {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
+        await sendEmail({
+          to: order.user.email,
+          subject: "Đơn hàng đã bị hủy - TzoShop",
+          html: createOrderCancelledEmail({
+            name: order.user.name,
+            orderCode: order.orderCode,
+            productName: order.product?.name,
+            reason: "Bạn đã hủy thanh toán.",
+            billingUrl: `${appUrl}/billing`,
+          }),
+          text: createOrderCancelledEmailText({
+            name: order.user.name,
+            orderCode: order.orderCode,
+            productName: order.product?.name,
+            reason: "Bạn đã hủy thanh toán.",
+            billingUrl: `${appUrl}/billing`,
+          }),
+        });
+      } catch (emailError) {
+        console.error("[payos/cancel] Failed to send cancelled email:", emailError);
+      }
+
       return NextResponse.json({
         success: true,
         status: "CANCELLED",
@@ -72,6 +109,30 @@ export async function POST(request: Request) {
         payosStatus: "CANCELLED",
       },
     });
+
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
+      await sendEmail({
+        to: order.user.email,
+        subject: "Đơn hàng đã bị hủy - TzoShop",
+        html: createOrderCancelledEmail({
+          name: order.user.name,
+          orderCode: order.orderCode,
+          productName: order.product?.name,
+          reason: "Bạn đã hủy thanh toán.",
+          billingUrl: `${appUrl}/billing`,
+        }),
+        text: createOrderCancelledEmailText({
+          name: order.user.name,
+          orderCode: order.orderCode,
+          productName: order.product?.name,
+          reason: "Bạn đã hủy thanh toán.",
+          billingUrl: `${appUrl}/billing`,
+        }),
+      });
+    } catch (emailError) {
+      console.error("[payos/cancel] Failed to send cancelled email:", emailError);
+    }
 
     // Thông báo cho user & admin
     try {

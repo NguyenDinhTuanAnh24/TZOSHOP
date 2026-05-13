@@ -279,7 +279,7 @@ export default function UsagePage() {
                     </div>
                     <h3 className="text-xl font-black uppercase text-black md:text-2xl">Nhật ký chi tiết</h3>
                   </div>
-                  <span className="w-fit border-2 border-black bg-[#FFFDF5] px-3 py-1.5 text-xs font-black uppercase tracking-wide text-black/70 shadow-[2px_2px_0px_0px_#000]">
+                  <span className="inline-flex max-w-full border-2 border-black bg-[#FFFDF5] px-3 py-1.5 text-xs font-black uppercase tracking-wide text-black/70 shadow-[2px_2px_0px_0px_#000]">
                     HIỂN THỊ {filteredLogs.length} KẾT QUẢ
                   </span>
                 </header>
@@ -323,7 +323,7 @@ export default function UsagePage() {
                   <>
                     <div className="hidden overflow-hidden border-4 border-black bg-[#FFFDF5] shadow-[8px_8px_0px_0px_#000] lg:block">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[980px]">
+                        <table className="w-full min-w-[760px]">
                           <thead>
                             <tr className="border-b-4 border-black bg-[#FFD93D] text-left text-xs font-black uppercase tracking-wide text-black">
                               <th className="px-4 py-3">Thời gian</th>

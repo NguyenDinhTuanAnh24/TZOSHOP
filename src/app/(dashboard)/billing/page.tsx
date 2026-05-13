@@ -324,7 +324,7 @@ export default function BillingPage() {
                   <>
                     <div className="hidden overflow-hidden border-4 border-black bg-[#FFFDF5] shadow-[8px_8px_0px_0px_#000] lg:block">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[860px]">
+                        <table className="w-full min-w-[760px]">
                           <thead>
                             <tr className="border-b-4 border-black bg-[#FFD93D] text-left text-xs font-black uppercase tracking-wide text-black">
                               <th className="px-4 py-3">Mã đơn</th>

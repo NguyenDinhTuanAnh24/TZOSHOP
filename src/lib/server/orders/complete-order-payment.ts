@@ -1,7 +1,10 @@
-import { prisma } from "@/lib/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { sendEmail } from "@/lib/server/email";
-import { createPaymentSuccessEmail } from "@/lib/server/email-templates/payment-success-email";
+import {
+  createPaymentSuccessEmail,
+  createPaymentSuccessEmailText,
+} from "@/lib/server/email-templates/payment-success-email";
 
 /**
  * Hàm cấp gói credits khi thanh toán đơn hàng thành công.
@@ -122,13 +125,13 @@ export async function completeOrderPayment(orderId: string) {
 
   // 5. Gửi email thông báo (ngoài transaction để không block DB)
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004";
-    const amountStr = new Intl.NumberFormat("vi-VN").format(order.amountVnd) + "đ";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
+    const amountStr = `${new Intl.NumberFormat("vi-VN").format(order.amountVnd)}đ`;
     const creditsStr = new Intl.NumberFormat("vi-VN").format(Number(order.product.credits));
 
     await sendEmail({
       to: order.user.email,
-      subject: `Thanh toán thành công - TzoShop`,
+      subject: "Thanh toán thành công - TzoShop",
       html: createPaymentSuccessEmail({
         name: order.user.name,
         orderCode: order.orderCode,
@@ -137,6 +140,19 @@ export async function completeOrderPayment(orderId: string) {
         credits: creditsStr,
         duration: expiresAt ? `${order.product.durationDays} ngày` : "Dùng đến khi hết credits",
         dashboardUrl: `${appUrl}/my-plans`,
+        apiKeys: String(order.product.apiKeyLimit),
+        paidAt: now.toLocaleString("vi-VN"),
+      }),
+      text: createPaymentSuccessEmailText({
+        name: order.user.name,
+        orderCode: order.orderCode,
+        productName: order.product.name,
+        amount: amountStr,
+        credits: creditsStr,
+        duration: expiresAt ? `${order.product.durationDays} ngày` : "Dùng đến khi hết credits",
+        dashboardUrl: `${appUrl}/my-plans`,
+        apiKeys: String(order.product.apiKeyLimit),
+        paidAt: now.toLocaleString("vi-VN"),
       }),
     });
   } catch (emailError) {
@@ -153,7 +169,7 @@ export async function completeOrderPayment(orderId: string) {
       userId: order.userId,
       type: "PAYMENT_SUCCESS",
       title: "Thanh toán thành công",
-      message: `Gói ${order.product.name} đã được kích hoạt với ${new Intl.NumberFormat('vi-VN').format(Number(order.product.credits))} credits.`,
+      message: `Gói ${order.product.name} đã được kích hoạt với ${new Intl.NumberFormat("vi-VN").format(Number(order.product.credits))} credits.`,
       href: "/my-plans",
       dedupeKey: `order-paid-user:${order.id}`,
       metadata: { orderId: order.id, productId: order.productId }
@@ -163,7 +179,7 @@ export async function completeOrderPayment(orderId: string) {
     await notifyAdmins({
       type: "SUCCESS",
       title: "Đơn hàng đã thanh toán",
-      message: `${order.user.email} vừa thanh toán đơn ${order.orderCode} - ${new Intl.NumberFormat('vi-VN').format(order.amountVnd)}đ.`,
+      message: `${order.user.email} vừa thanh toán đơn ${order.orderCode} - ${new Intl.NumberFormat("vi-VN").format(order.amountVnd)}đ.`,
       href: `/admin/orders?status=PAID`,
       dedupeKey: `order-paid-admin:${order.id}`,
       metadata: { orderId: order.id }
@@ -174,3 +190,4 @@ export async function completeOrderPayment(orderId: string) {
 
   return result;
 }
+

@@ -1,4 +1,4 @@
-import { Prisma, TicketStatus, TicketPriority } from "@prisma/client";
+﻿import { Prisma, TicketStatus, TicketPriority } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -95,16 +95,27 @@ export async function PATCH(request: NextRequest) {
       metadata: updateData
     });
 
-    // 1. Gửi Email thông báo
+    // 1. Gửi email thông báo
     try {
       const { sendEmail } = await import("@/lib/server/email");
-      const { createSupportTicketUpdatedEmail } = await import("@/lib/server/email-templates/support-ticket-updated-email");
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004";
+      const {
+        createSupportTicketUpdatedEmail,
+        createSupportTicketUpdatedEmailText,
+      } = await import("@/lib/server/email-templates/support-ticket-updated-email");
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
 
       await sendEmail({
         to: updatedTicket.email, // Gửi tới email trong ticket (có thể khác email account)
-        subject: `Yêu cầu hỗ trợ đã được cập nhật - TzoShop`,
+        subject: "Yêu cầu hỗ trợ đã được cập nhật - TzoShop",
         html: createSupportTicketUpdatedEmail({
+          name: updatedTicket.user?.name || updatedTicket.name,
+          ticketId: updatedTicket.id,
+          subject: updatedTicket.subject,
+          status: updatedTicket.status,
+          adminNote: updatedTicket.adminNotes,
+          supportUrl: `${appUrl}/support`
+        }),
+        text: createSupportTicketUpdatedEmailText({
           name: updatedTicket.user?.name || updatedTicket.name,
           ticketId: updatedTicket.id,
           subject: updatedTicket.subject,
@@ -117,7 +128,7 @@ export async function PATCH(request: NextRequest) {
       console.error("Support update email failed:", emailError);
     }
 
-    // 2. Thông báo In-app cho user nếu ticket có userId
+    // 2. Thông báo in-app cho user nếu ticket có userId
     if (updatedTicket.userId) {
       try {
         const { createNotificationOnce } = await import("@/lib/server/notifications");
@@ -156,3 +167,4 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+

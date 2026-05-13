@@ -1,26 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Users,
-  DollarSign,
-  Key,
-  Zap,
-  Bot,
-  Server,
-  LifeBuoy,
-  ShoppingCart,
-  ArrowRight,
-  Inbox,
-  LayoutDashboard
-} from "lucide-react";
-import { AppCard } from "@/components/ui/app-card";
-import { PageHeader } from "@/components/ui/page-header";
-import { ui } from "@/lib/ui-tokens";
-import { cn } from "@/lib/utils";
-import { formatVnd, translateStatus } from "@/lib/format";
 import Link from "next/link";
-
+import {
+  ArrowRight,
+  Bot,
+  DollarSign,
+  Inbox,
+  Key,
+  LayoutDashboard,
+  LifeBuoy,
+  Server,
+  ShieldCheck,
+  ShoppingCart,
+  Users,
+  Zap,
+} from "lucide-react";
+import { formatVnd, translateStatus } from "@/lib/format";
 
 type AdminStats = {
   totalUsers: number;
@@ -54,6 +50,48 @@ type RecentTicket = {
   createdAt: string;
 };
 
+function statusClass(status: string) {
+  if (status === "PAID" || status === "RESOLVED") return "bg-[#C7F0D8]";
+  if (status === "PENDING" || status === "OPEN") return "bg-[#FFD93D]";
+  return "bg-[#FF6B6B]";
+}
+
+function AdminDashboardSkeleton() {
+  return (
+    <div className="space-y-8" aria-hidden="true">
+      <section className="border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
+        <div className="h-8 w-64 bg-[#E9E1D0] animate-pulse" />
+        <div className="mt-3 h-4 w-full max-w-[540px] bg-[#E9E1D0] animate-pulse" />
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="min-h-[150px] border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_#000]">
+            <div className="h-12 w-12 border-4 border-black bg-[#E9E1D0] animate-pulse" />
+            <div className="mt-6 h-3 w-28 bg-[#E9E1D0] animate-pulse" />
+            <div className="mt-3 h-8 w-24 bg-[#E9E1D0] animate-pulse" />
+            <div className="mt-3 h-3 w-32 bg-[#E9E1D0] animate-pulse" />
+          </div>
+        ))}
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="min-h-[260px] border-4 border-black bg-[#FFFDF5] p-6 shadow-[7px_7px_0px_0px_#000]">
+            <div className="h-7 w-56 bg-[#E9E1D0] animate-pulse" />
+            <div className="mt-2 h-4 w-64 bg-[#E9E1D0] animate-pulse" />
+            <div className="mt-6 space-y-3">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="h-16 border-2 border-black bg-[#E9E1D0] animate-pulse" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
@@ -64,18 +102,8 @@ export default function AdminOverviewPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [resStats, resOrders, resTickets] = await Promise.all([
-          fetch("/api/admin/stats"),
-          fetch("/api/admin/orders"),
-          fetch("/api/admin/support")
-        ]);
-
-        const [dataStats, dataOrders, dataTickets] = await Promise.all([
-          resStats.json(),
-          resOrders.json(),
-          resTickets.json()
-        ]);
-
+        const [resStats, resOrders, resTickets] = await Promise.all([fetch("/api/admin/stats"), fetch("/api/admin/orders"), fetch("/api/admin/support")]);
+        const [dataStats, dataOrders, dataTickets] = await Promise.all([resStats.json(), resOrders.json(), resTickets.json()]);
         if (dataStats.success) setStats(dataStats.data);
         if (dataOrders.success) setRecentOrders(dataOrders.data.slice(0, 5));
         if (dataTickets.success) setRecentTickets(dataTickets.data.slice(0, 5));
@@ -85,221 +113,217 @@ export default function AdminOverviewPage() {
         setIsLoading(false);
       }
     };
-
-    fetchData();
+    void fetchData();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#00d4a4] border-t-transparent" />
-          <p className={cn(ui.label, "animate-pulse")}>Đang tải thống kê...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Logic hiển thị Credits Sold vs Credits Granted
-  const creditsValue = Number(stats?.creditsSold || 0);
-  const creditsLabel = "Credits đã bán";
-  const creditsDesc = "Tổng credits đã cấp thành công";
+  if (isLoading) return <AdminDashboardSkeleton />;
 
   const statCards = [
     {
-      label: "Tổng người dùng",
+      label: "TỔNG NGƯỜI DÙNG",
       value: (stats?.totalUsers || 0).toLocaleString(),
       desc: "Người dùng đăng ký",
       icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-50"
+      iconBg: "bg-[#93C5FD]",
     },
     {
-      label: "Doanh thu",
+      label: "DOANH THU",
       value: formatVnd(stats?.revenueVnd || 0),
       desc: "Tổng doanh thu PAID",
       icon: DollarSign,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50"
+      iconBg: "bg-[#C7F0D8]",
     },
     {
-      label: "Đơn chờ nạp",
-      value: stats?.pendingOrders || 0,
+      label: "ĐƠN CHỜ NẠP",
+      value: (stats?.pendingOrders || 0).toLocaleString(),
       desc: "Đơn hàng PENDING",
       icon: ShoppingCart,
-      color: "text-amber-600",
-      bg: "bg-amber-50"
+      iconBg: "bg-[#FFD93D]",
     },
     {
-      label: "Ticket đang mở",
-      value: stats?.openTickets || 0,
+      label: "TICKET ĐANG MỞ",
+      value: (stats?.openTickets || 0).toLocaleString(),
       desc: "Cần hỗ trợ khách hàng",
       icon: LifeBuoy,
-      color: "text-rose-600",
-      bg: "bg-rose-50"
+      iconBg: "bg-[#FF6B6B]",
     },
     {
-      label: creditsLabel,
-      value: creditsValue.toLocaleString(),
-      desc: creditsDesc,
+      label: "CREDITS ĐÃ BÁN",
+      value: Number(stats?.creditsSold || 0).toLocaleString(),
+      desc: "Tổng credits đã cấp thành công",
       icon: Zap,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50"
+      iconBg: "bg-[#A78BFA]",
     },
     {
-      label: "API Keys",
-      value: stats?.activeApiKeys || 0,
+      label: "API KEYS",
+      value: (stats?.activeApiKeys || 0).toLocaleString(),
       desc: "Key đang hoạt động",
       icon: Key,
-      color: "text-slate-600",
-      bg: "bg-slate-50"
+      iconBg: "bg-[#E9E1D0]",
     },
     {
-      label: "Models",
-      value: stats?.activeModels || 0,
+      label: "MODELS",
+      value: (stats?.activeModels || 0).toLocaleString(),
       desc: "Models AI đang phục vụ",
       icon: Bot,
-      color: "text-violet-600",
-      bg: "bg-violet-50"
+      iconBg: "bg-[#C084FC]",
     },
     {
-      label: "Providers",
-      value: stats?.activeProviders || 0,
+      label: "PROVIDERS",
+      value: (stats?.activeProviders || 0).toLocaleString(),
       desc: "Nhà cung cấp hoạt động",
       icon: Server,
-      color: "text-teal-600",
-      bg: "bg-teal-50"
+      iconBg: "bg-[#99F6E4]",
     },
   ];
 
+  const quickActions = [
+    { href: "/admin/orders", label: "Quản lý đơn hàng" },
+    { href: "/admin/support", label: "Xem ticket hỗ trợ" },
+    { href: "/admin/products", label: "Quản lý gói credits" },
+    { href: "/admin/usage", label: "Xem lịch sử sử dụng" },
+  ];
+
   return (
-    <div className="space-y-10">
-      <PageHeader 
-        title="Tổng quan quản trị" 
-        description="Theo dõi tình hình vận hành, đơn hàng, credits và hỗ trợ khách hàng."
-        icon={<LayoutDashboard className="h-8 w-8" />}
-        actions={
-          <div className="flex items-center gap-1.5 rounded-full bg-[#e7fff7] px-4 py-2 text-[10px] font-black text-[#00d4a4] ring-1 ring-[#00d4a4]/20 shadow-sm">
-            <div className="h-2 w-2 rounded-full bg-[#00d4a4] animate-pulse shadow-[0_0_8px_#00d4a4]" />
+    <div className="space-y-8 overflow-x-hidden">
+      <section className="relative overflow-visible border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
+        <div className="pointer-events-none absolute -right-3 -top-3 h-10 w-10 border-4 border-black bg-[#A78BFA]" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center border-4 border-black bg-[#FFD93D] shadow-[5px_5px_0px_0px_#000]">
+                <LayoutDashboard className="h-7 w-7 text-black" />
+              </div>
+              <span className="inline-flex border-2 border-black bg-[#C7F0D8] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black">ADMIN DASHBOARD</span>
+            </div>
+            <h1 className="text-3xl font-black uppercase tracking-tight text-black md:text-4xl">TỔNG QUAN QUẢN TRỊ</h1>
+            <p className="text-sm font-bold text-black/70 md:text-base">Theo dõi tình hình vận hành, đơn hàng, credits và hỗ trợ khách hàng.</p>
+          </div>
+          <div className="inline-flex items-center gap-2 border-4 border-black bg-[#C7F0D8] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-black shadow-[4px_4px_0px_0px_#000]">
+            <ShieldCheck className="h-4 w-4" />
             LIVE SYSTEM
           </div>
-        }
-      />
+        </div>
+      </section>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {statCards.map((card) => (
-          <AppCard key={card.label} className="group relative overflow-hidden p-7 transition-all hover:border-[#00d4a4] hover:shadow-xl hover:shadow-[#00d4a4]/5">
-            <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 duration-300", card.bg, card.color)}>
-              <card.icon className="h-7 w-7" />
+          <article
+            key={card.label}
+            className="flex min-h-[150px] flex-col justify-between border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_#000] transition-all duration-100 ease-linear hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_#000]"
+          >
+            <div className={`flex h-12 w-12 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.iconBg}`}>
+              <card.icon className="h-6 w-6 text-black" />
             </div>
-
-            <div className="mt-6">
-              <p className={ui.label}>{card.label}</p>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-[#0b0f0d]">{card.value}</h3>
-              <p className={cn(ui.pMuted, "mt-1.5 text-xs")}>{card.desc}</p>
+            <div className="mt-5">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">{card.label}</p>
+              <p className="mt-2 text-3xl font-black leading-none text-black">{card.value}</p>
+              <p className="mt-2 text-sm font-bold text-black/70">{card.desc}</p>
             </div>
-          </AppCard>
+          </article>
         ))}
-      </div>
+      </section>
 
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {quickActions.map((action, idx) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className={[
+              "inline-flex h-12 items-center justify-center border-4 border-black px-4 text-center text-xs font-black uppercase tracking-[0.08em] text-black shadow-[4px_4px_0px_0px_#000] transition-all duration-100 ease-linear hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+              idx % 2 === 0 ? "bg-[#FFD93D]" : "bg-white",
+            ].join(" ")}
+          >
+            {action.label}
+          </Link>
+        ))}
+      </section>
 
-
-      {/* Lists Grid */}
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Recent Orders */}
-        <div className="rounded-[40px] border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <article className="min-h-[260px] border-4 border-black bg-[#FFFDF5] p-5 shadow-[7px_7px_0px_0px_#000] md:p-6">
+          <header className="mb-5 flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Đơn hàng mới nhất</h2>
-              <p className="text-sm font-bold text-slate-500 mt-1">Các giao dịch gần đây trên hệ thống.</p>
+              <h2 className="text-2xl font-black text-black">Đơn hàng mới nhất</h2>
+              <p className="text-sm font-bold text-black/60">Các giao dịch gần đây trên hệ thống.</p>
             </div>
-            <Link href="/admin/orders" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all">
-              <ArrowRight className="h-5 w-5" />
+            <Link
+              href="/admin/orders"
+              className="inline-flex h-10 w-10 items-center justify-center border-4 border-black bg-[#FFD93D] text-black shadow-[3px_3px_0px_0px_#000] transition-all duration-100 hover:bg-[#FF6B6B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+            >
+              <ArrowRight className="h-4 w-4" />
             </Link>
-          </div>
+          </header>
 
-          <div className="space-y-4">
-            {recentOrders.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-400 italic font-bold">
-                <Inbox className="h-10 w-10 mb-3 opacity-20" />
-                Chưa có đơn hàng nào.
+          {recentOrders.length === 0 ? (
+            <div className="flex min-h-[170px] flex-col items-center justify-center text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center border-4 border-black bg-[#E9E1D0]">
+                <Inbox className="h-6 w-6 text-black" />
               </div>
-            ) : (
-              recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-5 rounded-3xl bg-slate-50/50 border border-slate-100/50 group hover:bg-white hover:border-emerald-100 transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-400 group-hover:text-emerald-600 shadow-sm border border-slate-100 transition-colors">
-                      <ShoppingCart className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-slate-900 leading-tight">#{order.orderCode}</p>
-                      <p className="text-[11px] font-bold text-slate-400 mt-0.5">{order.user.email}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-black text-slate-900">{formatVnd(order.amountVnd)}</p>
-                    <div className="mt-1 flex items-center justify-end gap-2">
-                      <span className={`inline-flex h-1.5 w-1.5 rounded-full ${
-                        order.status === 'PAID' ? 'bg-emerald-500' : 
-                        order.status === 'CANCELLED' ? 'bg-rose-500' : 
-                        'bg-amber-500'
-                      }`} />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{translateStatus(order.status)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Tickets to Process */}
-        <div className="rounded-[40px] border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Ticket cần xử lý</h2>
-              <p className="text-sm font-bold text-slate-500 mt-1">Yêu cầu hỗ trợ khách hàng mới nhất.</p>
+              <p className="text-base font-black text-black">Chưa có đơn hàng nào.</p>
+              <p className="mt-1 text-sm font-bold text-black/60">Dữ liệu đơn hàng mới sẽ hiển thị tại đây.</p>
             </div>
-            <Link href="/admin/support" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all">
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-          </div>
-
-          <div className="space-y-4">
-            {recentTickets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-400 italic font-bold">
-                <Inbox className="h-10 w-10 mb-3 opacity-20" />
-                Chưa có yêu cầu hỗ trợ nào.
-              </div>
-            ) : (
-              recentTickets.map((ticket) => (
-                <div key={ticket.id} className="flex items-center justify-between p-5 rounded-3xl bg-slate-50/50 border border-slate-100/50 group hover:bg-white hover:border-rose-100 transition-all">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-400 group-hover:text-rose-600 shadow-sm border border-slate-100 transition-colors">
-                      <LifeBuoy className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-slate-900 leading-tight truncate">{ticket.subject}</p>
-                      <p className="text-[11px] font-bold text-slate-400 mt-0.5 truncate">{ticket.email}</p>
-                    </div>
+          ) : (
+            <div className="space-y-3">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="flex items-center justify-between gap-3 border-2 border-black bg-white p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-black">#{order.orderCode}</p>
+                    <p className="truncate text-xs font-bold text-black/60">{order.user.email}</p>
                   </div>
-                  <div className="text-right shrink-0 ml-4">
-                    <span className={`inline-flex px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${ticket.priority === 'URGENT' ? 'bg-rose-100 text-rose-600' :
-                        ticket.priority === 'HIGH' ? 'bg-amber-100 text-amber-600' :
-                          'bg-slate-200 text-slate-600'
-                      }`}>
-                      {translateStatus(ticket.priority)}
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-black text-black">{formatVnd(order.amountVnd)}</p>
+                    <span className={`mt-1 inline-flex border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase text-black ${statusClass(order.status)}`}>
+                      {translateStatus(order.status)}
                     </span>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
-                      {new Date(ticket.createdAt).toLocaleDateString('vi-VN')}
-                    </p>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+              ))}
+            </div>
+          )}
+        </article>
+
+        <article className="min-h-[260px] border-4 border-black bg-[#FFFDF5] p-5 shadow-[7px_7px_0px_0px_#000] md:p-6">
+          <header className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-black text-black">Ticket cần xử lý</h2>
+              <p className="text-sm font-bold text-black/60">Yêu cầu hỗ trợ khách hàng mới nhất.</p>
+            </div>
+            <Link
+              href="/admin/support"
+              className="inline-flex h-10 w-10 items-center justify-center border-4 border-black bg-[#FFD93D] text-black shadow-[3px_3px_0px_0px_#000] transition-all duration-100 hover:bg-[#FF6B6B] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </header>
+
+          {recentTickets.length === 0 ? (
+            <div className="flex min-h-[170px] flex-col items-center justify-center text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center border-4 border-black bg-[#E9E1D0]">
+                <Inbox className="h-6 w-6 text-black" />
+              </div>
+              <p className="text-base font-black text-black">Chưa có yêu cầu hỗ trợ nào.</p>
+              <p className="mt-1 text-sm font-bold text-black/60">Ticket mới sẽ hiển thị tại đây để xử lý.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentTickets.map((ticket) => (
+                <div key={ticket.id} className="flex items-center justify-between gap-3 border-2 border-black bg-white p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-black">{ticket.subject}</p>
+                    <p className="truncate text-xs font-bold text-black/60">{ticket.email}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className={`inline-flex border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase text-black ${statusClass(ticket.status)}`}>
+                      {translateStatus(ticket.status)}
+                    </span>
+                    <p className="mt-1 text-[11px] font-bold text-black/60">{new Date(ticket.createdAt).toLocaleDateString("vi-VN")}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
+      </section>
     </div>
   );
 }

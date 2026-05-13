@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { requireCurrentUser } from "@/lib/server/current-user";
+import { sendEmail } from "@/lib/server/email";
+import {
+  createOrderPendingEmail,
+  createOrderPendingEmailText,
+} from "@/lib/server/email-templates/order-pending-email";
 
 export const runtime = "nodejs";
 
@@ -233,6 +238,33 @@ export async function POST(request: NextRequest) {
       dedupeKey: `order-created-user:${order.id}`,
       metadata: { orderId: order.id }
     });
+
+    if (!isFreeOrder && user.email) {
+      try {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
+        const amountStr = `${new Intl.NumberFormat("vi-VN").format(order.amountVnd)}đ`;
+        await sendEmail({
+          to: user.email,
+          subject: "Đơn hàng đang chờ thanh toán - TzoShop",
+          html: createOrderPendingEmail({
+            name: user.name,
+            orderCode: order.orderCode,
+            productName: order.product.name,
+            amount: amountStr,
+            paymentUrl: `${appUrl}/billing`,
+          }),
+          text: createOrderPendingEmailText({
+            name: user.name,
+            orderCode: order.orderCode,
+            productName: order.product.name,
+            amount: amountStr,
+            paymentUrl: `${appUrl}/billing`,
+          }),
+        });
+      } catch (emailError) {
+        console.error("[POST /api/orders] Failed to send pending email:", emailError);
+      }
+    }
 
     return NextResponse.json(
       {

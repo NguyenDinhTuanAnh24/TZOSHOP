@@ -1,68 +1,53 @@
-import { createBaseEmailTemplate } from "./base-email";
+﻿import { escapeHtml, renderTextEmail, renderTzoShopEmail } from "./base-email";
 
 type SupportTicketEmailProps = {
   name?: string | null;
+  email?: string | null;
   ticketCode?: string;
   subject: string;
   category: string;
+  priority?: string;
+  orderCode?: string | null;
+  apiKeyPrefix?: string | null;
   supportUrl: string;
 };
 
-export function createSupportTicketEmail({
-  name,
-  ticketCode,
-  subject,
-  category,
-  supportUrl,
-}: SupportTicketEmailProps) {
-  const displayName = name?.trim() || "bạn";
-
-  return createBaseEmailTemplate({
-    title: "TzoShop đã nhận yêu cầu hỗ trợ",
-    previewText: "Yêu cầu hỗ trợ của bạn đã được ghi nhận.",
-    children: `
-      <div style="text-align:center;">
-        <div style="display:inline-block; width:56px; height:56px; line-height:56px; border-radius:20px; background:#ecfdf5; color:#059669; font-size:26px; font-weight:800;">
-          💬
-        </div>
-      </div>
-
-      <h1 style="margin:24px 0 0; font-size:26px; line-height:34px; font-weight:800; color:#0f172a; text-align:center;">
-        Đã nhận yêu cầu hỗ trợ
-      </h1>
-
-      <p style="margin:14px 0 0; font-size:15px; line-height:26px; color:#475569; text-align:center;">
-        Xin chào <strong>${displayName}</strong>, đội ngũ TzoShop đã nhận được yêu cầu hỗ trợ của bạn.
-      </p>
-
-      <div style="margin-top:28px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:22px; padding:20px;">
-        <p style="margin:0 0 12px; font-size:13px; font-weight:800; color:#059669; text-transform:uppercase; letter-spacing:0.12em;">
-          Thông tin yêu cầu
-        </p>
-
-        <p style="margin:0; font-size:14px; line-height:24px; color:#475569;">
-          <strong>Mã ticket:</strong> ${ticketCode ?? "Đang xử lý"}
-        </p>
-
-        <p style="margin:8px 0 0; font-size:14px; line-height:24px; color:#475569;">
-          <strong>Loại yêu cầu:</strong> ${category}
-        </p>
-
-        <p style="margin:8px 0 0; font-size:14px; line-height:24px; color:#475569;">
-          <strong>Tiêu đề:</strong> ${subject}
-        </p>
-      </div>
-
-      <p style="margin:22px 0 0; font-size:14px; line-height:24px; color:#64748b;">
-        Chúng tôi sẽ phản hồi trong thời gian sớm nhất. Bạn có thể theo dõi yêu cầu tại trang hỗ trợ.
-      </p>
-
-      <div style="margin:28px 0 0; text-align:center;">
-        <a href="${supportUrl}"
-          style="display:inline-block; background:#059669; color:#ffffff; text-decoration:none; font-size:15px; font-weight:700; padding:14px 26px; border-radius:999px;">
-          Xem hỗ trợ
-        </a>
-      </div>
+export function createSupportTicketEmail(props: SupportTicketEmailProps) {
+  return renderTzoShopEmail({
+    title: "ĐÃ NHẬN YÊU CẦU HỖ TRỢ",
+    subtitle: "TzoShop sẽ kiểm tra và phản hồi trong thời gian sớm nhất.",
+    previewText: "TzoShop đã nhận yêu cầu hỗ trợ của bạn",
+    content: `
+      <p style="margin:0 0 14px 0;">Xin chào <strong>${escapeHtml(props.name?.trim() || "bạn")}</strong>, chúng tôi đã nhận yêu cầu hỗ trợ của bạn.</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:3px solid #000000;background:#FFFDF5;box-shadow:4px 4px 0 #000000;padding:12px;">
+        <tr><td style="padding:6px 0;font-size:14px;">Mã yêu cầu</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.ticketCode || "Đang xử lý")}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;">Họ tên</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.name || "")}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;">Email</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;word-break:break-all;">${escapeHtml(props.email || "")}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;">Loại yêu cầu</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.category)}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;">Mức độ ưu tiên</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.priority || "Bình thường")}</td></tr>
+        <tr><td style="padding:6px 0;font-size:14px;">Tiêu đề</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.subject)}</td></tr>
+        ${props.orderCode ? `<tr><td style="padding:6px 0;font-size:14px;">Mã đơn hàng</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.orderCode)}</td></tr>` : ""}
+        ${props.apiKeyPrefix ? `<tr><td style="padding:6px 0;font-size:14px;">API key</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.apiKeyPrefix)}</td></tr>` : ""}
+      </table>
     `,
+    actionLabel: "XEM TRANG HỖ TRỢ",
+    actionUrl: props.supportUrl,
+    footerNote: "Thời gian phản hồi thường dưới 15 phút trong khung giờ hỗ trợ.",
   });
+}
+
+export function createSupportTicketEmailText(props: SupportTicketEmailProps) {
+  return renderTextEmail([
+    "ĐÃ NHẬN YÊU CẦU HỖ TRỢ - TzoShop",
+    `Xin chào ${props.name?.trim() || "bạn"}, chúng tôi đã nhận yêu cầu hỗ trợ của bạn.`,
+    `Mã yêu cầu: ${props.ticketCode || "Đang xử lý"}`,
+    `Họ tên: ${props.name || ""}`,
+    `Email: ${props.email || ""}`,
+    `Loại yêu cầu: ${props.category}`,
+    `Mức độ ưu tiên: ${props.priority || "Bình thường"}`,
+    `Tiêu đề: ${props.subject}`,
+    props.orderCode ? `Mã đơn hàng: ${props.orderCode}` : "",
+    props.apiKeyPrefix ? `API key: ${props.apiKeyPrefix}` : "",
+    `Xem trang hỗ trợ: ${props.supportUrl}`,
+  ]);
 }

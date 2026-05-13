@@ -108,7 +108,7 @@ function RegisterForm() {
                   </span>
                   <span className="text-sm sm:text-base">TZOSHOP</span>
                 </Link>
-                <span className="inline-flex whitespace-nowrap border-4 border-black bg-black px-3 py-2 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#000] animate-brutal-wiggle">
+                <span className="inline-flex border-4 border-black bg-black px-3 py-2 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#000] animate-brutal-wiggle">
                   CREATE ACCOUNT
                 </span>
               </div>

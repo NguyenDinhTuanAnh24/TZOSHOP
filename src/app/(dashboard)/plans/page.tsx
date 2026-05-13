@@ -196,7 +196,7 @@ function FilterChip({ active, children, onClick }: { active: boolean; children: 
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex h-10 items-center justify-center whitespace-nowrap border-2 border-black px-4 text-center text-sm font-black text-black shadow-[2px_2px_0px_0px_#000] transition-all duration-100 ease-linear hover:-translate-y-0.5 hover:bg-[#FFF3B0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none",
+        "inline-flex h-10 max-w-full items-center justify-center whitespace-nowrap border-2 border-black px-3 text-center text-xs font-black text-black shadow-[2px_2px_0px_0px_#000] transition-all duration-100 ease-linear hover:-translate-y-0.5 hover:bg-[#FFF3B0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none sm:px-4 sm:text-sm",
         active
           ? "bg-[#FFD93D] shadow-[3px_3px_0px_0px_#000]"
           : "bg-white"
@@ -218,7 +218,7 @@ function FilterRow({
 }) {
   return (
     <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:gap-5">
-      <div className="flex min-w-[120px] items-center gap-2 text-sm font-black uppercase text-black">
+      <div className="flex items-center gap-2 text-sm font-black uppercase text-black md:min-w-[120px]">
         <span className="flex h-8 w-8 items-center justify-center border-2 border-black bg-[#FFD93D] shadow-[2px_2px_0px_0px_#000]">
           <Icon className="h-4 w-4" />
         </span>
@@ -591,7 +591,7 @@ function PlansPageContent() {
                     {tierTabs.map((tab) => (
                       <FilterChip key={tab.value} active={selectedTier === tab.value} onClick={() => { setSelectedTier(tab.value); setCurrentPage(1); }}>
                         <span className={cn(
-                          "inline-flex h-9 min-w-[56px] items-center justify-center whitespace-nowrap px-3 text-center text-[12px] font-black uppercase leading-none",
+                          "inline-flex h-9 items-center justify-center whitespace-nowrap px-3 text-center text-[12px] font-black uppercase leading-none sm:min-w-[56px]",
                           selectedTier === tab.value && "text-black"
                         )}>
                           {tab.label}
@@ -689,8 +689,8 @@ function PlansPageContent() {
 
                           <div className="mt-4 border-2 border-black bg-white p-3 shadow-[3px_3px_0px_0px_#000]">
                             <p className="text-xs font-black uppercase text-black/70">Models hỗ trợ</p>
-                            <div className="mt-2 flex flex-wrap items-center gap-3">
-                              <div className="inline-flex h-10 items-center justify-center whitespace-nowrap border-2 border-black bg-[#BFECCF] px-4 text-center text-sm font-black text-black shadow-[2px_2px_0px_0px_#000]">
+                            <div className="mt-2 flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                              <div className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap border-2 border-black bg-[#BFECCF] px-4 text-center text-sm font-black text-black shadow-[2px_2px_0px_0px_#000] sm:w-auto">
                                 {modelCount === 0 ? "Chưa có model" : `Hỗ trợ ${modelCount} model`}
                               </div>
                             {modelCount > 0 && (
@@ -701,7 +701,7 @@ function PlansPageContent() {
                                     prev.includes(plan.id) ? prev.filter((id) => id !== plan.id) : [...prev, plan.id]
                                   )
                                 }
-                                className="inline-flex h-10 items-center justify-center border-2 border-black bg-[#FFD93D] px-4 text-sm font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] transition-all duration-100 hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+                                className="inline-flex h-10 w-full items-center justify-center border-2 border-black bg-[#FFD93D] px-4 text-sm font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] transition-all duration-100 hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none sm:w-auto"
                               >
                                 <AppIcon icon={isExpandedModel ? ChevronUp : ChevronDown} className="mr-1 h-3.5 w-3.5" />
                                 {isExpandedModel ? "Thu gọn" : "Xem chi tiết"}
@@ -737,7 +737,7 @@ function PlansPageContent() {
                   </div>
 
                   {totalPages > 1 && (
-                    <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                    <div className="mt-8 flex flex-col items-center gap-3">
                       <button
                         type="button"
                         disabled={safeCurrentPage === 1}
@@ -747,19 +747,23 @@ function PlansPageContent() {
                         TRƯỚC
                       </button>
 
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button
-                          key={page}
-                          type="button"
-                          onClick={() => setCurrentPage(page)}
-                          className={cn(
-                            "h-11 border-4 border-black px-4 font-black text-black shadow-[4px_4px_0px_0px_#000]",
-                            safeCurrentPage === page ? "bg-[#FFD93D]" : "bg-white"
-                          )}
-                        >
-                          {page}
-                        </button>
-                      ))}
+                      <div className="w-full overflow-x-auto">
+                        <div className="flex min-w-max items-center justify-center gap-3 px-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                              key={page}
+                              type="button"
+                              onClick={() => setCurrentPage(page)}
+                              className={cn(
+                                "h-11 border-4 border-black px-4 font-black text-black shadow-[4px_4px_0px_0px_#000]",
+                                safeCurrentPage === page ? "bg-[#FFD93D]" : "bg-white"
+                              )}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
                       <button
                         type="button"
@@ -804,7 +808,7 @@ function PlansPageContent() {
 
             <div className="mt-4 space-y-2">
               <label className="text-[11px] font-black uppercase text-black/70">Mã giảm giá (nếu có)</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   type="text"
                   placeholder="Nhập mã ưu đãi..."
@@ -836,7 +840,7 @@ function PlansPageContent() {
               </button>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 disabled={isCreatingOrder}
@@ -844,11 +848,11 @@ function PlansPageContent() {
                   setIsConfirmBuyOpen(false);
                   setSelectedPlanToBuy(null);
                 }}
-                className={`${brutalBtn} h-11 bg-white px-6 hover:bg-[#FFD93D]`}
+                className={`${brutalBtn} h-11 w-full bg-white px-6 hover:bg-[#FFD93D] sm:w-auto`}
               >
                 HỦY
               </button>
-              <button type="button" onClick={handleConfirmBuyPlan} disabled={isCreatingOrder} className={`${brutalBtn} h-11 bg-[#FF6B6B] px-6 disabled:opacity-50`}>
+              <button type="button" onClick={handleConfirmBuyPlan} disabled={isCreatingOrder} className={`${brutalBtn} h-11 w-full bg-[#FF6B6B] px-6 disabled:opacity-50 sm:w-auto`}>
                 {isCreatingOrder ? "ĐANG XỬ LÝ..." : "XÁC NHẬN MUA"}
               </button>
             </div>

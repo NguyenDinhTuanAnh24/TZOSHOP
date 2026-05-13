@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
-      showToast("Vui lòng nhập email.", "error");
+      showToast("Vui lòng nhập email hợp lệ.", "error");
       return;
     }
 
@@ -33,16 +33,13 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        showToast(data.message ?? "Đã có lỗi xảy ra.", "error");
+        showToast(data.message ?? "Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.", "error");
       } else {
         setSent(true);
-        showToast(
-          data.message ?? "Nếu email tồn tại, hướng dẫn đã được gửi.",
-          "success",
-        );
+        showToast(data.message ?? "Đã gửi hướng dẫn đặt lại mật khẩu.", "success");
       }
     } catch {
-      showToast("Đã có lỗi xảy ra. Vui lòng thử lại.", "error");
+      showToast("Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +82,7 @@ export default function ForgotPasswordPage() {
                   <span className="text-sm sm:text-base">TZOSHOP</span>
                 </Link>
 
-                <span className="inline-flex whitespace-nowrap border-4 border-black bg-black px-3 py-2 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#000] animate-brutal-wiggle">
+                <span className="inline-flex border-4 border-black bg-black px-3 py-2 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#000] animate-brutal-wiggle">
                   RESET PASSWORD
                 </span>
               </div>
@@ -123,12 +120,12 @@ export default function ForgotPasswordPage() {
                       <ShieldCheck className="h-10 w-10 text-black" />
                     </div>
                     <h2 className="mt-5 text-3xl font-black uppercase leading-[1.08] tracking-tight sm:text-4xl">
-                      KIỂM TRA EMAIL CỦA BẠN
+                      Kiểm tra hộp thư của bạn.
                     </h2>
                     <div className="mt-5 border-4 border-black bg-white px-5 py-4 text-left shadow-[5px_5px_0px_0px_#000]">
                       <div className="mb-3 h-2 w-20 border-2 border-black bg-[#FF6B6B]" />
                       <p className="text-sm font-bold leading-relaxed text-black">
-                        Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới hộp thư của bạn. Hãy kiểm tra cả mục spam hoặc thư rác.
+                        Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới hộp thư của bạn.
                       </p>
                     </div>
                     <div className="mt-6 space-y-3">
@@ -183,7 +180,7 @@ export default function ForgotPasswordPage() {
                     <div className="mt-6 border-4 border-black bg-white px-4 py-3 shadow-[4px_4px_0px_0px_#000]">
                       <p className="text-sm font-black uppercase">LƯU Ý</p>
                       <p className="mt-1 text-sm font-medium leading-6">
-                        Không thấy email? Hãy kiểm tra thư rác hoặc thử lại sau vài phút.
+                        Nếu không thấy email, hãy kiểm tra mục spam hoặc thử lại sau vài phút.
                       </p>
                     </div>
 

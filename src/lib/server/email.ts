@@ -1,12 +1,13 @@
-import { Resend } from "resend";
+﻿import { Resend } from "resend";
 
 type SendEmailParams = {
   to: string;
   subject: string;
   html: string;
+  text?: string;
 };
 
-export async function sendEmail({ to, subject, html }: SendEmailParams) {
+export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESET_PASSWORD_FROM_EMAIL;
 
@@ -16,6 +17,9 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
       console.log("[DEV EMAIL] To:", to);
       console.log("[DEV EMAIL] Subject:", subject);
       console.log("[DEV EMAIL] HTML:", html);
+      if (text) {
+        console.log("[DEV EMAIL] TEXT:", text);
+      }
     }
 
     return {
@@ -31,6 +35,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
     to: [to],
     subject,
     html,
+    text,
   });
 
   if (error) {

@@ -1,9 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TicketPriority } from "@prisma/client";
 import { requireCurrentUser, getCurrentUser } from "@/lib/server/current-user";
 import { sendEmail } from "@/lib/server/email";
-import { createSupportTicketEmail } from "@/lib/server/email-templates/support-ticket-email";
+import {
+  createSupportTicketEmail,
+  createSupportTicketEmailText,
+} from "@/lib/server/email-templates/support-ticket-email";
 
 export const runtime = "nodejs";
 
@@ -104,15 +107,30 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004";
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
       await sendEmail({
         to: email,
-        subject: `TzoShop đã nhận yêu cầu hỗ trợ`,
+        subject: "TzoShop đã nhận yêu cầu hỗ trợ",
         html: createSupportTicketEmail({
           name,
+          email,
           ticketCode: ticket.id.slice(-6).toUpperCase(),
           subject,
           category: category || "Khác",
+          priority,
+          orderCode: orderCode || null,
+          apiKeyPrefix: apiKeyPrefix || null,
+          supportUrl: `${appUrl}/support`,
+        }),
+        text: createSupportTicketEmailText({
+          name,
+          email,
+          ticketCode: ticket.id.slice(-6).toUpperCase(),
+          subject,
+          category: category || "Khác",
+          priority,
+          orderCode: orderCode || null,
+          apiKeyPrefix: apiKeyPrefix || null,
           supportUrl: `${appUrl}/support`,
         }),
       });
@@ -141,3 +159,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

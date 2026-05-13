@@ -81,7 +81,7 @@ export default function DashboardTopbar({ onOpenMobile }: { onOpenMobile: () => 
           </button>
           <div className="min-w-0">
             <h1 className="truncate text-base font-black uppercase text-black sm:text-xl">{meta.title}</h1>
-            <p className="truncate text-xs font-bold text-black/70 sm:text-sm">{meta.description}</p>
+            <p className="hidden truncate text-xs font-bold text-black/70 sm:block sm:text-sm">{meta.description}</p>
           </div>
         </div>
 

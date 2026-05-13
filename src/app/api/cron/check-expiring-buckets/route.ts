@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/server/email";
-import { createExpiringSoonEmail } from "@/lib/server/email-templates/expiring-soon-email";
+import {
+  createExpiringSoonEmail,
+  createExpiringSoonEmailText,
+} from "@/lib/server/email-templates/expiring-soon-email";
 
 export const runtime = "nodejs";
 
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Cron] Found ${expiringBuckets.length} expiring buckets.`);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://tzoshop.io.vn";
     let successCount = 0;
 
     // 3. Gửi email và cập nhật trạng thái
@@ -57,6 +60,13 @@ export async function GET(request: NextRequest) {
           to: bucket.user.email,
           subject: "Gói dịch vụ sắp hết hạn - TzoShop",
           html: createExpiringSoonEmail({
+            name: bucket.user.name,
+            productName: bucket.product?.name || "Gói dịch vụ AI",
+            expiresAt: bucket.expiresAt.toLocaleDateString("vi-VN"),
+            daysRemaining,
+            rechargeUrl: `${appUrl}/billing`,
+          }),
+          text: createExpiringSoonEmailText({
             name: bucket.user.name,
             productName: bucket.product?.name || "Gói dịch vụ AI",
             expiresAt: bucket.expiresAt.toLocaleDateString("vi-VN"),
@@ -88,3 +98,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

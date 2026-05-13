@@ -392,13 +392,13 @@ function ApiKeysPageContent() {
                       <StatusBadge status={apiKey.isActive ? "Đang hoạt động" : "Đã thu hồi"} variant={apiKey.isActive ? "success" : "danger"} />
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-4 border-black bg-black p-3">
-                      <code className="min-w-0 flex-1 overflow-x-auto font-mono text-sm font-bold text-[#FFFDF5]">
+                    <div className="flex flex-col gap-3 border-4 border-black bg-black p-3 sm:flex-row sm:items-center">
+                      <code className="min-w-0 flex-1 overflow-x-auto break-all font-mono text-sm font-bold text-[#FFFDF5]">
                         {isVisible && apiKey.key ? apiKey.key : (apiKey.maskedKey ?? apiKey.keyPrefix)}
                       </code>
 
                       {apiKey.isActive ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto sm:flex-nowrap">
                           <button
                             type="button"
                             onClick={() => toggleVisibility(apiKey.id)}

@@ -78,7 +78,8 @@ export default function ApiDocsPage() {
       <DocsQuickConfig onOpenCodeExamples={() => setActiveTab("code")} />
 
       <section className="space-y-6">
-        <div className="flex flex-wrap gap-3">
+        <div className="overflow-x-auto pb-1">
+          <div className="flex w-max gap-3 pr-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -90,7 +91,7 @@ export default function ApiDocsPage() {
                 aria-selected={active}
                 onClick={() => setActiveTab(tab.id)}
                 className={[
-                  "inline-flex h-11 items-center border-4 border-black px-4 text-xs font-black uppercase tracking-wide text-black transition-all duration-100 ease-linear focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2",
+                  "inline-flex h-11 items-center whitespace-nowrap border-4 border-black px-4 text-xs font-black uppercase tracking-wide text-black transition-all duration-100 ease-linear focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2",
                   active
                     ? "bg-[#FFD93D] shadow-[4px_4px_0px_0px_#000]"
                     : "bg-[#FFFDF5] shadow-[3px_3px_0px_0px_#000] hover:-translate-y-0.5 hover:bg-[#FFD93D]",
@@ -101,6 +102,7 @@ export default function ApiDocsPage() {
               </button>
             );
           })}
+          </div>
         </div>
 
         <div role="tabpanel" className="space-y-6">

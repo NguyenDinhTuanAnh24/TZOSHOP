@@ -4,59 +4,62 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { 
-  LayoutDashboard, 
-  Users, 
-  ShoppingCart, 
-  Package, 
-  Boxes, 
-  ServerCog, 
-  LifeBuoy, 
-  ScrollText, 
-  LogOut, 
-  ShieldCheck,
+import {
   Activity,
+  BarChart3,
+  Boxes,
+  LayoutDashboard,
+  LifeBuoy,
+  LogOut,
   Menu,
-  X
+  Package,
+  ScrollText,
+  ServerCog,
+  ShieldCheck,
+  ShoppingCart,
+  TicketPercent,
+  Users,
+  X,
 } from "lucide-react";
 import { AppIcon } from "@/components/ui/icon";
 import { useConfirm } from "@/hooks/use-confirm";
 
 const menuGroups = [
   {
-    title: "Tổng quan",
+    title: "TỔNG QUAN",
     items: [
       { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
-    ]
+      { href: "/admin/revenue", label: "Doanh thu", icon: BarChart3 },
+    ],
   },
   {
-    title: "Kinh doanh",
+    title: "KINH DOANH",
     items: [
       { href: "/admin/users", label: "Người dùng", icon: Users },
       { href: "/admin/orders", label: "Đơn hàng", icon: ShoppingCart },
-      { href: "/admin/products", label: "Gói Credits", icon: Package },
-    ]
+      { href: "/admin/products", label: "Gói credits", icon: Package },
+      { href: "/admin/coupons", label: "Mã giảm giá", icon: TicketPercent },
+    ],
   },
   {
-    title: "Hệ thống API",
+    title: "HỆ THỐNG API",
     items: [
       { href: "/admin/models", label: "Models", icon: Boxes },
       { href: "/admin/providers", label: "Providers", icon: ServerCog },
       { href: "/admin/usage", label: "Lịch sử dùng", icon: Activity },
-    ]
+    ],
   },
   {
-    title: "Hỗ trợ",
-    items: [
-      { href: "/admin/support", label: "Ticket hỗ trợ", icon: LifeBuoy },
-    ]
+    title: "HỖ TRỢ",
+    items: [{ href: "/admin/support", label: "Ticket hỗ trợ", icon: LifeBuoy }],
   },
   {
-    title: "Hệ thống",
+    title: "HỆ THỐNG",
     items: [
-      { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
-    ]
-  }
+      { href: "/admin/system", label: "Trạng thái hệ thống", icon: Activity },
+      { href: "/admin/audit-logs", label: "Audit logs", icon: ScrollText },
+    ],
+  },
 ];
 
 export function AdminMobileNav() {
@@ -66,12 +69,10 @@ export function AdminMobileNav() {
   const { askConfirm } = useConfirm();
 
   useEffect(() => {
-    if (!open) {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
       document.body.style.overflow = "";
-      return;
-    }
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    };
   }, [open]);
 
   const handleLogout = () => {
@@ -82,9 +83,7 @@ export function AdminMobileNav() {
       confirmLabel: "Đăng xuất",
       cancelLabel: "Hủy",
       type: "danger",
-      onConfirm: async () => {
-        await signOut({ callbackUrl: "/login" });
-      },
+      onConfirm: async () => signOut({ callbackUrl: "/login" }),
     });
   };
 
@@ -92,78 +91,69 @@ export function AdminMobileNav() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+        className="inline-flex h-11 w-11 items-center justify-center border-4 border-black bg-white text-black shadow-[4px_4px_0px_0px_#000] transition-all duration-100 hover:bg-[#FFD93D] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+        aria-label="Mở menu admin"
       >
-        <Menu className="h-6 w-6" />
+        <Menu className="h-5 w-5" />
       </button>
 
       {open && (
         <div className="fixed inset-0 z-[10000] lg:hidden">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="relative z-10 flex h-dvh w-[85vw] max-w-[340px] flex-col bg-white shadow-2xl animate-in slide-in-from-left duration-300">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600">
-                  <ShieldCheck className="h-5 w-5 text-white" />
-                </div>
-                <span className="font-black text-slate-900 tracking-tight">Admin Panel</span>
+          <button className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} aria-label="Đóng menu" />
+          <aside className="relative z-10 flex h-dvh w-[86vw] max-w-[320px] flex-col border-r-4 border-black bg-[#FFFDF5]">
+            <div className="flex items-center justify-between border-b-4 border-black p-4">
+              <div className="inline-flex items-center gap-2 border-4 border-black bg-[#FFD93D] px-3 py-2 shadow-[4px_4px_0px_0px_#000]">
+                <span className="flex h-8 w-8 items-center justify-center border-2 border-black bg-[#C7F0D8]">
+                  <ShieldCheck className="h-4 w-4 text-black" />
+                </span>
+                <span className="text-xs font-black uppercase tracking-[0.12em] text-black">Admin</span>
               </div>
-              <button 
-                onClick={() => setOpen(false)} 
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-400"
+              <button
+                onClick={() => setOpen(false)}
+                className="inline-flex h-10 w-10 items-center justify-center border-4 border-black bg-white shadow-[3px_3px_0px_0px_#000]"
+                aria-label="Đóng menu"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-6">
-              <nav className="space-y-8">
-                {menuGroups.map((group) => (
-                  <div key={group.title}>
-                    <p className="px-4 mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
-                      {group.title}
-                    </p>
-                    <div className="space-y-1">
-                      {group.items.map((item) => {
-                        const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setOpen(false)}
-                            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold transition-all ${
-                              isActive
-                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
-                                : "text-slate-600 hover:bg-slate-50"
-                            }`}
-                          >
-                            <AppIcon 
-                              icon={item.icon} 
-                              className={`h-5 w-5 ${isActive ? "text-emerald-600" : "text-slate-400"}`} 
-                            />
-                            {item.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+              {menuGroups.map((group) => (
+                <div key={group.title} className="mb-4">
+                  <p className="mb-2 mt-5 px-4 text-[11px] font-black uppercase tracking-[0.16em] text-black/50">{group.title}</p>
+                  <div className="space-y-2">
+                    {group.items.map((item) => {
+                      const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className={[
+                            "flex h-11 items-center gap-3 border-4 px-3 text-sm font-black text-black transition-all duration-100 ease-linear",
+                            active
+                              ? "border-black bg-[#FFD93D] shadow-[4px_4px_0px_0px_#000]"
+                              : "border-transparent hover:-translate-y-0.5 hover:border-black hover:bg-[#FFF3B0] hover:shadow-[3px_3px_0px_0px_#000]",
+                          ].join(" ")}
+                        >
+                          <AppIcon icon={item.icon} className="h-5 w-5 shrink-0 text-black" />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      );
+                    })}
                   </div>
-                ))}
-              </nav>
+                </div>
+              ))}
             </div>
 
-            <div className="border-t border-slate-100 p-4">
-              <div className="mb-4 flex items-center gap-3 px-4 py-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-600">
-                  {session?.user?.name?.[0]?.toUpperCase() || "A"}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-slate-900">{session?.user?.name}</p>
-                  <p className="truncate text-xs font-medium text-slate-500">{session?.user?.email}</p>
-                </div>
+            <div className="border-t-4 border-black p-3">
+              <div className="mb-3 border-4 border-black bg-white px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
+                <p className="truncate text-sm font-black text-black">{session?.user?.name || "Administrator"}</p>
+                <p className="truncate text-xs font-bold text-black/60">{session?.user?.email || "admin@tzoshop.io.vn"}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-black text-rose-600 hover:bg-rose-50"
+                className="flex h-11 w-full items-center justify-center gap-2 border-4 border-black bg-[#FF6B6B] text-sm font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]"
               >
                 <LogOut className="h-5 w-5" />
                 Đăng xuất
@@ -175,3 +165,4 @@ export function AdminMobileNav() {
     </>
   );
 }
+

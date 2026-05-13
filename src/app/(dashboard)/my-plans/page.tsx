@@ -331,19 +331,19 @@ export default function MyPlansPage() {
                       </div>
 
                       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <div className="w-fit min-w-[130px] border-4 border-black bg-[#C7F0D8] px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
+                        <div className="w-full min-w-0 border-4 border-black bg-[#C7F0D8] px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
                           <p className="text-[11px] font-bold uppercase text-black/70">Credits còn lại</p>
                           <p className="text-xl font-black text-black">{formatCredits(bucket.creditsRemaining)}</p>
                         </div>
-                        <div className="w-fit min-w-[130px] border-4 border-black bg-[#E9E1D0] px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
+                        <div className="w-full min-w-0 border-4 border-black bg-[#E9E1D0] px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
                           <p className="text-[11px] font-bold uppercase text-black/70">Credits đã dùng</p>
                           <p className="text-xl font-black text-black">{formatCredits(bucket.usedCredits)}</p>
                         </div>
-                        <div className="w-fit min-w-[130px] border-4 border-black bg-[#FFFDF5] px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
+                        <div className="w-full min-w-0 border-4 border-black bg-[#FFFDF5] px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
                           <p className="text-[11px] font-bold uppercase text-black/70">Hiệu lực</p>
                           <p className="text-base font-black text-black">{bucket.expiresAt ? new Date(bucket.expiresAt).toLocaleDateString("vi-VN") : "Vô hạn"}</p>
                         </div>
-                        <div className="w-fit min-w-[130px] border-4 border-black bg-[#FFFDF5] px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
+                        <div className="w-full min-w-0 border-4 border-black bg-[#FFFDF5] px-3 py-2 shadow-[3px_3px_0px_0px_#000]">
                           <p className="text-[11px] font-bold uppercase text-black/70">API key đang dùng</p>
                           <p className="text-xl font-black text-black">{bucket.activeApiKeys}/{bucket.apiKeyLimit}</p>
                         </div>
