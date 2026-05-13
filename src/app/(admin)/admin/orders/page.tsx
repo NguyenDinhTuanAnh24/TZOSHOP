@@ -1,27 +1,20 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { 
-  ShoppingCart, 
-  Search, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
-  FileText,
-  ExternalLink,
+import {
+  CheckCircle2,
   ChevronRight,
+  CreditCard,
+  FileText,
   Inbox,
-  RefreshCw
+  ReceiptText,
+  RefreshCw,
+  Search,
+  ShoppingCart,
+  XCircle,
 } from "lucide-react";
-import { AppButton } from "@/components/ui/app-button";
-import { IconButton } from "@/components/ui/icon-button";
-import { AppCard } from "@/components/ui/app-card";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { ui } from "@/lib/ui-tokens";
-import { cn } from "@/lib/utils";
-import { formatVnd, translateStatus } from "@/lib/format";
+import { formatVnd } from "@/lib/format";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
@@ -47,17 +40,66 @@ type OrderItem = {
   discountAmount?: number;
 };
 
+function statusLabel(status: string) {
+  if (status === "PENDING") return "CHỜ THANH TOÁN";
+  if (status === "PAID") return "ĐÃ THANH TOÁN";
+  if (status === "CANCELLED") return "ĐÃ HỦY";
+  if (status === "EXPIRED") return "HẾT HẠN";
+  return status;
+}
+
+function statusBg(status: string) {
+  if (status === "PENDING") return "bg-[#FFD93D]";
+  if (status === "PAID") return "bg-[#C7F0D8]";
+  if (status === "CANCELLED") return "bg-[#FF6B6B]";
+  return "bg-[#E9E1D0]";
+}
+
+function familyBg(family: string) {
+  if (family === "CODEXAI") return "bg-[#C7F0D8]";
+  if (family === "CLAUDE") return "bg-[#FFD93D]";
+  if (family === "GEMINI") return "bg-[#A78BFA]";
+  if (family === "DEEPSEEK") return "bg-[#FF6B6B]";
+  return "bg-[#93C5FD]";
+}
+
+function OrdersSkeleton() {
+  return (
+    <div className="space-y-6" aria-hidden="true">
+      <div className="h-36 border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000]">
+        <div className="h-8 w-64 animate-pulse bg-[#E9E1D0]" />
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-28 border-4 border-black bg-[#FFFDF5] p-4 shadow-[5px_5px_0px_0px_#000]">
+            <div className="h-full w-full animate-pulse bg-[#E9E1D0]" />
+          </div>
+        ))}
+      </div>
+      <div className="h-36 border-4 border-black bg-white p-4 shadow-[7px_7px_0px_0px_#000]">
+        <div className="h-full w-full animate-pulse bg-[#E9E1D0]" />
+      </div>
+      <div className="space-y-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-24 border-4 border-black bg-[#FFFDF5] p-4 shadow-[6px_6px_0px_0px_#000]">
+            <div className="h-full w-full animate-pulse bg-[#E9E1D0]" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Filters
+
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [filterEmail, setFilterEmail] = useState("");
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
   const [search, setSearch] = useState("");
-  
+
   const { toast, showToast, clearToast } = useToast();
 
   const fetchOrders = useCallback(async () => {
@@ -68,7 +110,6 @@ export default function AdminOrdersPage() {
       if (filterEmail) params.append("email", filterEmail);
       if (filterStartDate) params.append("startDate", filterStartDate);
       if (filterEndDate) params.append("endDate", filterEndDate);
-      
       const res = await fetch(`/api/admin/orders?${params.toString()}`);
       const result = await res.json();
       if (result.success) setOrders(result.data);
@@ -81,16 +122,14 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchOrders();
+      void fetchOrders();
     }, 0);
     return () => clearTimeout(timer);
   }, [fetchOrders]);
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-    const confirmMsg = newStatus === "CANCELLED" 
-      ? "Bạn có chắc muốn HỦY đơn hàng này?" 
-      : `Xác nhận đổi trạng thái đơn hàng sang ${newStatus}?`;
-      
+    const confirmMsg =
+      newStatus === "CANCELLED" ? "Bạn có chắc muốn HỦY đơn hàng này?" : `Xác nhận đổi trạng thái đơn hàng sang ${newStatus}?`;
     if (!window.confirm(confirmMsg)) return;
 
     try {
@@ -102,7 +141,7 @@ export default function AdminOrdersPage() {
       const result = await res.json();
       if (result.success) {
         showToast("Đã cập nhật trạng thái đơn hàng.", "success");
-        fetchOrders();
+        void fetchOrders();
       }
     } catch {
       showToast("Không thể cập nhật trạng thái.", "error");
@@ -113,12 +152,12 @@ export default function AdminOrdersPage() {
     try {
       showToast("Đang kiểm tra với PayOS...", "info");
       const res = await fetch(`/api/admin/orders/${orderId}/verify`, {
-        method: "POST"
+        method: "POST",
       });
       const result = await res.json();
       if (result.success) {
         showToast(result.message, result.status === "PAID" ? "success" : "info");
-        if (result.status === "PAID") fetchOrders();
+        if (result.status === "PAID") void fetchOrders();
       } else {
         showToast(result.message, "error");
       }
@@ -127,75 +166,101 @@ export default function AdminOrdersPage() {
     }
   };
 
-
-
-  const filteredOrders = orders.filter(o => {
+  const filteredOrders = orders.filter((o) => {
     if (!search) return true;
-    return o.orderCode.toLowerCase().includes(search.toLowerCase()) || 
-           o.user.email.toLowerCase().includes(search.toLowerCase());
+    return o.orderCode.toLowerCase().includes(search.toLowerCase()) || o.user.email.toLowerCase().includes(search.toLowerCase());
   });
 
-  return (
-    <div className="space-y-8">
-      <PageHeader 
-        title="Đơn hàng" 
-        description="Theo dõi đơn mua credits, thanh toán và trạng thái kích hoạt gói."
-        icon={<ShoppingCart className="h-8 w-8" />}
-        actions={
-          <div className="flex items-center gap-6">
-             <div className="text-right mr-4 hidden md:block">
-                <p className={ui.label}>Tổng doanh thu</p>
-                <p className="text-xl font-black text-[#00d4a4]">
-                  {formatVnd(orders.reduce((acc, o) => o.status === "PAID" ? acc + o.amountVnd : acc, 0))}
-                </p>
-             </div>
-             <IconButton 
-                onClick={fetchOrders}
-                isLoading={isLoading}
-                variant="outline"
-                title="Làm mới"
-                aria-label="Làm mới"
-             >
-                <RefreshCw className={cn("h-5 w-5 shrink-0", isLoading && "animate-spin")} />
-             </IconButton>
-          </div>
-        }
-      />
+  const totalRevenue = useMemo(() => orders.reduce((acc, o) => (o.status === "PAID" ? acc + o.amountVnd : acc), 0), [orders]);
+  const totalOrders = orders.length;
+  const paidOrders = orders.filter((o) => o.status === "PAID").length;
+  const pendingOrders = orders.filter((o) => o.status === "PENDING").length;
+  const cancelledExpired = orders.filter((o) => o.status === "CANCELLED" || o.status === "EXPIRED").length;
 
-      <AppCard className="p-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+  if (isLoading && orders.length === 0) return <OrdersSkeleton />;
+
+  return (
+    <div className="space-y-8 overflow-x-hidden">
+      <section className="relative overflow-visible border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
+        <div className="pointer-events-none absolute -right-3 -top-3 h-10 w-10 border-4 border-black bg-[#A78BFA]" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
-            <label className={ui.label}>Tìm kiếm mã đơn</label>
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center border-4 border-black bg-[#FFD93D] shadow-[5px_5px_0px_0px_#000]">
+                <ShoppingCart className="h-7 w-7 text-black" />
+              </div>
+              <span className="inline-flex border-2 border-black bg-[#C7F0D8] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black">ORDERS</span>
+            </div>
+            <h1 className="text-3xl font-black uppercase tracking-tight text-black md:text-4xl">ĐƠN HÀNG</h1>
+            <p className="text-sm font-bold text-black/70 md:text-base">Theo dõi đơn mua credits, thanh toán và trạng thái kích hoạt gói.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="border-4 border-black bg-[#C7F0D8] px-4 py-3 shadow-[4px_4px_0px_0px_#000]">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Tổng doanh thu</p>
+              <p className="text-2xl font-black text-black">{formatVnd(totalRevenue)}</p>
+            </div>
+            <button
+              onClick={fetchOrders}
+              className="inline-flex h-11 w-11 items-center justify-center border-4 border-black bg-white text-black shadow-[4px_4px_0px_0px_#000] hover:bg-[#FFD93D]"
+              title="Làm mới"
+              aria-label="Làm mới"
+            >
+              <RefreshCw className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "TỔNG ĐƠN HÀNG", value: totalOrders, sub: "Tất cả đơn", bg: "bg-[#DBEAFE]", icon: ReceiptText },
+          { label: "ĐÃ THANH TOÁN", value: paidOrders, sub: "Đơn hàng đã thanh toán", bg: "bg-[#C7F0D8]", icon: CheckCircle2 },
+          { label: "CHỜ THANH TOÁN", value: pendingOrders, sub: "Đơn hàng đang chờ thanh toán", bg: "bg-[#FFD93D]", icon: CreditCard },
+          { label: "ĐÃ HỦY / HẾT HẠN", value: cancelledExpired, sub: "Đơn hàng đã hủy hoặc hết hạn", bg: "bg-[#FF6B6B]", icon: XCircle },
+        ].map((card) => (
+          <article key={card.label} className="min-h-[110px] border-4 border-black bg-[#FFFDF5] p-4 shadow-[5px_5px_0px_0px_#000]">
+            <div className="flex items-center gap-4">
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.bg}`}>
+                <card.icon className="h-5 w-5 text-black" />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-black/60">{card.label}</p>
+                <p className="mt-1 text-2xl font-black leading-none text-black">{card.value.toLocaleString("vi-VN")}</p>
+                <p className="mt-1 text-sm font-bold text-black/60">{card.sub}</p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="space-y-4 border-4 border-black bg-white p-4 shadow-[7px_7px_0px_0px_#000] md:p-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Tìm mã đơn</label>
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a9690]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/45" />
               <input
                 type="text"
                 placeholder="Nhập mã đơn..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={cn(ui.input, "pl-10")}
+                className="h-12 w-full border-4 border-black bg-white pl-10 pr-4 text-sm font-bold text-black placeholder:text-black/45 shadow-[3px_3px_0px_0px_#000] outline-none"
               />
             </div>
           </div>
-
           <div className="space-y-2">
-            <label className={ui.label}>Lọc theo Email</label>
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Email khách hàng</label>
             <input
               type="text"
               placeholder="Nhập email khách..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
-              className={ui.input}
+              className="h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black placeholder:text-black/45 shadow-[3px_3px_0px_0px_#000] outline-none"
             />
           </div>
-
           <div className="space-y-2">
-            <label className={ui.label}>Trạng thái</label>
-            <select 
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className={ui.input}
-            >
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Trạng thái</label>
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black shadow-[3px_3px_0px_0px_#000] outline-none">
               <option value="ALL">Tất cả trạng thái</option>
               <option value="PENDING">Chờ thanh toán</option>
               <option value="PAID">Đã thanh toán</option>
@@ -203,173 +268,201 @@ export default function AdminOrdersPage() {
               <option value="EXPIRED">Hết hạn</option>
             </select>
           </div>
-
           <div className="space-y-2">
-            <label className={ui.label}>Khoảng ngày</label>
-            <div className="flex items-center gap-2">
-              <input 
-                type="date"
-                value={filterStartDate}
-                onChange={(e) => setFilterStartDate(e.target.value)}
-                className={ui.input}
-              />
-              <span className="text-[#dfe5e1]">-</span>
-              <input 
-                type="date"
-                value={filterEndDate}
-                onChange={(e) => setFilterEndDate(e.target.value)}
-                className={ui.input}
-              />
-            </div>
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Từ ngày</label>
+            <input type="date" value={filterStartDate} onChange={(e) => setFilterStartDate(e.target.value)} className="h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black shadow-[3px_3px_0px_0px_#000] outline-none" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Đến ngày</label>
+            <input type="date" value={filterEndDate} onChange={(e) => setFilterEndDate(e.target.value)} className="h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black shadow-[3px_3px_0px_0px_#000] outline-none" />
           </div>
         </div>
-      </AppCard>
-
-      <AppCard className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-[#fbfbf8] border-b border-[#edf1ee]">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Mã đơn</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Khách hàng</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Gói mua</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400 text-center">Số tiền</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400 text-center">Trạng thái</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Thời gian</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-[0.16em] text-slate-400 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {isLoading ? (
-                <tr><td colSpan={7} className="py-24 text-center">
-                   <div className="flex flex-col items-center gap-4">
-                    <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#00d4a4] border-t-transparent" />
-                    <p className={cn(ui.label, "animate-pulse")}>Đang tải đơn hàng...</p>
-                  </div>
-                </td></tr>
-              ) : filteredOrders.length === 0 ? (
-                <tr><td colSpan={7} className="py-24 text-center">
-                   <div className="flex flex-col items-center gap-2 text-[#8a9690]">
-                    <Inbox className="h-12 w-12 text-[#dfe5e1]" />
-                    <p className={cn(ui.pMuted, "italic")}>Chưa có đơn hàng phù hợp.</p>
-                  </div>
-                </td></tr>
-              ) : (
-                filteredOrders.map((order) => (
-                  <tr key={order.id} className="group hover:bg-slate-50/30 transition-colors">
-                    <td className="px-8 py-6">
-                       <div className="flex items-center gap-4">
-                          <Link 
-                            href={`/admin/orders/${order.id}`}
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fbfbf8] text-[#8a9690] hover:bg-white hover:text-[#00d4a4] transition-all shadow-sm ring-1 ring-[#edf1ee] active:scale-95"
-                          >
-                             <FileText className="h-5 w-5" />
-                          </Link>
-                          <Link 
-                            href={`/admin/orders/${order.id}`}
-                            className="text-sm font-black text-slate-950 hover:text-[#00d4a4] transition-colors cursor-pointer"
-                          >
-                            #{order.orderCode}
-                          </Link>
-                       </div>
-                    </td>
-                    <td className="px-8 py-6">
-                       <p className="text-sm font-bold text-slate-900 leading-tight">{order.user.name || 'Khách hàng'}</p>
-                       <p className="text-xs font-semibold text-slate-500 mt-0.5">{order.user.email}</p>
-                    </td>
-                    <td className="px-8 py-6">
-                       <p className="text-sm font-bold text-slate-900">{order.product.name}</p>
-                       <StatusBadge status={order.product.apiFamily} variant="neutral" className="mt-1" />
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                       <p className="text-sm font-black text-slate-950">{formatVnd(order.amountVnd)}</p>
-                       {order.couponCode && (
-                         <div className="mt-1 flex flex-col items-center">
-                            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-widest">{order.couponCode}</span>
-                            <span className="text-[9px] font-bold text-slate-400">-{formatVnd(order.discountAmount || 0)}</span>
-                         </div>
-                       )}
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                       <div className="flex flex-col items-center gap-2">
-                          <StatusBadge 
-                            status={translateStatus(order.status)} 
-                            variant={order.status === 'PAID' ? 'success' : order.status === 'PENDING' ? 'warning' : order.status === 'CANCELLED' ? 'danger' : 'neutral'} 
-                            className="text-[11px] font-black px-3 py-1.5"
-                          />
-                          {order.status === "PAID" && (
-                            order.isCreditsGranted ? (
-                              <span className="text-[9px] font-black text-[#00d4a4] uppercase tracking-tighter">Đã cấp Credits ✅</span>
-                            ) : (
-                              <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter">Chưa cấp Credits ⚠️</span>
-                            )
-                          )}
-                       </div>
-                    </td>
-                    <td className="px-8 py-6">
-                       <div className="flex items-center gap-2 text-[#0b0f0d]">
-                          <Clock className="h-4 w-4 text-[#dfe5e1]" />
-                          <div className="flex flex-col">
-                             <span className="text-[12px] font-bold">{format(new Date(order.createdAt), "dd/MM/yyyy")}</span>
-                             <span className={cn(ui.pMuted, "text-[10px]")}>{format(new Date(order.createdAt), "HH:mm:ss")}</span>
-                          </div>
-                       </div>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex justify-end gap-2.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                        {order.status === "PENDING" && (
-                          <>
-                            <AppButton 
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => handleUpdateStatus(order.id, "CANCELLED")}
-                              className="h-9 text-red-600 hover:bg-red-50 border-red-100"
-                            >
-                              <XCircle className="h-4 w-4 mr-1.5" /> Hủy đơn
-                            </AppButton>
-                            <AppButton 
-                              variant="accent"
-                              size="sm"
-                              onClick={() => handleVerifyPayment(order.id)}
-                              className="h-9"
-                            >
-                              <ExternalLink className="h-4 w-4 mr-1.5" /> Check PayOS
-                            </AppButton>
-                            <AppButton 
-                              variant="primary"
-                              size="sm"
-                              onClick={() => handleUpdateStatus(order.id, "PAID")}
-                              className="h-9"
-                            >
-                              <CheckCircle2 className="h-4 w-4 mr-1.5" /> Duyệt
-                            </AppButton>
-                          </>
-                        )}
-                        <IconButton
-                          onClick={() => window.location.href = `/admin/orders/${order.id}`}
-                          variant="outline"
-                          title="Xem chi tiết"
-                          className="h-9 w-9"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </IconButton>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-black/60">Đang hiển thị <span className="text-black">{filteredOrders.length}</span> đơn hàng</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                setSearch("");
+                setFilterEmail("");
+                setFilterStatus("ALL");
+                setFilterStartDate("");
+                setFilterEndDate("");
+              }}
+              className="h-11 border-4 border-black bg-white px-4 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]"
+            >
+              Xóa lọc
+            </button>
+            <button onClick={fetchOrders} className="h-11 border-4 border-black bg-[#C7F0D8] px-4 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]">
+              Làm mới
+            </button>
+          </div>
         </div>
-      </AppCard>
+      </section>
 
-      {toast && (
-        <ToastMessage
-          message={toast.message}
-          type={toast.type}
-          onClose={clearToast}
-        />
+      {filteredOrders.length === 0 ? (
+        <section className="min-h-[300px] border-4 border-black bg-[#FFFDF5] p-8 shadow-[8px_8px_0px_0px_#000]">
+          <div className="flex h-full min-h-[230px] flex-col items-center justify-center text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center border-4 border-black bg-[#FFD93D] shadow-[4px_4px_0px_0px_#000]">
+              <Inbox className="h-7 w-7 text-black" />
+            </div>
+            <p className="text-xl font-black text-black">{orders.length === 0 ? "CHƯA CÓ ĐƠN HÀNG NÀO" : "KHÔNG TÌM THẤY ĐƠN HÀNG"}</p>
+            <p className="mt-2 text-sm font-bold text-black/60">
+              {orders.length === 0
+                ? "Các đơn mua credits sẽ xuất hiện tại đây sau khi khách hàng chọn gói."
+                : "Thử đổi bộ lọc, khoảng ngày hoặc làm mới danh sách."}
+            </p>
+            {orders.length > 0 && (
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setFilterEmail("");
+                  setFilterStatus("ALL");
+                  setFilterStartDate("");
+                  setFilterEndDate("");
+                }}
+                className="mt-5 h-11 border-4 border-black bg-[#FFD93D] px-5 text-xs font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]"
+              >
+                XÓA BỘ LỌC
+              </button>
+            )}
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="hidden overflow-hidden border-4 border-black bg-white shadow-[8px_8px_0px_0px_#000] lg:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1000px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b-4 border-black bg-[#FFFDF5]">
+                    <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.16em] text-black/60">Mã đơn</th>
+                    <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.16em] text-black/60">Khách hàng</th>
+                    <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.16em] text-black/60">Gói mua</th>
+                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-[0.16em] text-black/60">Số tiền</th>
+                    <th className="px-4 py-4 text-center text-[11px] font-black uppercase tracking-[0.16em] text-black/60">Trạng thái</th>
+                    <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.16em] text-black/60">Thời gian</th>
+                    <th className="px-4 py-4 text-right text-[11px] font-black uppercase tracking-[0.16em] text-black/60">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order) => (
+                    <tr key={order.id} className="border-b-2 border-black/10 align-middle transition-colors hover:bg-[#FFF8D6]">
+                      <td className="px-4 py-4">
+                        <div className="inline-flex items-center gap-2 border-2 border-black bg-[#FFFDF5] px-2 py-1 shadow-[2px_2px_0px_0px_#000]">
+                          <FileText className="h-3.5 w-3.5 text-black" />
+                          <span className="text-xs font-black text-black">#{order.orderCode}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center border-4 border-black bg-[#C7F0D8] text-sm font-black uppercase text-black shadow-[3px_3px_0px_0px_#000]">
+                            {(order.user.name?.[0] || order.user.email?.[0] || "K").toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="max-w-[210px] truncate text-sm font-black text-black">{order.user.name || "Khách vãng lai"}</p>
+                            <p className="max-w-[260px] truncate text-sm font-bold text-black/60">{order.user.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <p className="text-sm font-bold text-black">{order.product?.name || "Không xác định"}</p>
+                        <span className={`mt-1 inline-flex border-2 border-black px-2 py-0.5 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] ${familyBg(order.product?.apiFamily)}`}>
+                          {order.product?.apiFamily || "N/A"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <p className="text-lg font-black text-black">{formatVnd(order.amountVnd || 0)}</p>
+                        {order.couponCode ? <p className="mt-1 text-xs font-black text-black/60">-{formatVnd(order.discountAmount || 0)}</p> : null}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <span className={`inline-flex h-8 items-center border-2 border-black px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] ${statusBg(order.status)}`}>
+                          {statusLabel(order.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <p className="text-sm font-bold text-black">{format(new Date(order.createdAt), "dd/MM/yyyy HH:mm")}</p>
+                        {order.paidAt ? <p className="text-xs font-bold text-black/60">Thanh toán: {format(new Date(order.paidAt), "dd/MM/yyyy HH:mm")}</p> : null}
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {order.status === "PENDING" && (
+                            <>
+                              <button onClick={() => void handleUpdateStatus(order.id, "CANCELLED")} className="h-10 border-2 border-black bg-white px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] hover:bg-[#FFD93D]">
+                                Hủy
+                              </button>
+                              <button onClick={() => void handleVerifyPayment(order.id)} className="h-10 border-2 border-black bg-white px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] hover:bg-[#FFD93D]">
+                                Check
+                              </button>
+                              <button onClick={() => void handleUpdateStatus(order.id, "PAID")} className="h-10 border-2 border-black bg-[#C7F0D8] px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]">
+                                Duyệt
+                              </button>
+                            </>
+                          )}
+                          <Link href={`/admin/orders/${order.id}`} className="inline-flex h-10 w-10 items-center justify-center border-2 border-black bg-white text-black shadow-[2px_2px_0px_0px_#000] hover:bg-[#FFD93D]">
+                            <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="grid gap-4 lg:hidden">
+            {filteredOrders.map((order) => (
+              <article key={order.id} className="space-y-4 border-4 border-black bg-[#FFFDF5] p-4 shadow-[6px_6px_0px_0px_#000]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="inline-flex border-2 border-black bg-white px-2 py-1 text-xs font-black text-black shadow-[2px_2px_0px_0px_#000]">#{order.orderCode}</div>
+                    <p className="mt-2 text-sm font-black text-black">{order.user.name || "Khách vãng lai"}</p>
+                    <p className="break-all text-sm font-bold text-black/60">{order.user.email}</p>
+                  </div>
+                  <span className={`inline-flex h-8 items-center border-2 border-black px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000] ${statusBg(order.status)}`}>
+                    {statusLabel(order.status)}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="border-2 border-black bg-white p-2">
+                    <p className="text-xs font-black uppercase text-black/60">Gói mua</p>
+                    <p className="text-sm font-bold text-black">{order.product?.name || "Không xác định"}</p>
+                  </div>
+                  <div className="border-2 border-black bg-white p-2">
+                    <p className="text-xs font-black uppercase text-black/60">Số tiền</p>
+                    <p className="text-sm font-black text-black">{formatVnd(order.amountVnd || 0)}</p>
+                  </div>
+                  <div className="col-span-2 border-2 border-black bg-white p-2">
+                    <p className="text-xs font-black uppercase text-black/60">Thời gian</p>
+                    <p className="text-sm font-bold text-black">{format(new Date(order.createdAt), "dd/MM/yyyy HH:mm")}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {order.status === "PENDING" && (
+                    <>
+                      <button onClick={() => void handleUpdateStatus(order.id, "CANCELLED")} className="h-10 border-2 border-black bg-white px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]">
+                        Hủy
+                      </button>
+                      <button onClick={() => void handleVerifyPayment(order.id)} className="h-10 border-2 border-black bg-white px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]">
+                        Check PayOS
+                      </button>
+                      <button onClick={() => void handleUpdateStatus(order.id, "PAID")} className="h-10 border-2 border-black bg-[#C7F0D8] px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]">
+                        Duyệt
+                      </button>
+                    </>
+                  )}
+                  <Link href={`/admin/orders/${order.id}`} className="inline-flex h-10 items-center border-2 border-black bg-[#FFD93D] px-3 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]">
+                    Chi tiết
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </section>
+        </>
       )}
+
+      {toast && <ToastMessage message={toast.message} type={toast.type} onClose={clearToast} />}
     </div>
   );
 }

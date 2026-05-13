@@ -1,26 +1,20 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { 
+import {
   Package,
   Search,
   Plus,
   Power,
   PowerOff,
   Star,
-  Clock,
-  ChevronRight,
   Filter,
-  Key,
   Pencil,
   ChevronLeft,
-  LayoutGrid
+  ChevronRight,
+  LayoutGrid,
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
-import { AppCard } from "@/components/ui/app-card";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { ui } from "@/lib/ui-tokens";
 import { cn } from "@/lib/utils";
 import { formatVnd } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
@@ -52,20 +46,27 @@ type AiModel = {
   isActive: boolean;
 };
 
+function familyStyle(apiFamily: string) {
+  if (apiFamily === "CODEXAI") return "bg-[#C7F0D8]";
+  if (apiFamily === "CLAUDE") return "bg-[#FFD93D]";
+  if (apiFamily === "GEMINI") return "bg-[#A78BFA]";
+  if (apiFamily === "DEEPSEEK") return "bg-[#FF6B6B]";
+  return "bg-[#93C5FD]";
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [models, setModels] = useState<AiModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Filters
+
   const [search, setSearch] = useState("");
   const [filterFamily, setFilterFamily] = useState("ALL");
   const [filterActive, setFilterActive] = useState("ALL");
   const [filterContact, setFilterContact] = useState("ALL");
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 6;
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
@@ -156,15 +157,9 @@ export default function AdminProductsPage() {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [resProducts, resModels] = await Promise.all([
-        fetch("/api/admin/products"),
-        fetch("/api/admin/models")
-      ]);
-      const [dataProducts, dataModels] = await Promise.all([
-        resProducts.json(),
-        resModels.json()
-      ]);
-      
+      const [resProducts, resModels] = await Promise.all([fetch("/api/admin/products"), fetch("/api/admin/models")]);
+      const [dataProducts, dataModels] = await Promise.all([resProducts.json(), resModels.json()]);
+
       if (dataProducts.success) setProducts(dataProducts.data);
       if (dataModels.success) setModels(dataModels.data.filter((m: AiModel) => m.isActive));
     } catch (error) {
@@ -180,7 +175,7 @@ export default function AdminProductsPage() {
     }, 0);
     return () => clearTimeout(timer);
   }, [fetchData]);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setCurrentPage(1);
@@ -230,17 +225,15 @@ export default function AdminProductsPage() {
 
   const handleSave = async () => {
     try {
-      const url = editingId 
-        ? `/api/admin/products/${editingId}`
-        : `/api/admin/products`;
+      const url = editingId ? `/api/admin/products/${editingId}` : `/api/admin/products`;
       const method = editingId ? "PATCH" : "POST";
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      
+
       const result = await res.json();
       if (result.success) {
         showToast(editingId ? "Đã cập nhật." : "Đã tạo.", "success");
@@ -257,10 +250,10 @@ export default function AdminProductsPage() {
   const handleToggleActive = (productId: string, currentStatus: boolean) => {
     const isActivating = !currentStatus;
     const action = isActivating ? "Bật" : "Tắt";
-    
+
     askConfirm({
       title: `${action} gói sản phẩm?`,
-      description: isActivating 
+      description: isActivating
         ? "Gói này sẽ xuất hiện lại trên bảng giá cho người dùng mua."
         : "Người dùng sẽ không thể mua gói này nữa.",
       confirmLabel: `Xác nhận ${action}`,
@@ -270,7 +263,7 @@ export default function AdminProductsPage() {
         const res = await fetch(`/api/admin/products/${productId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isActive: isActivating })
+          body: JSON.stringify({ isActive: isActivating }),
         });
         const result = await res.json();
         if (result.success) {
@@ -279,517 +272,402 @@ export default function AdminProductsPage() {
         } else {
           showToast("Có lỗi xảy ra.", "error");
         }
-      }
+      },
     });
   };
 
   const filteredProducts = products
-    .filter(p => {
+    .filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.slug.toLowerCase().includes(search.toLowerCase());
       const matchesFamily = filterFamily === "ALL" || p.apiFamily === filterFamily;
       const matchesActive = filterActive === "ALL" || (filterActive === "ACTIVE" ? p.isActive : !p.isActive);
       const matchesContact = filterContact === "ALL" || (filterContact === "CONTACT" ? p.isContactOnly : !p.isContactOnly);
-      
-      // Advanced Filters
+
       const matchesMinCredits = advancedFilters.minCredits === "" || Number(p.credits) >= Number(advancedFilters.minCredits);
       const matchesMaxCredits = advancedFilters.maxCredits === "" || Number(p.credits) <= Number(advancedFilters.maxCredits);
       const matchesMinPrice = advancedFilters.minPrice === "" || p.priceVnd >= Number(advancedFilters.minPrice);
       const matchesMaxPrice = advancedFilters.maxPrice === "" || p.priceVnd <= Number(advancedFilters.maxPrice);
       const matchesMinApiKeys = advancedFilters.minApiKeys === "" || p.apiKeyLimit >= Number(advancedFilters.minApiKeys);
       const matchesMaxApiKeys = advancedFilters.maxApiKeys === "" || p.apiKeyLimit <= Number(advancedFilters.maxApiKeys);
-      
+
       const matchesActiveOnly = !advancedFilters.activeOnly || p.isActive === true;
       const matchesInactiveOnly = !advancedFilters.inactiveOnly || p.isActive === false;
       const matchesPriorityOnly = !advancedFilters.priorityOnly || p.isPopular === true;
       const matchesCustomOnly = !advancedFilters.customOnly || p.isContactOnly === true;
-      
+
       const matchesTrialOnly = !advancedFilters.trialOnly || p.name.toLowerCase().includes("trial");
       const matchesEnterpriseOnly = !advancedFilters.enterpriseOnly || p.name.toLowerCase().includes("enterprise");
       const matchesFreeOnly = !advancedFilters.freeOnly || p.priceVnd === 0;
 
       return (
-        matchesSearch && matchesFamily && matchesActive && matchesContact &&
-        matchesMinCredits && matchesMaxCredits && matchesMinPrice && matchesMaxPrice &&
-        matchesMinApiKeys && matchesMaxApiKeys && matchesActiveOnly && matchesInactiveOnly &&
-        matchesPriorityOnly && matchesCustomOnly && matchesTrialOnly && matchesEnterpriseOnly &&
+        matchesSearch &&
+        matchesFamily &&
+        matchesActive &&
+        matchesContact &&
+        matchesMinCredits &&
+        matchesMaxCredits &&
+        matchesMinPrice &&
+        matchesMaxPrice &&
+        matchesMinApiKeys &&
+        matchesMaxApiKeys &&
+        matchesActiveOnly &&
+        matchesInactiveOnly &&
+        matchesPriorityOnly &&
+        matchesCustomOnly &&
+        matchesTrialOnly &&
+        matchesEnterpriseOnly &&
         matchesFreeOnly
       );
     })
     .sort((a, b) => {
       switch (advancedFilters.sortBy) {
-        case "price-asc": return a.priceVnd - b.priceVnd;
-        case "price-desc": return b.priceVnd - a.priceVnd;
-        case "credits-asc": return Number(a.credits) - Number(b.credits);
-        case "credits-desc": return Number(b.credits) - Number(a.credits);
-        case "api-keys-desc": return b.apiKeyLimit - a.apiKeyLimit;
-        case "name-asc": return a.name.localeCompare(b.name);
+        case "price-asc":
+          return a.priceVnd - b.priceVnd;
+        case "price-desc":
+          return b.priceVnd - a.priceVnd;
+        case "credits-asc":
+          return Number(a.credits) - Number(b.credits);
+        case "credits-desc":
+          return Number(b.credits) - Number(a.credits);
+        case "api-keys-desc":
+          return b.apiKeyLimit - a.apiKeyLimit;
+        case "name-asc":
+          return a.name.localeCompare(b.name);
         case "newest":
         default:
-          return 0; // Default order from API
+          return 0;
       }
     });
 
-  const availableModels = models.filter(m => m.apiFamily === formData.apiFamily);
+  const availableModels = models.filter((m) => m.apiFamily === formData.apiFamily);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const activeCount = products.filter((p) => p.isActive).length;
+  const inactiveCount = products.length - activeCount;
+  const familiesCount = new Set(products.map((p) => p.apiFamily)).size;
+
+  const brutalInput =
+    "h-12 w-full border-4 border-black bg-white px-4 text-sm font-bold text-black placeholder:text-black/45 shadow-[3px_3px_0px_0px_#000] outline-none";
 
   return (
-    <div className="space-y-8">
-      <PageHeader 
-        title="Quản lý Gói Credits" 
-        description="Thiết kế và quản lý các gói nạp credits cho người dùng."
-        icon={<Package className="h-8 w-8 text-[#00d4a4]" />}
-        actions={
-          <AppButton 
-            onClick={() => handleOpenModal()}
-            variant="primary"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Tạo gói mới
-          </AppButton>
-        }
-      />
-
-      <AppCard className="p-4 bg-[#fbfbf8]/50">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8a9690]" />
-            <input
-              type="text"
-              placeholder="Tìm tên gói hoặc slug..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={cn(ui.input, "pl-12 bg-white")}
-            />
+    <div className="space-y-8 overflow-x-hidden">
+      <section className="relative overflow-visible border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000] md:p-7">
+        <div className="pointer-events-none absolute -right-3 -top-3 h-10 w-10 border-4 border-black bg-[#A78BFA]" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center border-4 border-black bg-[#FFD93D] shadow-[5px_5px_0px_0px_#000]">
+                <Package className="h-7 w-7 text-black" />
+              </div>
+              <span className="inline-flex border-2 border-black bg-[#C7F0D8] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black">PRODUCTS</span>
+            </div>
+            <h1 className="text-3xl font-black uppercase tracking-tight text-black md:text-4xl">QUẢN LÝ GÓI CREDITS</h1>
+            <p className="text-sm font-bold text-black/70 md:text-base">Thiết kế và quản lý các gói nạp credits cho người dùng.</p>
           </div>
-          
-          <div className="flex flex-wrap gap-3">
-            <select 
-              value={filterFamily}
-              onChange={(e) => setFilterFamily(e.target.value)}
-              className={cn(ui.input, "w-auto min-w-[140px] h-11 py-0 px-4")}
-            >
+          <AppButton onClick={() => handleOpenModal()} variant="primary" size="sm" className="h-12 border-4 border-black bg-[#FF6B6B] px-5 font-black uppercase text-black shadow-[5px_5px_0px_0px_#000] hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#000]">
+            <Plus className="mr-2 h-4 w-4" />
+            TẠO GÓI MỚI
+          </AppButton>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "TỔNG GÓI", value: products.length, sub: "Credits packages", bg: "bg-[#DBEAFE]" },
+          { label: "ĐANG BẬT", value: activeCount, sub: "Khả dụng", bg: "bg-[#C7F0D8]" },
+          { label: "ĐANG TẮT", value: inactiveCount, sub: "Tạm ẩn", bg: "bg-[#FF6B6B]" },
+          { label: "DÒNG AI", value: familiesCount, sub: "Đang bán", bg: "bg-[#FFD93D]" },
+        ].map((card) => (
+          <article key={card.label} className="min-h-[110px] border-4 border-black bg-[#FFFDF5] p-4 shadow-[5px_5px_0px_0px_#000]">
+            <div className="flex items-center gap-4">
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${card.bg}`}>
+                <Package className="h-5 w-5 text-black" />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-black/60">{card.label}</p>
+                <p className="mt-1 text-2xl font-black leading-none text-black">{card.value.toLocaleString("vi-VN")}</p>
+                <p className="mt-1 text-sm font-bold text-black/60">{card.sub}</p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="space-y-4 border-4 border-black bg-white p-4 shadow-[7px_7px_0px_0px_#000] md:p-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_180px_auto]">
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Tìm kiếm</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/45" />
+              <input type="text" placeholder="Tên gói hoặc slug..." value={search} onChange={(e) => setSearch(e.target.value)} className={`${brutalInput} pl-10`} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Dòng AI</label>
+            <select value={filterFamily} onChange={(e) => setFilterFamily(e.target.value)} className={brutalInput}>
               <option value="ALL">Tất cả dòng AI</option>
               <option value="CODEXAI">CodeX AI</option>
               <option value="CLAUDE">Claude</option>
               <option value="GEMINI">Gemini</option>
               <option value="DEEPSEEK">DeepSeek</option>
             </select>
-
-            <select 
-              value={filterActive}
-              onChange={(e) => setFilterActive(e.target.value)}
-              className={cn(ui.input, "w-auto min-w-[140px] h-11 py-0 px-4")}
-            >
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Trạng thái</label>
+            <select value={filterActive} onChange={(e) => setFilterActive(e.target.value)} className={brutalInput}>
               <option value="ALL">Mọi trạng thái</option>
               <option value="ACTIVE">Đang bật</option>
               <option value="INACTIVE">Đang tắt</option>
             </select>
-
-             <AppButton 
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Loại gói</label>
+            <select value={filterContact} onChange={(e) => setFilterContact(e.target.value)} className={brutalInput}>
+              <option value="ALL">Tất cả</option>
+              <option value="NORMAL">Gói thường</option>
+              <option value="CONTACT">Liên hệ</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Lọc nâng cao</label>
+            <AppButton
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              variant={showAdvancedFilters || activeAdvancedFilterCount > 0 ? "primary" : "secondary"}
+              variant="secondary"
               size="sm"
               className={cn(
-                "h-11 relative",
-                showAdvancedFilters && "ring-2 ring-emerald-500 border-emerald-500 bg-emerald-50 text-emerald-950",
-                !showAdvancedFilters && activeAdvancedFilterCount > 0 && "border-emerald-200 bg-emerald-50/50"
+                "relative h-12 w-full border-4 border-black px-4 font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]",
+                showAdvancedFilters || activeAdvancedFilterCount > 0 ? "bg-[#FFD93D]" : "bg-white",
               )}
             >
-              <Filter className="h-4 w-4 mr-2" />
-              Lọc nâng cao
+              <Filter className="mr-2 h-4 w-4" />
+              LỌC
               {activeAdvancedFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#00d4a4] text-[10px] font-black text-white shadow-sm ring-2 ring-white">
+                <span className="absolute -right-2 -top-2 inline-flex h-6 w-6 items-center justify-center border-2 border-black bg-[#FF6B6B] text-[10px] font-black text-black">
                   {activeAdvancedFilterCount}
                 </span>
               )}
             </AppButton>
           </div>
         </div>
-      </AppCard>
+      </section>
 
-      {/* Advanced Filters Panel */}
       {showAdvancedFilters && (
-        <AppCard className="p-6 bg-white border-slate-200 shadow-xl rounded-[32px] animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-black text-slate-900 tracking-tight">Bộ lọc nâng cao</h3>
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Thu hẹp danh sách theo giá, credits và trạng thái</p>
-            </div>
-            <button 
-              onClick={resetAdvancedFilters}
-              className="text-xs font-black text-rose-600 hover:text-rose-700 uppercase tracking-widest hover:underline transition-all"
-            >
-              Xóa tất cả bộ lọc
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {/* Credits Range */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Khoảng Credits</label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="number" 
-                  placeholder="Min"
-                  value={advancedFilters.minCredits}
-                  onChange={(e) => setAdvancedFilters({...advancedFilters, minCredits: e.target.value})}
-                  className={cn(ui.input, "h-11 text-xs font-bold")}
-                />
-                <span className="text-slate-300">—</span>
-                <input 
-                  type="number" 
-                  placeholder="Max"
-                  value={advancedFilters.maxCredits}
-                  onChange={(e) => setAdvancedFilters({...advancedFilters, maxCredits: e.target.value})}
-                  className={cn(ui.input, "h-11 text-xs font-bold")}
-                />
-              </div>
-            </div>
-
-            {/* Price Range */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Khoảng Giá (VNĐ)</label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="number" 
-                  placeholder="Từ"
-                  value={advancedFilters.minPrice}
-                  onChange={(e) => setAdvancedFilters({...advancedFilters, minPrice: e.target.value})}
-                  className={cn(ui.input, "h-11 text-xs font-bold")}
-                />
-                <span className="text-slate-300">—</span>
-                <input 
-                  type="number" 
-                  placeholder="Đến"
-                  value={advancedFilters.maxPrice}
-                  onChange={(e) => setAdvancedFilters({...advancedFilters, maxPrice: e.target.value})}
-                  className={cn(ui.input, "h-11 text-xs font-bold")}
-                />
-              </div>
-            </div>
-
-            {/* API Keys Limit */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Số lượng API Keys</label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="number" 
-                  placeholder="Min Keys"
-                  value={advancedFilters.minApiKeys}
-                  onChange={(e) => setAdvancedFilters({...advancedFilters, minApiKeys: e.target.value})}
-                  className={cn(ui.input, "h-11 text-xs font-bold")}
-                />
-                <span className="text-slate-300">—</span>
-                <input 
-                  type="number" 
-                  placeholder="Max Keys"
-                  value={advancedFilters.maxApiKeys}
-                  onChange={(e) => setAdvancedFilters({...advancedFilters, maxApiKeys: e.target.value})}
-                  className={cn(ui.input, "h-11 text-xs font-bold")}
-                />
-              </div>
-            </div>
-
-            {/* Sorting */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sắp xếp theo</label>
-              <select 
-                value={advancedFilters.sortBy}
-                onChange={(e) => setAdvancedFilters({...advancedFilters, sortBy: e.target.value})}
-                className={cn(ui.input, "h-11 text-xs font-bold")}
-              >
-                <option value="newest">Mới nhất</option>
-                <option value="price-asc">Giá: Thấp đến Cao</option>
-                <option value="price-desc">Giá: Cao đến Thấp</option>
-                <option value="credits-asc">Credits: Thấp đến Cao</option>
-                <option value="credits-desc">Credits: Cao đến Thấp</option>
-                <option value="api-keys-desc">Nhiều API Keys nhất</option>
-                <option value="name-asc">Tên gói: A-Z</option>
-              </select>
-            </div>
-
-            {/* Flags / Checkboxes */}
-            <div className="md:col-span-2 xl:col-span-4 grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-3">
-              <label className={cn(
-                "flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all",
-                advancedFilters.priorityOnly ? "bg-emerald-50 border-emerald-200 ring-1 ring-emerald-200" : "bg-white border-slate-100 hover:border-slate-200"
-              )}>
-                <input type="checkbox" checked={advancedFilters.priorityOnly} onChange={(e) => setAdvancedFilters({...advancedFilters, priorityOnly: e.target.checked})} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
-                <span className="text-xs font-bold text-slate-700">Ưu tiên</span>
-              </label>
-
-              <label className={cn(
-                "flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all",
-                advancedFilters.customOnly ? "bg-emerald-50 border-emerald-200 ring-1 ring-emerald-200" : "bg-white border-slate-100 hover:border-slate-200"
-              )}>
-                <input type="checkbox" checked={advancedFilters.customOnly} onChange={(e) => setAdvancedFilters({...advancedFilters, customOnly: e.target.checked})} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
-                <span className="text-xs font-bold text-slate-700">Liên hệ</span>
-              </label>
-
-              <label className={cn(
-                "flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all",
-                advancedFilters.trialOnly ? "bg-emerald-50 border-emerald-200 ring-1 ring-emerald-200" : "bg-white border-slate-100 hover:border-slate-200"
-              )}>
-                <input type="checkbox" checked={advancedFilters.trialOnly} onChange={(e) => setAdvancedFilters({...advancedFilters, trialOnly: e.target.checked})} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
-                <span className="text-xs font-bold text-slate-700">Gói Trial</span>
-              </label>
-
-              <label className={cn(
-                "flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all",
-                advancedFilters.enterpriseOnly ? "bg-emerald-50 border-emerald-200 ring-1 ring-emerald-200" : "bg-white border-slate-100 hover:border-slate-200"
-              )}>
-                <input type="checkbox" checked={advancedFilters.enterpriseOnly} onChange={(e) => setAdvancedFilters({...advancedFilters, enterpriseOnly: e.target.checked})} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
-                <span className="text-xs font-bold text-slate-700">Enterprise</span>
-              </label>
-
-              <label className={cn(
-                "flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all",
-                advancedFilters.freeOnly ? "bg-emerald-50 border-emerald-200 ring-1 ring-emerald-200" : "bg-white border-slate-100 hover:border-slate-200"
-              )}>
-                <input type="checkbox" checked={advancedFilters.freeOnly} onChange={(e) => setAdvancedFilters({...advancedFilters, freeOnly: e.target.checked})} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
-                <span className="text-xs font-bold text-slate-700">Gói Miễn phí</span>
-              </label>
-
-              <label className={cn(
-                "flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all",
-                advancedFilters.activeOnly ? "bg-emerald-50 border-emerald-200 ring-1 ring-emerald-200" : "bg-white border-slate-100 hover:border-slate-200"
-              )}>
-                <input type="checkbox" checked={advancedFilters.activeOnly} onChange={(e) => setAdvancedFilters({...advancedFilters, activeOnly: e.target.checked})} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
-                <span className="text-xs font-bold text-slate-700">Đang hoạt động</span>
-              </label>
-
-              <label className={cn(
-                "flex items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all",
-                advancedFilters.inactiveOnly ? "bg-emerald-50 border-emerald-200 ring-1 ring-emerald-200" : "bg-white border-slate-100 hover:border-slate-200"
-              )}>
-                <input type="checkbox" checked={advancedFilters.inactiveOnly} onChange={(e) => setAdvancedFilters({...advancedFilters, inactiveOnly: e.target.checked})} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
-                <span className="text-xs font-bold text-slate-700">Đang tạm ẩn</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-8 flex justify-end">
-            <AppButton 
-              onClick={() => setShowAdvancedFilters(false)}
-              variant="primary"
-              className="h-12 px-10 rounded-full font-bold"
-            >
-              Áp dụng bộ lọc
+        <section className="space-y-6 border-4 border-black bg-[#FFFDF5] p-6 shadow-[8px_8px_0px_0px_#000]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-xl font-black uppercase text-black">BỘ LỌC NÂNG CAO</h3>
+            <AppButton onClick={resetAdvancedFilters} variant="secondary" size="sm" className="h-10 border-4 border-black bg-white px-4 font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]">
+              XÓA BỘ LỌC
             </AppButton>
           </div>
-        </AppCard>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Credits min</label>
+              <input type="number" value={advancedFilters.minCredits} onChange={(e) => setAdvancedFilters({ ...advancedFilters, minCredits: e.target.value })} className={brutalInput} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Credits max</label>
+              <input type="number" value={advancedFilters.maxCredits} onChange={(e) => setAdvancedFilters({ ...advancedFilters, maxCredits: e.target.value })} className={brutalInput} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Giá min</label>
+              <input type="number" value={advancedFilters.minPrice} onChange={(e) => setAdvancedFilters({ ...advancedFilters, minPrice: e.target.value })} className={brutalInput} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Giá max</label>
+              <input type="number" value={advancedFilters.maxPrice} onChange={(e) => setAdvancedFilters({ ...advancedFilters, maxPrice: e.target.value })} className={brutalInput} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">API keys min</label>
+              <input type="number" value={advancedFilters.minApiKeys} onChange={(e) => setAdvancedFilters({ ...advancedFilters, minApiKeys: e.target.value })} className={brutalInput} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">API keys max</label>
+              <input type="number" value={advancedFilters.maxApiKeys} onChange={(e) => setAdvancedFilters({ ...advancedFilters, maxApiKeys: e.target.value })} className={brutalInput} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Sắp xếp</label>
+              <select value={advancedFilters.sortBy} onChange={(e) => setAdvancedFilters({ ...advancedFilters, sortBy: e.target.value })} className={brutalInput}>
+                <option value="newest">Mới nhất</option>
+                <option value="price-asc">Giá thấp đến cao</option>
+                <option value="price-desc">Giá cao đến thấp</option>
+                <option value="credits-asc">Credits thấp đến cao</option>
+                <option value="credits-desc">Credits cao đến thấp</option>
+                <option value="api-keys-desc">API keys nhiều nhất</option>
+                <option value="name-asc">Tên gói A-Z</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
+            {[
+              { k: "priorityOnly", label: "Ưu tiên" },
+              { k: "customOnly", label: "Liên hệ" },
+              { k: "trialOnly", label: "Gói trial" },
+              { k: "enterpriseOnly", label: "Enterprise" },
+              { k: "freeOnly", label: "Miễn phí" },
+              { k: "activeOnly", label: "Đang bật" },
+              { k: "inactiveOnly", label: "Đang tắt" },
+            ].map((item) => {
+              const checked = advancedFilters[item.k as keyof typeof advancedFilters] as boolean;
+              return (
+                <label key={item.k} className={cn("flex cursor-pointer items-center gap-2 border-2 border-black px-3 py-2 text-xs font-black uppercase", checked ? "bg-[#FFD93D]" : "bg-white")}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, [item.k]: e.target.checked })}
+                    className="h-4 w-4"
+                  />
+                  <span>{item.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3">
         {isLoading ? (
-          Array(6).fill(0).map((_, i) => (
-            <div key={i} className="h-64 rounded-[40px] bg-[#fbfbf8] animate-pulse border border-[#edf1ee]" />
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="min-h-[280px] border-4 border-black bg-[#FFFDF5] p-5 shadow-[7px_7px_0px_0px_#000]">
+              <div className="h-full w-full animate-pulse bg-[#E9E1D0]" />
+            </div>
           ))
         ) : paginatedProducts.length === 0 ? (
-          <div className="col-span-full py-24 flex flex-col items-center justify-center bg-[#fbfbf8] rounded-[40px] border border-dashed border-[#edf1ee]">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-100 mb-4">
-              <Package className="h-8 w-8 text-[#8a9690] opacity-40" />
+          <div className="col-span-full flex min-h-[320px] flex-col items-center justify-center border-4 border-black bg-[#FFFDF5] p-8 text-center shadow-[8px_8px_0px_0px_#000]">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center border-4 border-black bg-[#FFD93D] shadow-[4px_4px_0px_0px_#000]">
+              <Package className="h-7 w-7 text-black" />
             </div>
-            <h4 className="text-lg font-black text-slate-900 tracking-tight">Không tìm thấy gói phù hợp</h4>
-            <p className={cn(ui.pMuted, "mt-1 italic")}>Thử thay đổi bộ lọc hoặc xoá lọc nâng cao để xem thêm kết quả.</p>
-            {(activeAdvancedFilterCount > 0 || search !== "" || filterFamily !== "ALL" || filterActive !== "ALL" || filterContact !== "ALL") && (
-              <AppButton 
-                onClick={() => {
-                  setSearch("");
-                  setFilterFamily("ALL");
-                  setFilterActive("ALL");
-                  setFilterContact("ALL");
-                  resetAdvancedFilters();
-                }}
-                variant="secondary"
-                size="sm"
-                className="mt-6 h-10 px-6"
-              >
-                Xóa tất cả bộ lọc
-              </AppButton>
-            )}
+            <h4 className="text-xl font-black text-black">{products.length === 0 ? "CHƯA CÓ GÓI CREDITS NÀO" : "KHÔNG TÌM THẤY GÓI CREDITS"}</h4>
+            <p className="mt-2 text-sm font-bold text-black/60">Thử đổi bộ lọc hoặc tạo gói credits mới.</p>
           </div>
         ) : (
           paginatedProducts.map((p) => (
-            <AppCard key={p.id} className={cn(
-              "group relative overflow-hidden p-8 transition-all hover:border-[#00d4a4]/30 hover:shadow-xl",
-              !p.isActive && "opacity-60 bg-[#fbfbf8]"
-            )}>
-              {p.isPopular && (
-                <div className="absolute top-6 right-6 flex items-center gap-1.5 rounded-full bg-[#ffb800]/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[#ffb800] ring-1 ring-[#ffb800]/20">
-                  <Star className="h-3 w-3 fill-[#ffb800]" />
-                  Ưu tiên
-                </div>
+            <article
+              key={p.id}
+              className={cn(
+                "group relative flex min-h-[280px] flex-col overflow-visible border-4 border-black bg-[#FFFDF5] p-5 shadow-[7px_7px_0px_0px_#000] transition-all duration-100 ease-linear hover:-translate-y-0.5 hover:shadow-[9px_9px_0px_0px_#000]",
+                !p.isActive && "opacity-70",
               )}
-
-              <div className="flex items-start gap-4 mb-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0b0f0d] text-white shadow-lg transition-transform group-hover:scale-110">
-                  <Package className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-[#0b0f0d] tracking-tight group-hover:text-[#00d4a4] transition-colors">{p.name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-black text-[#8a9690] uppercase tracking-widest bg-[#fbfbf8] px-2 py-0.5 rounded-lg border border-[#edf1ee]">
-                      {p.apiFamily}
-                    </span>
-                    {!p.isActive && (
-                       <StatusBadge status="Tắt" variant="danger" />
-                    )}
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000]", familyStyle(p.apiFamily))}>
+                    <Package className="h-6 w-6 text-black" />
                   </div>
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 text-xl font-black leading-tight text-black">{p.name}</h3>
+                    <p className="mt-1 break-all text-xs font-bold text-black/60">{p.slug}</p>
+                  </div>
+                </div>
+                {p.isPopular && (
+                  <span className="inline-flex items-center gap-1 border-2 border-black bg-[#FF6B6B] px-2 py-1 text-[10px] font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]">
+                    <Star className="h-3 w-3" />
+                    ƯU TIÊN
+                  </span>
+                )}
+              </div>
+              <div className="mb-4 flex flex-wrap gap-2">
+                <span className={cn("inline-flex border-2 border-black px-2 py-1 text-[10px] font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]", familyStyle(p.apiFamily))}>{p.apiFamily}</span>
+                <span className={cn("inline-flex border-2 border-black px-2 py-1 text-xs font-black uppercase text-black shadow-[2px_2px_0px_0px_#000]", p.isActive ? "bg-[#C7F0D8]" : "bg-[#FF6B6B]")}>{p.isActive ? "ĐANG BẬT" : "ĐANG TẮT"}</span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="border-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-black/60">Credits</p>
+                  <p className="mt-1 text-2xl font-black text-black">{Number(p.credits).toLocaleString("vi-VN")}</p>
+                </div>
+                <div className="border-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_#000]">
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-black/60">Giá bán</p>
+                  <p className="mt-1 text-2xl font-black text-black">{p.isContactOnly ? "Liên hệ" : formatVnd(p.priceVnd)}</p>
                 </div>
               </div>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center justify-between">
-                  <span className={ui.label}>Credits</span>
-                  <span className="text-xl font-black text-[#0b0f0d]">{Number(p.credits).toLocaleString()}</span>
+              <div className="mt-4 space-y-2 text-sm font-bold text-black">
+                <div className="flex items-center justify-between gap-3 border-b-2 border-black/10 pb-2">
+                  <span className="text-[11px] font-black uppercase tracking-[0.12em] text-black/60">Hiệu lực</span>
+                  <span className="text-right font-black">{p.durationDays ? `${p.durationDays} ngày` : "Vĩnh viễn"}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className={ui.label}>Giá bán</span>
-                  {p.isContactOnly ? (
-                    <span className="text-sm font-black text-[#ffb800] uppercase">Liên hệ</span>
-                  ) : (
-                    <span className="text-xl font-black text-[#00d4a4]">{formatVnd(p.priceVnd)}</span>
-                  )}
+                <div className="flex items-center justify-between gap-3 border-b-2 border-black/10 pb-2">
+                  <span className="text-[11px] font-black uppercase tracking-[0.12em] text-black/60">API keys</span>
+                  <span className="text-right font-black">{p.apiKeyLimit} key</span>
                 </div>
-                <div className="flex items-center justify-between border-t border-[#edf1ee] pt-4">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#8a9690]">
-                    <Clock className="h-3.5 w-3.5" />
-                    {p.durationDays ? `${p.durationDays} ngày` : "Vĩnh viễn"}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#8a9690]">
-                    <Key className="h-3.5 w-3.5" />
-                    {p.apiKeyLimit} Keys
-                  </div>
+                <div className="flex items-center justify-between gap-3 border-b-2 border-black/10 pb-2">
+                  <span className="text-[11px] font-black uppercase tracking-[0.12em] text-black/60">Models</span>
+                  <span className="text-right font-black">Hỗ trợ {p.allowedModels.length} model</span>
                 </div>
               </div>
-
-              <div className="flex items-center gap-3">
-                <AppButton
-                  onClick={() => handleOpenModal(p)}
-                  variant="secondary"
-                  className="flex-1 h-10"
-                >
-                  <Pencil className="h-4 w-4 shrink-0 text-slate-700" />
-                  <span>Sửa</span>
+              <div className="mt-auto grid grid-cols-[1fr_auto] gap-3 pt-4">
+                <AppButton onClick={() => handleOpenModal(p)} variant="secondary" className="h-11 border-4 border-black bg-white font-black uppercase text-black shadow-[4px_4px_0px_0px_#000] hover:bg-[#FFD93D]">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  SỬA
                 </AppButton>
                 <AppButton
                   onClick={() => handleToggleActive(p.id, p.isActive)}
                   variant="secondary"
                   className={cn(
-                    "h-10 w-10 p-0 rounded-full shrink-0 flex items-center justify-center",
-                    p.isActive ? "text-rose-600 hover:bg-rose-50 hover:text-rose-700" : "text-[#00d4a4] hover:bg-[#e7fff7]"
+                    "h-11 w-11 border-4 border-black p-0 font-black text-black shadow-[4px_4px_0px_0px_#000]",
+                    p.isActive ? "bg-[#FF6B6B]" : "bg-[#C7F0D8]",
                   )}
+                  title={p.isActive ? "Tắt gói" : "Bật gói"}
                 >
-                  {p.isActive ? <PowerOff className="h-5 w-5 shrink-0" /> : <Power className="h-5 w-5 shrink-0" />}
+                  {p.isActive ? <PowerOff className="h-5 w-5" /> : <Power className="h-5 w-5" />}
                 </AppButton>
               </div>
-            </AppCard>
+            </article>
           ))
         )}
-      </div>
+      </section>
 
-      {/* Pagination UI */}
       {!isLoading && filteredProducts.length > PAGE_SIZE && (
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 px-4">
-          <p className="text-sm font-bold text-slate-400">
-            Hiển thị <span className="text-slate-900">{((currentPage - 1) * PAGE_SIZE) + 1}</span> - <span className="text-slate-900">{Math.min(currentPage * PAGE_SIZE, filteredProducts.length)}</span> trong tổng <span className="text-slate-900">{filteredProducts.length}</span> gói
+        <section className="mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm font-bold text-black/70">
+            Hiển thị <span className="font-black text-black">{(currentPage - 1) * PAGE_SIZE + 1}</span> - <span className="font-black text-black">{Math.min(currentPage * PAGE_SIZE, filteredProducts.length)}</span> trong tổng <span className="font-black text-black">{filteredProducts.length}</span> gói
           </p>
-
-          <div className="flex items-center gap-2">
-            <AppButton 
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              variant="secondary"
-              className="h-10 px-4"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Trước
+          <div className="flex flex-wrap items-center gap-2">
+            <AppButton onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} variant="secondary" className="h-11 border-4 border-black bg-white px-4 font-black uppercase text-black shadow-[4px_4px_0px_0px_#000] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none">
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              TRƯỚC
             </AppButton>
-            <div className="flex h-10 px-4 items-center justify-center rounded-full bg-slate-50 border border-slate-100 text-sm font-black text-slate-900">
-              Trang {currentPage} / {totalPages}
-            </div>
-            <AppButton 
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              variant="secondary"
-              className="h-10 px-4"
-            >
-              Sau
-              <ChevronRight className="h-4 w-4" />
+            <div className="flex h-11 items-center border-4 border-black bg-[#FFD93D] px-4 text-sm font-black text-black shadow-[4px_4px_0px_0px_#000]">Trang {currentPage}/{totalPages}</div>
+            <AppButton onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} variant="secondary" className="h-11 border-4 border-black bg-white px-4 font-black uppercase text-black shadow-[4px_4px_0px_0px_#000] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none">
+              SAU
+              <ChevronRight className="ml-1 h-4 w-4" />
             </AppButton>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Create/Edit Modal */}
-      <Modal 
-        open={isModalOpen} 
+      <Modal
+        open={isModalOpen}
         onClose={handleCloseModal}
         title={editingId ? "Cập nhật gói sản phẩm" : "Thêm gói sản phẩm mới"}
-        maxWidthClassName="max-w-7xl"
+        maxWidthClassName="max-w-6xl"
         footer={
-          <div className="flex w-full items-center justify-end gap-3">
-            <AppButton
-              onClick={handleCloseModal}
-              variant="secondary"
-              className="h-12 px-8 rounded-full"
-            >
-              Hủy
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <AppButton onClick={handleCloseModal} variant="secondary" className="h-12 border-4 border-black bg-white px-8 font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]">
+              HỦY
             </AppButton>
-            <AppButton
-              onClick={handleSave}
-              variant="primary"
-              isLoading={isLoading}
-              className="h-12 px-10 rounded-full font-bold"
-            >
-              {editingId ? "Cập nhật ngay" : "Tạo gói sản phẩm"}
+            <AppButton onClick={handleSave} variant="primary" isLoading={isLoading} className="h-12 border-4 border-black bg-[#FFD93D] px-10 font-black uppercase text-black shadow-[4px_4px_0px_0px_#000]">
+              {editingId ? "CẬP NHẬT" : "TẠO GÓI"}
             </AppButton>
           </div>
         }
       >
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[420px_1fr]">
-          {/* Left Column: Basic Info & Status */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
           <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-100 bg-slate-50/50 p-6 space-y-6">
-              <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Thông tin cơ bản</h4>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <label className={ui.label}>Tên gói sản phẩm</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    placeholder="ví dụ: Starter Pack"
-                    className={ui.input}
-                  />
+            <div className="space-y-4 border-4 border-black bg-[#FFFDF5] p-5 shadow-[6px_6px_0px_0px_#000]">
+              <h4 className="text-xs font-black uppercase tracking-[0.16em] text-black/60">Thông tin cơ bản</h4>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Tên gói sản phẩm</label>
+                  <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Ví dụ: Starter Pack" className={brutalInput} />
                 </div>
                 <div className="space-y-2">
-                  <label className={ui.label}>Slug (Đường dẫn)</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.slug}
-                    onChange={e => setFormData({...formData, slug: e.target.value})}
-                    placeholder="ví dụ: starter-pack"
-                    className={ui.input}
-                  />
+                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Slug</label>
+                  <input type="text" required value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} placeholder="starter-pack" className={brutalInput} />
                 </div>
                 <div className="space-y-2">
-                  <label className={ui.label}>Dòng AI</label>
-                  <select
-                    value={formData.apiFamily}
-                    onChange={e => setFormData({...formData, apiFamily: e.target.value, allowedModels: []})}
-                    className={ui.input}
-                  >
+                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Dòng AI</label>
+                  <select value={formData.apiFamily} onChange={(e) => setFormData({ ...formData, apiFamily: e.target.value, allowedModels: [] })} className={brutalInput}>
                     <option value="CODEXAI">CodeX AI</option>
                     <option value="CLAUDE">Claude</option>
                     <option value="GEMINI">Gemini</option>
@@ -797,167 +675,90 @@ export default function AdminProductsPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className={ui.label}>Tổng Credits</label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    value={formData.credits}
-                    onChange={e => setFormData({...formData, credits: e.target.value})}
-                    className={ui.input}
-                  />
+                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Tổng credits</label>
+                  <input type="number" required min="0" value={formData.credits} onChange={(e) => setFormData({ ...formData, credits: e.target.value })} className={brutalInput} />
                 </div>
                 <div className="space-y-2">
-                  <label className={ui.label}>Thời hạn (ngày)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.durationDays ?? ""}
-                    onChange={e => setFormData({...formData, durationDays: e.target.value === "" ? null : Number(e.target.value)})}
-                    placeholder="0 = vĩnh viễn"
-                    className={ui.input}
-                  />
+                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Thời hạn (ngày)</label>
+                  <input type="number" min="0" value={formData.durationDays ?? ""} onChange={(e) => setFormData({ ...formData, durationDays: e.target.value === "" ? null : Number(e.target.value) })} placeholder="0 = vĩnh viễn" className={brutalInput} />
                 </div>
                 <div className="space-y-2">
-                  <label className={ui.label}>Giới hạn API Keys</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={formData.apiKeyLimit}
-                    onChange={e => setFormData({...formData, apiKeyLimit: Number(e.target.value)})}
-                    className={ui.input}
-                  />
+                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Giới hạn API keys</label>
+                  <input type="number" required min="1" value={formData.apiKeyLimit} onChange={(e) => setFormData({ ...formData, apiKeyLimit: Number(e.target.value) })} className={brutalInput} />
                 </div>
                 <div className="space-y-2">
-                  <label className={ui.label}>Giá bán (VNĐ)</label>
-                  <input
-                    type="number"
-                    required={!formData.isContactOnly}
-                    disabled={formData.isContactOnly}
-                    min="0"
-                    value={formData.priceVnd}
-                    onChange={e => setFormData({...formData, priceVnd: Number(e.target.value)})}
-                    className={cn(ui.input, formData.isContactOnly && "opacity-50 bg-slate-100")}
-                  />
+                  <label className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">Giá bán (VNĐ)</label>
+                  <input type="number" required={!formData.isContactOnly} disabled={formData.isContactOnly} min="0" value={formData.priceVnd} onChange={(e) => setFormData({ ...formData, priceVnd: Number(e.target.value) })} className={cn(brutalInput, formData.isContactOnly && "bg-[#E9E1D0]")} />
                 </div>
               </div>
             </div>
-
-            <div className="rounded-3xl border border-slate-100 bg-slate-50/50 p-6 space-y-4">
-              <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Trạng thái & Hiển thị</h4>
+            <div className="space-y-3 border-4 border-black bg-[#FFFDF5] p-5 shadow-[6px_6px_0px_0px_#000]">
+              <h4 className="text-xs font-black uppercase tracking-[0.16em] text-black/60">Trạng thái</h4>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <label className={cn(
-                  "flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer",
-                  formData.isActive ? "bg-white border-emerald-200 shadow-sm" : "bg-slate-50 border-slate-100 opacity-60"
-                )}>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Kích hoạt</span>
-                  <Switch 
-                    checked={formData.isActive}
-                    onCheckedChange={v => setFormData({...formData, isActive: v})}
-                  />
+                <label className="flex cursor-pointer items-center justify-between border-2 border-black bg-white px-3 py-2 text-xs font-black uppercase text-black">
+                  <span>Kích hoạt</span>
+                  <Switch checked={formData.isActive} onCheckedChange={(v) => setFormData({ ...formData, isActive: v })} />
                 </label>
-                <label className={cn(
-                  "flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer",
-                  formData.isPopular ? "bg-white border-amber-200 shadow-sm" : "bg-slate-50 border-slate-100 opacity-60"
-                )}>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Ưu tiên</span>
-                  <Switch 
-                    checked={formData.isPopular}
-                    onCheckedChange={v => setFormData({...formData, isPopular: v})}
-                  />
+                <label className="flex cursor-pointer items-center justify-between border-2 border-black bg-white px-3 py-2 text-xs font-black uppercase text-black">
+                  <span>Ưu tiên</span>
+                  <Switch checked={formData.isPopular} onCheckedChange={(v) => setFormData({ ...formData, isPopular: v })} />
                 </label>
-                <label className={cn(
-                  "flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer",
-                  formData.isContactOnly ? "bg-white border-blue-200 shadow-sm" : "bg-slate-50 border-slate-100 opacity-60"
-                )}>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Liên hệ</span>
-                  <Switch 
-                    checked={formData.isContactOnly}
-                    onCheckedChange={v => setFormData({...formData, isContactOnly: v})}
-                  />
+                <label className="flex cursor-pointer items-center justify-between border-2 border-black bg-white px-3 py-2 text-xs font-black uppercase text-black">
+                  <span>Liên hệ</span>
+                  <Switch checked={formData.isContactOnly} onCheckedChange={(v) => setFormData({ ...formData, isContactOnly: v })} />
                 </label>
               </div>
             </div>
           </div>
-
-          {/* Right Column: Models List */}
-          <div className="flex flex-col h-full">
-            <div className="flex-1 rounded-3xl border border-slate-200 bg-slate-50/40 p-6 flex flex-col min-h-[500px]">
-              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h4 className="text-lg font-black text-slate-900 tracking-tight">Models hỗ trợ ({formData.apiFamily})</h4>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Đã chọn {formData.allowedModels.length} models</p>
-                </div>
-                
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input 
-                    type="text"
-                    placeholder="Tìm model..."
-                    value={modelSearch}
-                    onChange={(e) => setModelSearch(e.target.value)}
-                    className="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 bg-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                  />
-                </div>
+          <div className="flex min-h-[520px] flex-col border-4 border-black bg-[#FFFDF5] p-5 shadow-[6px_6px_0px_0px_#000]">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h4 className="text-lg font-black text-black">Models hỗ trợ ({formData.apiFamily})</h4>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-black/60">Đã chọn {formData.allowedModels.length} model</p>
               </div>
-
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-[400px]">
-                {availableModels.filter(m => m.publicName.toLowerCase().includes(modelSearch.toLowerCase())).length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 opacity-30">
-                    <LayoutGrid className="h-12 w-12 mb-4" />
-                    <p className="text-sm font-black italic">Không tìm thấy model nào phù hợp.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                    {availableModels
-                      .filter(m => m.publicName.toLowerCase().includes(modelSearch.toLowerCase()))
-                      .map(model => {
-                        const isSelected = formData.allowedModels.includes(model.publicName);
-                        return (
-                          <label 
-                            key={model.publicName} 
-                            className={cn(
-                              "flex min-h-[44px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition-all hover:shadow-sm active:scale-[0.98]",
-                              isSelected 
-                                ? "border-emerald-500 bg-emerald-50/50 text-emerald-950 shadow-sm" 
-                                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                            )}
-                          >
-                            <input 
-                              type="checkbox"
-                              className="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
-                              checked={isSelected}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setFormData(f => ({ ...f, allowedModels: [...f.allowedModels, model.publicName] }));
-                                } else {
-                                  setFormData(f => ({ ...f, allowedModels: f.allowedModels.filter(m => m !== model.publicName) }));
-                                }
-                              }}
-                            />
-                            <span className="truncate" title={model.publicName}>
-                              {model.publicName}
-                            </span>
-                          </label>
-                        );
-                      })}
-                  </div>
-                )}
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/45" />
+                <input type="text" placeholder="Tìm model..." value={modelSearch} onChange={(e) => setModelSearch(e.target.value)} className={`${brutalInput} pl-10`} />
               </div>
+            </div>
+            <div className="min-h-[390px] flex-1 overflow-y-auto border-2 border-black bg-white p-3">
+              {availableModels.filter((m) => m.publicName.toLowerCase().includes(modelSearch.toLowerCase())).length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center text-center">
+                  <LayoutGrid className="mb-3 h-10 w-10 text-black/60" />
+                  <p className="text-sm font-black text-black/70">Không tìm thấy model phù hợp.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {availableModels
+                    .filter((m) => m.publicName.toLowerCase().includes(modelSearch.toLowerCase()))
+                    .map((model) => {
+                      const isSelected = formData.allowedModels.includes(model.publicName);
+                      return (
+                        <label key={model.publicName} className={cn("flex cursor-pointer items-center gap-3 border-2 border-black px-3 py-2 text-sm font-bold text-black", isSelected ? "bg-[#FFD93D]" : "bg-[#FFFDF5]")}>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 shrink-0"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData((f) => ({ ...f, allowedModels: [...f.allowedModels, model.publicName] }));
+                              } else {
+                                setFormData((f) => ({ ...f, allowedModels: f.allowedModels.filter((m) => m !== model.publicName) }));
+                              }
+                            }}
+                          />
+                          <span className="break-all">{model.publicName}</span>
+                        </label>
+                      );
+                    })}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </Modal>
 
-      {toast && (
-        <ToastMessage
-          message={toast.message}
-          type={toast.type}
-          onClose={clearToast}
-        />
-      )}
-
+      {toast && <ToastMessage message={toast.message} type={toast.type} onClose={clearToast} />}
       {confirmState && (
         <ConfirmDialog
           open={!!confirmState}

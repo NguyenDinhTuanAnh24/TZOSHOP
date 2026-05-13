@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -122,56 +122,56 @@ export default function AdminOverviewPage() {
     {
       label: "TỔNG NGƯỜI DÙNG",
       value: (stats?.totalUsers || 0).toLocaleString(),
-      desc: "Người dùng đăng ký",
+      desc: "Người dùng đã đăng ký",
       icon: Users,
       iconBg: "bg-[#93C5FD]",
     },
     {
       label: "DOANH THU",
       value: formatVnd(stats?.revenueVnd || 0),
-      desc: "Tổng doanh thu PAID",
+      desc: "Tổng doanh thu đã thanh toán",
       icon: DollarSign,
       iconBg: "bg-[#C7F0D8]",
     },
     {
       label: "ĐƠN CHỜ NẠP",
       value: (stats?.pendingOrders || 0).toLocaleString(),
-      desc: "Đơn hàng PENDING",
+      desc: "Đơn hàng đang chờ xử lý",
       icon: ShoppingCart,
       iconBg: "bg-[#FFD93D]",
     },
     {
       label: "TICKET ĐANG MỞ",
       value: (stats?.openTickets || 0).toLocaleString(),
-      desc: "Cần hỗ trợ khách hàng",
+      desc: "Yêu cầu cần hỗ trợ",
       icon: LifeBuoy,
       iconBg: "bg-[#FF6B6B]",
     },
     {
       label: "CREDITS ĐÃ BÁN",
       value: Number(stats?.creditsSold || 0).toLocaleString(),
-      desc: "Tổng credits đã cấp thành công",
+      desc: "Credits đã cấp thành công",
       icon: Zap,
       iconBg: "bg-[#A78BFA]",
     },
     {
       label: "API KEYS",
       value: (stats?.activeApiKeys || 0).toLocaleString(),
-      desc: "Key đang hoạt động",
+      desc: "API key đang hoạt động",
       icon: Key,
       iconBg: "bg-[#E9E1D0]",
     },
     {
       label: "MODELS",
       value: (stats?.activeModels || 0).toLocaleString(),
-      desc: "Models AI đang phục vụ",
+      desc: "Model đang được phục vụ",
       icon: Bot,
       iconBg: "bg-[#C084FC]",
     },
     {
       label: "PROVIDERS",
       value: (stats?.activeProviders || 0).toLocaleString(),
-      desc: "Nhà cung cấp hoạt động",
+      desc: "Nhà cung cấp đang hoạt động",
       icon: Server,
       iconBg: "bg-[#99F6E4]",
     },
@@ -196,7 +196,7 @@ export default function AdminOverviewPage() {
               </div>
               <span className="inline-flex border-2 border-black bg-[#C7F0D8] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black">ADMIN DASHBOARD</span>
             </div>
-            <h1 className="text-3xl font-black uppercase tracking-tight text-black md:text-4xl">TỔNG QUAN QUẢN TRỊ</h1>
+            <h1 className="pt-1 text-3xl font-black uppercase tracking-tight text-black md:text-4xl">TỔNG QUAN QUẢN TRỊ</h1>
             <p className="text-sm font-bold text-black/70 md:text-base">Theo dõi tình hình vận hành, đơn hàng, credits và hỗ trợ khách hàng.</p>
           </div>
           <div className="inline-flex items-center gap-2 border-4 border-black bg-[#C7F0D8] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-black shadow-[4px_4px_0px_0px_#000]">
@@ -216,9 +216,9 @@ export default function AdminOverviewPage() {
               <card.icon className="h-6 w-6 text-black" />
             </div>
             <div className="mt-5">
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">{card.label}</p>
-              <p className="mt-2 text-3xl font-black leading-none text-black">{card.value}</p>
-              <p className="mt-2 text-sm font-bold text-black/70">{card.desc}</p>
+              <p className="text-xs font-black uppercase tracking-[0.08em] text-black/70">{card.label}</p>
+              <p className="mt-3 text-3xl font-black leading-none text-black md:text-4xl">{card.value}</p>
+              <p className="mt-3 break-words text-sm font-bold leading-snug text-black/70">{card.desc}</p>
             </div>
           </article>
         ))}

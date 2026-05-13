@@ -9,9 +9,6 @@ export async function GET() {
     await requireAdminUser();
 
     const users = await prisma.user.findMany({
-      where: {
-        role: "USER"
-      },
       orderBy: {
         createdAt: "desc",
       },

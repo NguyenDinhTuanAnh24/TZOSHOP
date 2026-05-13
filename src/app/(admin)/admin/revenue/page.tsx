@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -24,6 +24,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
 import { downloadCsv } from "@/lib/download-csv";
+import { translateStatus } from "@/lib/format";
 
 type RevenueData = {
   summary: {
@@ -176,21 +177,21 @@ export default function AdminRevenuePage() {
     {
       label: "DOANH THU HÔM NAY",
       value: formatVnd(data.summary.todayRevenueVnd),
-      desc: format(new Date(), "'Ngày' dd/MM"),
+      desc: format(new Date(), "dd/MM").replace(/^/, "Ngày "),
       icon: DollarSign,
       iconBg: "bg-[#C7F0D8]",
     },
     {
       label: "DOANH THU THÁNG NÀY",
       value: formatVnd(data.summary.monthRevenueVnd),
-      desc: format(new Date(), "'Tháng' MM/yyyy"),
+      desc: format(new Date(), "MM/yyyy").replace(/^/, "Tháng "),
       icon: TrendingUp,
       iconBg: "bg-[#93C5FD]",
     },
     {
       label: "GIÁ TRỊ ĐƠN TB",
       value: formatVnd(data.summary.averageOrderValueVnd),
-      desc: "Revenue / Paid Orders",
+      desc: "Trung bình mỗi đơn đã thanh toán",
       icon: Target,
       iconBg: "bg-[#A78BFA]",
     },
@@ -199,29 +200,29 @@ export default function AdminRevenuePage() {
   const miniStats = [
     {
       label: "ĐƠN ĐÃ THANH TOÁN",
-      value: formatNum(data.summary.paidOrders),
-      sub: "Đơn",
+      value: `${formatNum(data.summary.paidOrders)} đơn`,
+      sub: "Đơn hàng đã thanh toán",
       icon: ShoppingCart,
       iconBg: "bg-[#C7F0D8]",
     },
     {
       label: "ĐƠN CHỜ THANH TOÁN",
-      value: formatNum(data.summary.pendingOrders),
-      sub: "Đơn",
+      value: `${formatNum(data.summary.pendingOrders)} đơn`,
+      sub: "Đơn hàng đang chờ",
       icon: Calendar,
       iconBg: "bg-[#FFD93D]",
     },
     {
       label: "CREDITS ĐÃ BÁN",
-      value: formatNum(data.summary.creditsSold),
-      sub: "Bán",
+      value: `${formatNum(data.summary.creditsSold)} bán`,
+      sub: "Credits từ đơn đã thanh toán",
       icon: Zap,
       iconBg: "bg-[#C7F0D8]",
     },
     {
       label: "CREDITS ĐÃ CẤP",
-      value: formatNum(data.summary.creditsGranted),
-      sub: "Tổng",
+      value: `${formatNum(data.summary.creditsGranted)} tổng`,
+      sub: "Credits đã cấp cho người dùng",
       icon: TrendingUp,
       iconBg: "bg-[#DBEAFE]",
     },
@@ -275,9 +276,9 @@ export default function AdminRevenuePage() {
               <card.icon className="h-6 w-6 text-black" />
             </div>
             <div className="mt-5">
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-black/60">{card.label}</p>
-              <p className="mt-2 text-3xl font-black leading-none text-black md:text-4xl">{card.value}</p>
-              <p className="mt-2 text-sm font-bold text-black/70">{card.desc}</p>
+              <p className="text-xs font-black uppercase tracking-[0.08em] text-black/70">{card.label}</p>
+              <p className="mt-3 text-3xl font-black leading-none text-black md:text-4xl">{card.value}</p>
+              <p className="mt-3 break-words text-sm font-bold leading-snug text-black/70">{card.desc}</p>
             </div>
           </article>
         ))}
@@ -290,11 +291,9 @@ export default function AdminRevenuePage() {
               <card.icon className="h-5 w-5 text-black" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.12em] text-black/60">{card.label}</p>
-              <div className="mt-1 flex items-baseline gap-1.5">
-                <p className="text-2xl font-black leading-none text-black">{card.value}</p>
-                <span className="text-xs font-black uppercase text-black/60">{card.sub}</span>
-              </div>
+              <p className="text-xs font-black uppercase tracking-[0.08em] text-black/70">{card.label}</p>
+              <p className="mt-3 text-3xl font-black leading-none text-black">{card.value}</p>
+              <p className="mt-3 break-words text-sm font-bold leading-snug text-black/70">{card.sub}</p>
             </div>
           </article>
         ))}
@@ -415,7 +414,7 @@ export default function AdminRevenuePage() {
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-2xl font-black text-black">Đơn hàng thanh toán mới nhất</h3>
-            <p className="text-sm font-bold text-black/70">20 đơn hàng PAID gần đây nhất</p>
+            <p className="text-sm font-bold text-black/70">20 đơn hàng đã thanh toán gần đây nhất</p>
           </div>
           <Link
             href="/admin/orders?status=PAID"
@@ -446,7 +445,7 @@ export default function AdminRevenuePage() {
                         <CreditCard className="h-6 w-6 text-black" />
                       </div>
                       <p className="text-base font-black text-black">Chưa có đơn thanh toán</p>
-                      <p className="text-sm font-bold text-black/60">Các đơn PAID gần nhất sẽ hiển thị tại đây.</p>
+                      <p className="text-sm font-bold text-black/60">Các đơn đã thanh toán gần nhất sẽ hiển thị tại đây.</p>
                     </div>
                   </td>
                 </tr>
@@ -462,7 +461,7 @@ export default function AdminRevenuePage() {
                         <span className="max-w-[220px] truncate text-sm font-bold text-black">{o.productName}</span>
                         <StatusBadge status={o.apiFamily} variant="neutral" />
                         <span className={`inline-flex border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase text-black ${statusBg(o.status)}`}>
-                          {o.status}
+                          {translateStatus(o.status)}
                         </span>
                       </div>
                     </td>
