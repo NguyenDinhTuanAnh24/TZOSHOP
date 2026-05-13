@@ -10,12 +10,12 @@ import {
   ArrowDownLeft,
   Pencil,
   RefreshCw,
-  Cpu,
   Layers,
 } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
+import { AiFamilyLogo, familyIconBoxClass } from "@/components/admin/ai-family-logo";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -469,8 +469,8 @@ export default function AdminModelsPage() {
                   <tr key={model.id} className="border-b-2 border-black/10 align-middle transition-colors hover:bg-[#FFF8D6]">
                     <td className="px-4 py-4">
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${familyBadgeClass(model.apiFamily)}`}>
-                          <Cpu className="h-4 w-4 text-black" />
+                        <div className={cn("h-10 w-10 shrink-0", familyIconBoxClass(model.apiFamily))}>
+                          <AiFamilyLogo family={model.apiFamily} className="h-6 w-6 object-contain" />
                         </div>
                         <div className="min-w-0">
                           <p className="break-all text-sm font-black text-black">{model.publicName}</p>
@@ -791,4 +791,3 @@ export default function AdminModelsPage() {
     </div>
   );
 }
-

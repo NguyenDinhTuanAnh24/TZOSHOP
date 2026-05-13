@@ -30,7 +30,7 @@ export default function AdminTopbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 h-20 border-b-4 border-black bg-[#FFFDF5]">
+    <header className="sticky top-0 z-40 h-20 w-full border-b-4 border-black bg-[#FFFDF5]">
       <div className="flex h-full items-center justify-between gap-3 px-5 md:px-6 lg:px-8">
         <div className="min-w-0">
           <h1 className="truncate text-base font-black uppercase text-black sm:text-xl">{config.title}</h1>
@@ -61,4 +61,3 @@ export default function AdminTopbar() {
     </header>
   );
 }
-

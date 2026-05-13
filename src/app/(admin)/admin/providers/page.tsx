@@ -8,7 +8,6 @@ import {
   Edit,
   Globe,
   ShieldCheck,
-  Zap,
   Clock,
   LockKeyhole,
   Key,
@@ -18,6 +17,7 @@ import {
 import { AppButton } from "@/components/ui/app-button";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
+import { AiFamilyLogo, familyIconBoxClass } from "@/components/admin/ai-family-logo";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -390,8 +390,8 @@ export default function AdminProvidersPage() {
                   <tr key={provider.id} className="border-b-2 border-black/10 align-middle transition-colors hover:bg-[#FFF8D6]">
                     <td className="px-4 py-4">
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000] ${familyBadgeClass(provider.apiFamily)}`}>
-                          <Zap className="h-4 w-4 text-black" />
+                        <div className={cn("h-10 w-10 shrink-0", familyIconBoxClass(provider.apiFamily))}>
+                          <AiFamilyLogo family={provider.apiFamily} className="h-6 w-6 object-contain" />
                         </div>
                         <p className="break-words text-base font-black text-black">{provider.name}</p>
                       </div>
@@ -624,4 +624,3 @@ export default function AdminProvidersPage() {
     </div>
   );
 }
-

@@ -17,6 +17,7 @@ import {
 import { AppButton } from "@/components/ui/app-button";
 import { cn } from "@/lib/utils";
 import { formatVnd } from "@/lib/format";
+import { AiFamilyLogo, familyIconBoxClass } from "@/components/admin/ai-family-logo";
 import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -552,8 +553,8 @@ export default function AdminProductsPage() {
             >
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
-                  <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center border-4 border-black shadow-[3px_3px_0px_0px_#000]", familyStyle(p.apiFamily))}>
-                    <Package className="h-6 w-6 text-black" />
+                  <div className={cn("h-12 w-12 shrink-0", familyIconBoxClass(p.apiFamily))}>
+                    <AiFamilyLogo family={p.apiFamily} className="h-7 w-7 object-contain" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="line-clamp-2 text-xl font-black leading-tight text-black">{p.name}</h3>
