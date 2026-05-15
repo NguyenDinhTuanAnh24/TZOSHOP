@@ -185,7 +185,7 @@ export const authOptions: NextAuthOptions = {
           ...session,
           user: undefined,
           expires: session.expires,
-        } as any;
+        };
       }
 
       if (session.user) {

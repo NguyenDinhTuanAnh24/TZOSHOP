@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Bell, Eye, KeyRound, Lock, Mail, Package, RefreshCw, Search, Shield, ShieldCheck, Unlock, UserPlus, Users, Wallet } from "lucide-react";
+import { Bell, Eye, KeyRound, Lock, Mail, Package, Search, Shield, ShieldCheck, Unlock, UserPlus, Users, Wallet } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-toast";
 import { CosmicButton } from "@/components/ui/cosmic-button";
@@ -13,7 +13,6 @@ import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirm } from "@/hooks/use-confirm";
 import { cn } from "@/lib/utils";
-import { downloadCsv } from "@/lib/download-csv";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 
 type UserItem = {
@@ -112,7 +111,6 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [me, setMe] = useState<{ id: string; role?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [nowMs] = useState(() => Date.now());
   const [search, setSearch] = useState("");

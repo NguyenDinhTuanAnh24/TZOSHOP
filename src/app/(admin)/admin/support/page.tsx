@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { AlertCircle, LifeBuoy, RefreshCw, Search, Ticket } from "lucide-react";
+import { AlertCircle, LifeBuoy, Search, Ticket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";

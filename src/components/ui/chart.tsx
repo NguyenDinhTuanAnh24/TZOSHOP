@@ -53,7 +53,7 @@ const ChartContainer = React.forwardRef<
         )}
         {...props}
       >
-        <ChartStyle id={chartId} config={config} />
+        <ChartStyle config={config} />
         <RechartsPrimitive.ResponsiveContainer>
           {children}
         </RechartsPrimitive.ResponsiveContainer>
@@ -63,7 +63,7 @@ const ChartContainer = React.forwardRef<
 })
 ChartContainer.displayName = "Chart"
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+const ChartStyle = ({ config }: { config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
     ([, chartItemConfig]) => chartItemConfig.theme || chartItemConfig.color
   )

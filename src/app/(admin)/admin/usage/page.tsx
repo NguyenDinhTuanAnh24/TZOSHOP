@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Activity, AlertCircle, Cpu, History, Key, RefreshCw, Search, Users, Zap } from "lucide-react";
+import { Activity, AlertCircle, Cpu, History, Key, Search, Users, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CosmicButton } from "@/components/ui/cosmic-button";
 import { TextFadeInUp } from "@/components/animations/text-fade-in-up";
 
 type UsageLog = {
@@ -449,4 +448,3 @@ export default function AdminUsagePage() {
     </div>
   );
 }
-
