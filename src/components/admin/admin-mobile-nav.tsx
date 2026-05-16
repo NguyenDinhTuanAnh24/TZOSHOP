@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -102,7 +102,7 @@ export function AdminMobileNav() {
         cancelLabel: "Ở lại",
         type: "danger",
         onConfirm: async () => {
-          await signOut({ callbackUrl: "/login" });
+          await signOut({ callbackUrl: "/" });
         },
       });
     }, 120);

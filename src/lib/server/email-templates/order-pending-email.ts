@@ -1,4 +1,4 @@
-import { escapeHtml, renderTextEmail, renderTzoShopEmail } from "./base-email";
+﻿import { buildBaseEmail, escapeHtml, renderTextEmail } from "./base-email";
 
 type OrderPendingEmailProps = {
   name?: string | null;
@@ -10,33 +10,35 @@ type OrderPendingEmailProps = {
 };
 
 export function createOrderPendingEmail(props: OrderPendingEmailProps) {
-  return renderTzoShopEmail({
-    title: "ĐƠN HÀNG ĐANG CHỜ THANH TOÁN",
-    subtitle: "Vui lòng hoàn tất thanh toán để kích hoạt gói credits.",
-    previewText: `Đơn ${props.orderCode} đang chờ thanh toán`,
-    content: `
-      <p style="margin:0 0 14px 0;">Xin chào <strong>${escapeHtml(props.name?.trim() || "bạn")}</strong>, đơn hàng của bạn đã được tạo.</p>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:3px solid #000000;background:#FFFDF5;box-shadow:4px 4px 0 #000000;padding:12px;">
-        <tr><td style="padding:6px 0;font-size:14px;">Mã đơn hàng</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.orderCode)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;">Tên gói</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.productName)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;">Số tiền</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.amount)}</td></tr>
-        ${props.paymentDeadline ? `<tr><td style="padding:6px 0;font-size:14px;">Hạn thanh toán</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.paymentDeadline)}</td></tr>` : ""}
-      </table>
+  return buildBaseEmail({
+    title: "Đơn hàng chờ thanh toán",
+    preview: "Vui lòng hoàn tất thanh toán để kích hoạt gói credits.",
+    children: `
+      <h1 style="margin:0;font-size:26px;line-height:34px;font-weight:800;color:#0f172a;">Đơn hàng chờ thanh toán</h1>
+      <p style="margin:16px 0 0 0;font-size:15px;line-height:26px;color:#475569;">Xin chào <strong>${escapeHtml(props.name?.trim() || "bạn")}</strong>, đơn hàng của bạn đã được tạo.</p>
+
+      <div style="margin:20px 0;padding:16px;border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc;">
+        <p style="margin:0;font-size:14px;color:#475569;">Mã đơn: <strong>${escapeHtml(props.orderCode)}</strong></p>
+        <p style="margin:8px 0 0 0;font-size:14px;color:#475569;">Tên gói: <strong>${escapeHtml(props.productName)}</strong></p>
+        <p style="margin:8px 0 0 0;font-size:14px;color:#475569;">Số tiền: <strong>${escapeHtml(props.amount)}</strong></p>
+        ${props.paymentDeadline ? `<p style="margin:8px 0 0 0;font-size:14px;color:#475569;">Hạn thanh toán: <strong>${escapeHtml(props.paymentDeadline)}</strong></p>` : ""}
+      </div>
+
+      <div style="margin:28px 0;">
+        <a href="${escapeHtml(props.paymentUrl)}" style="display:inline-block;border-radius:16px;background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:14px 22px;font-size:14px;font-weight:800;color:#ffffff;text-decoration:none;">Tiếp tục thanh toán</a>
+      </div>
     `,
-    actionLabel: "TIẾP TỤC THANH TOÁN",
-    actionUrl: props.paymentUrl,
-    footerNote: "Nếu bạn đã thanh toán nhưng chưa thấy credits, hãy chờ vài phút hoặc liên hệ hỗ trợ.",
   });
 }
 
 export function createOrderPendingEmailText(props: OrderPendingEmailProps) {
   return renderTextEmail([
-    "ĐƠN HÀNG ĐANG CHỜ THANH TOÁN - TzoShop",
-    `Xin chào ${props.name?.trim() || "bạn"}, vui lòng hoàn tất thanh toán cho đơn hàng.`,
-    `Mã đơn hàng: ${props.orderCode}`,
+    "ĐƠN HÀNG CHỜ THANH TOÁN - TzoShop",
+    `Xin chào ${props.name?.trim() || "bạn"}, vui lòng hoàn tất thanh toán cho đơn hàng của bạn.`,
+    `Mã đơn: ${props.orderCode}`,
     `Tên gói: ${props.productName}`,
     `Số tiền: ${props.amount}`,
     props.paymentDeadline ? `Hạn thanh toán: ${props.paymentDeadline}` : "",
-    `Tiếp tục thanh toán: ${props.paymentUrl}`,
+    `Thanh toán: ${props.paymentUrl}`,
   ]);
 }

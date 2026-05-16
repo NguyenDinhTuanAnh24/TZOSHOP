@@ -75,7 +75,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       const result = await res.json();
       if (!res.ok || result?.success !== true || result?.data == null) {
         setOrder(null);
-        showToast(result?.error?.message || "Khng th ti thng tin.", "error");
+        showToast(result?.error?.message || "Không thể tải thông tin.", "error");
         return;
       }
       setOrder(result.data);
@@ -163,7 +163,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   if (!order) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-2xl font-black text-slate-900">Khng tm thấy ơn hng.</h2>
+        <h2 className="text-2xl font-black text-slate-900">Không tìm thấy đơn hàng.</h2>
         <Link href="/admin/orders" className="mt-4 inline-flex text-emerald-600 font-bold hover:underline">
           Quay lại danh sch
         </Link>
@@ -175,7 +175,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
 
   const statusConfig: Record<string, { label: string, color: string, bg: string, icon: React.ElementType }> = {
-    PAID: { label: "Đ thanh ton", color: "text-emerald-600", bg: "bg-emerald-50", icon: CheckCircle2 },
+    PAID: { label: "Đã thanh toán", color: "text-emerald-600", bg: "bg-emerald-50", icon: CheckCircle2 },
     PENDING: { label: "Chờ thanh ton", color: "text-amber-600", bg: "bg-amber-50", icon: Clock },
     CANCELLED: { label: "Đ hủy", color: "text-rose-600", bg: "bg-rose-50", icon: XCircle },
     EXPIRED: { label: "Hết hạn", color: "text-slate-500", bg: "bg-slate-100", icon: AlertCircle },
@@ -282,14 +282,14 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                     <div className="p-5 rounded-[32px] bg-white border border-emerald-100 shadow-sm">
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hết hạn</p>
                        <p className="text-sm font-black text-slate-900">
-                         {order.creditBucket.expiresAt ? format(new Date(order.creditBucket.expiresAt), "dd/MM/yyyy HH:mm") : "Khng thời hạn"}
+                         {order.creditBucket.expiresAt ? format(new Date(order.creditBucket.expiresAt), "dd/MM/yyyy HH:mm") : "Không thời hạn"}
                        </p>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 p-6 rounded-[32px] bg-rose-50 border border-rose-100 text-rose-600">
                     <AlertCircle className="h-5 w-5" />
-                    <p className="text-sm font-bold">Đơn ģ PAID nhưng chưa thấy bản ghi CreditBucket. Vui lng kim tra lại Ledger.</p>
+                    <p className="text-sm font-bold">Đơn đã PAID nhưng chưa thấy bản ghi CreditBucket. Vui lòng kiểm tra lại Ledger.</p>
                   </div>
                 )}
              </section>
@@ -299,7 +299,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                  <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                    <Package className="h-5 w-5" />
                  </div>
-                 <h3 className="text-xl font-black text-slate-900">Thng tin sản phẩm</h3>
+                 <h3 className="text-xl font-black text-slate-900">Thông tin sản phẩm</h3>
               </div>
               <div className="grid gap-8 sm:grid-cols-2">
                  <div className="space-y-6">
@@ -318,7 +318,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                        <div className="p-4 rounded-3xl bg-slate-50 border border-slate-100">
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Thời hạn</p>
                           <p className="text-lg font-black text-slate-900">
-                            {order.product.durationDays && order.product.durationDays > 0 ? `${order.product.durationDays} ngy` : "Khng gii hạn"}
+                            {order.product.durationDays && order.product.durationDays > 0 ? `${order.product.durationDays} ngày` : "Không giới hạn"}
                           </p>
                        </div>
                     </div>
@@ -396,7 +396,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                     href={`/admin/users/${order.user.id}`}
                     className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3 text-sm font-black text-white hover:bg-black transition-all active:scale-95 shadow-lg shadow-slate-200"
                  >
-                    H sơ khch hng <ArrowRight className="h-4 w-4" />
+                    Hồ sơ khách hàng <ArrowRight className="h-4 w-4" />
                  </Link>
               </div>
            </section>
@@ -413,7 +413,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                  <div className="flex items-start gap-3">
                     <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
                     <p className="text-xs font-medium text-slate-400 leading-relaxed">
-                       Khi chuyn trạng thi sang PAID, h thng sẽ tự ng gửi email thng bo v tạo thng bo in-app cho khch hng.
+                       Khi chuyển trạng thái sang PAID, hệ thống sẽ tự động gửi email thông báo và tạo thông báo in-app cho khách hàng.
                     </p>
                  </div>
               </div>

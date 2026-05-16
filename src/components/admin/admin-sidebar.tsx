@@ -95,7 +95,7 @@ export default function AdminSidebar({
       cancelLabel: "Ở lại",
       type: "danger",
       onConfirm: async () => {
-        await signOut({ callbackUrl: "/login" });
+        await signOut({ callbackUrl: "/" });
       },
     });
   };

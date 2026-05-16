@@ -334,14 +334,14 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <button 
-               onClick={() => showToast("T�nh n�ng �ang ph�t tri?n", "info")}
+               onClick={() => showToast("Tính năng đang phát triển", "info")}
                className="flex flex-col items-center justify-center gap-3 rounded-[32px] border border-slate-200 bg-white p-6 transition-all hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-500/5 group"
             >
               <Zap className="h-6 w-6 text-emerald-600 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-black text-slate-900">Tặng Credits</span>
             </button>
             <button 
-               onClick={() => showToast("T�nh n�ng �ang ph�t tri?n", "info")}
+               onClick={() => showToast("Tính năng đang phát triển", "info")}
                className="flex flex-col items-center justify-center gap-3 rounded-[32px] border border-slate-200 bg-white p-6 transition-all hover:border-amber-300 hover:shadow-lg hover:shadow-amber-500/5 group"
             >
               <AlertTriangle className="h-6 w-6 text-amber-500 group-hover:scale-110 transition-transform" />

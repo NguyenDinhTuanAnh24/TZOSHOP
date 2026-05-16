@@ -84,7 +84,7 @@ export default function DashboardMobileNav() {
         cancelLabel: "Hủy",
         type: "danger",
         onConfirm: async () => {
-          await signOut({ callbackUrl: "/login" });
+          await signOut({ callbackUrl: "/" });
         },
       });
     }, 120);

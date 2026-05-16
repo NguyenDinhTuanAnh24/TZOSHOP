@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -34,60 +34,60 @@ import {
 
 const navItems = [
   { label: "SẢN PHẨM", href: "/plans" },
-  { label: "THÔNG TIN", href: "/#providers" },
-  { label: "CHÍNH SÁCH", href: "/terms" },
-  { label: "ĐÁNH GIÁ", href: "/#testimonials" },
+  { label: "THNG TIN", href: "/#providers" },
+  { label: "CHNH SCH", href: "/terms" },
+  { label: "ĐNH GI", href: "/#testimonials" },
 ];
 
 const providers = [
   {
     name: "CodexAI",
     icon: "/logos/codexai.svg",
-    desc: "Phù hợp cho coding, agent workflow và công cụ phát triển.",
+    desc: "Ph hợp cho coding, agent workflow v cng cụ pht trin.",
   },
   {
     name: "Claude",
     icon: "/logos/claude.svg",
-    desc: "Tối ưu cho phân tích, viết nội dung dài và xử lý ngữ cảnh.",
+    desc: "Ti ưu cho phn tch, viết ni dung di v xử l ngữ cảnh.",
   },
   {
     name: "Gemini",
     icon: "/logos/gemini.svg",
-    desc: "Linh hoạt cho tác vụ đa dạng, tốc độ nhanh và chi phí hợp lý.",
+    desc: "Linh hoạt cho tc vụ a dạng, tc  nhanh v chi ph hợp l.",
   },
   {
     name: "DeepSeek",
     icon: "/logos/deepseek.svg",
-    desc: "Phù hợp cho nhu cầu tiết kiệm, coding và xử lý tác vụ thường ngày.",
+    desc: "Ph hợp cho nhu cầu tiết kim, coding v xử l tc vụ thường ngy.",
   },
 ];
 
 const workflowFeatures = [
   {
-    title: "Chọn gói credits phù hợp",
-    desc: "Dễ dàng chọn gói theo nhu cầu sử dụng, từ trải nghiệm thử đến workflow thường xuyên hoặc nhu cầu cao hơn.",
-    bullets: ["So sánh gói rõ ràng", "Linh hoạt theo từng dòng AI", "Phù hợp cá nhân và team nhỏ"],
+    title: "Chọn gi credits ph hợp",
+    desc: "D dng chọn gi theo nhu cầu sử dụng, từ trải nghim thử ến workflow thường xuyn hoặc nhu cầu cao hơn.",
+    bullets: ["So snh gi r rng", "Linh hoạt theo từng dng AI", "Ph hợp c nhn v team nhỏ"],
     icon: CreditCard,
     previewType: "plans",
   },
   {
-    title: "Kích hoạt và sử dụng nhanh",
-    desc: "Sau khi có gói, bạn có thể bắt đầu sử dụng ngay với các công cụ AI quen thuộc mà không cần thao tác phức tạp.",
-    bullets: ["Bắt đầu trong vài phút", "Dùng với extension, IDE hoặc app hỗ trợ", "Trải nghiệm thống nhất trong một tài khoản"],
+    title: "Kch hoạt v sử dụng nhanh",
+    desc: "Sau khi c gi, bạn c th bắt ầu sử dụng ngay vi cc cng cụ AI quen thuc m khng cần thao tc phức tạp.",
+    bullets: ["Bắt ầu trong vi pht", "Dng vi extension, IDE hoặc app h trợ", "Trải nghim thng nhất trong mt ti khoản"],
     icon: KeyRound,
     previewType: "quickstart",
   },
   {
-    title: "Theo dõi usage minh bạch",
-    desc: "Nắm được lượng credits đã dùng, request phát sinh và xu hướng sử dụng để kiểm soát ngân sách tốt hơn.",
-    bullets: ["Theo dõi credits còn lại", "Xem lịch sử sử dụng", "Hạn chế phát sinh ngoài dự kiến"],
+    title: "Theo di usage minh bạch",
+    desc: "Nắm ược lượng credits ģ dng, request pht sinh v xu hưng sử dụng  kim sot ngn sch tt hơn.",
+    bullets: ["Theo di credits cn lại", "Xem lch sử sử dụng", "Hạn chế pht sinh ngoi dự kiến"],
     icon: LayoutDashboard,
     previewType: "usage",
   },
   {
-    title: "Quản lý đơn hàng và hỗ trợ dễ dàng",
-    desc: "Kiểm tra đơn hàng, trạng thái thanh toán, mã giảm giá và gửi yêu cầu hỗ trợ khi cần.",
-    bullets: ["Đơn hàng rõ trạng thái", "Hỗ trợ qua nhiều kênh", "Thông tin tài khoản dễ quản lý"],
+    title: "Quản l ơn hng v h trợ d dng",
+    desc: "Kim tra ơn hng, trạng thi thanh ton, m giảm gi v gửi yu cầu h trợ khi cần.",
+    bullets: ["Đơn hng r trạng thi", "H trợ qua nhiều knh", "Thng tin ti khoản d quản l"],
     icon: Wallet,
     previewType: "orders",
   },
@@ -95,176 +95,176 @@ const workflowFeatures = [
 
 const steps = [
   {
-    title: "Tạo tài khoản",
-    desc: "Đăng ký nhanh để bắt đầu quản lý credits và API key trong một nơi.",
+    title: "Tạo ti khoản",
+    desc: "Đng k nhanh  bắt ầu quản l credits v API key trong mt nơi.",
   },
   {
-    title: "Chọn dòng AI và gói credits",
-    desc: "Lựa chọn gói theo nhu cầu sử dụng thực tế và loại tác vụ bạn thường chạy.",
+    title: "Chọn dng AI v gi credits",
+    desc: "Lựa chọn gi theo nhu cầu sử dụng thực tế v loại tc vụ bạn thường chạy.",
   },
   {
     title: "Tạo API key",
-    desc: "Khởi tạo key riêng cho gói đã chọn để kiểm soát và theo dõi thuận tiện.",
+    desc: "Khi tạo key ring cho gi ģ chọn  kim sot v theo di thuận tin.",
   },
   {
-    title: "Tích hợp vào công cụ bạn dùng",
-    desc: "Dùng API key trong extension, IDE hoặc ứng dụng để triển khai công việc hằng ngày.",
+    title: "Tch hợp vo cng cụ bạn dng",
+    desc: "Dng API key trong extension, IDE hoặc ứng dụng  trin khai cng vic hằng ngy.",
   },
 ];
 
 const reasons = [
   {
-    title: "Tiết kiệm thời gian thiết lập",
+    title: "Tiết kim thời gian thiết lập",
     description:
-      "Chọn gói phù hợp, kích hoạt nhanh và bắt đầu sử dụng với các công cụ AI quen thuộc mà không cần thao tác phức tạp.",
+      "Chọn gi ph hợp, kch hoạt nhanh v bắt ầu sử dụng vi cc cng cụ AI quen thuc m khng cần thao tc phức tạp.",
   },
   {
-    title: "Dễ kiểm soát chi phí",
-    description: "Theo dõi credits, lịch sử sử dụng và trạng thái gói để tránh phát sinh ngoài dự kiến.",
+    title: "D kim sot chi ph",
+    description: "Theo di credits, lch sử sử dụng v trạng thi gi  trnh pht sinh ngoi dự kiến.",
   },
   {
     title: "Linh hoạt theo nhu cầu",
-    description: "Từ cá nhân, người dùng thường xuyên đến team nhỏ, TzoShop có nhiều lựa chọn gói credits phù hợp.",
+    description: "Từ c nhn, người dng thường xuyn ến team nhỏ, TzoShop c nhiều lựa chọn gi credits ph hợp.",
   },
   {
-    title: "Quản lý tập trung",
-    description: "Gói credits, đơn hàng, API key và usage được gom về một nơi để bạn dễ theo dõi và vận hành.",
+    title: "Quản l tập trung",
+    description: "Gi credits, ơn hng, API key v usage ược gom về mt nơi  bạn d theo di v vận hnh.",
   },
 ];
 
 const testimonials = [
   {
     name: "Minh Anh",
-    role: "Developer cá nhân",
-    quote: "TzoShop giúp mình bắt đầu nhanh hơn rất nhiều. Chọn gói xong là có thể dùng ngay với công cụ quen thuộc.",
+    role: "Developer c nhn",
+    quote: "TzoShop gip mnh bắt ầu nhanh hơn rất nhiều. Chọn gi xong l c th dng ngay vi cng cụ quen thuc.",
     rating: 5,
-    badge: "Người dùng Plus",
+    badge: "Người dng Plus",
   },
   {
     name: "Quang Huy",
     role: "Freelancer",
-    quote: "Phần theo dõi usage khá rõ ràng, dễ kiểm soát chi phí hơn so với trước.",
+    quote: "Phần theo di usage kh r rng, d kim sot chi ph hơn so vi trưc.",
     rating: 5,
-    badge: "Người dùng thường xuyên",
+    badge: "Người dng thường xuyn",
   },
   {
-    name: "Hà Linh",
+    name: "H Linh",
     role: "Content team",
-    quote: "Mình thích cách TzoShop gom mọi thứ về một nơi, từ gói credits đến đơn hàng và lịch sử sử dụng.",
+    quote: "Mnh thch cch TzoShop gom mọi thứ về mt nơi, từ gi credits ến ơn hng v lch sử sử dụng.",
     rating: 5,
     badge: "Team nhỏ",
   },
   {
     name: "Tuấn Minh",
-    role: "Người dùng Plus",
-    quote: "Giao diện dễ dùng, mua gói nhanh và không bị rối khi cần kiểm tra lại thông tin.",
+    role: "Người dng Plus",
+    quote: "Giao din d dng, mua gi nhanh v khng b ri khi cần kim tra lại thng tin.",
     rating: 4,
-    badge: "Người dùng Plus",
+    badge: "Người dng Plus",
   },
   {
-    name: "Khánh Duy",
+    name: "Khnh Duy",
     role: "Team nhỏ",
-    quote: "Phù hợp với nhóm của mình vì vừa dễ quản lý vừa có nhiều lựa chọn theo nhu cầu.",
+    quote: "Ph hợp vi nhm của mnh v vừa d quản l vừa c nhiều lựa chọn theo nhu cầu.",
     rating: 5,
     badge: "Team nhỏ",
   },
   {
     name: "Ngọc Mai",
     role: "Designer",
-    quote: "Tốc độ bắt đầu khá nhanh, mình không mất nhiều thời gian để làm quen.",
+    quote: "Tc  bắt ầu kh nhanh, mnh khng mất nhiều thời gian  lm quen.",
     rating: 5,
-    badge: "Người dùng thường xuyên",
+    badge: "Người dng thường xuyn",
   },
   {
     name: "Đức Long",
     role: "Power user",
-    quote: "Phần hỗ trợ nhiều dạng AI và cách quản lý tập trung là điểm mạnh đánh giá cao nhất.",
+    quote: "Phần h trợ nhiều dạng AI v cch quản l tập trung l im mạnh ġnh gi cao nhất.",
     rating: 5,
     badge: "Power user",
   },
   {
     name: "Thảo Vy",
-    role: "Người dùng Mini",
-    quote: "Mình thấy dễ tiếp cận, đặc biệt là khi mới bắt đầu dùng các gói credits.",
+    role: "Người dng Mini",
+    quote: "Mnh thấy d tiếp cận, ặc bit l khi mi bắt ầu dng cc gi credits.",
     rating: 4,
-    badge: "Người dùng Mini",
+    badge: "Người dng Mini",
   },
 ];
 
 const pricingPreview = [
   {
     name: "Trial",
-    badge: "Tiết kiệm",
-    subtitle: "Cho trải nghiệm nhanh",
-    desc: "Dùng thử workflow cơ bản, phù hợp để làm quen và kiểm tra nhu cầu thực tế.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Thời hạn ngắn để bắt đầu nhanh",
-    bullets: ["Kích hoạt nhanh", "Phù hợp người mới", "Thiết lập đơn giản"],
+    badge: "Tiết kim",
+    subtitle: "Cho trải nghim nhanh",
+    desc: "Dng thử workflow cơ bản, ph hợp  lm quen v kim tra nhu cầu thực tế.",
+    credits: "Credits theo từng dng AI",
+    validity: "Thời hạn ngắn  bắt ầu nhanh",
+    bullets: ["Kch hoạt nhanh", "Ph hợp người mi", "Thiết lập ơn giản"],
   },
   {
     name: "Mini",
-    badge: "Tiết kiệm",
-    subtitle: "Cho cá nhân",
-    desc: "Bắt đầu nhanh với mức chi phí thấp và khả năng mở rộng khi cần.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Thời hạn linh hoạt theo gói",
-    bullets: ["Bắt đầu nhanh", "Phù hợp cá nhân", "Theo dõi usage cơ bản"],
+    badge: "Tiết kim",
+    subtitle: "Cho c nhn",
+    desc: "Bắt ầu nhanh vi mức chi ph thấp v khả nng m rng khi cần.",
+    credits: "Credits theo từng dng AI",
+    validity: "Thời hạn linh hoạt theo gi",
+    bullets: ["Bắt ầu nhanh", "Ph hợp c nhn", "Theo di usage cơ bản"],
   },
   {
     name: "Plus",
-    badge: "Phổ biến",
-    subtitle: "Cho sử dụng thường xuyên",
-    desc: "Cân bằng tốt giữa chi phí và hiệu quả để duy trì công việc hằng ngày.",
-    credits: "Credits tối ưu cho workflow hằng ngày",
-    validity: "Chu kỳ ổn định cho công việc liên tục",
-    bullets: ["Cân bằng chi phí", "Ưu tiên ổn định", "Quản lý key linh hoạt"],
+    badge: "Ph biến",
+    subtitle: "Cho sử dụng thường xuyn",
+    desc: "Cn bằng tt giữa chi ph v hiu quả  duy tr cng vic hằng ngy.",
+    credits: "Credits ti ưu cho workflow hằng ngy",
+    validity: "Chu kỳ n nh cho cng vic lin tục",
+    bullets: ["Cn bằng chi ph", "Ưu tin n nh", "Quản l key linh hoạt"],
   },
   {
     name: "Pro",
     badge: "Cho team",
     subtitle: "Cho workflow nặng hơn",
-    desc: "Nhiều credits hơn để chạy tác vụ chuyên sâu và yêu cầu vận hành ổn định.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Dành cho cường độ sử dụng cao",
-    bullets: ["Dung lượng lớn hơn", "Phù hợp người dùng chuyên sâu", "Mở rộng linh hoạt"],
+    desc: "Nhiều credits hơn  chạy tc vụ chuyn su v yu cầu vận hnh n nh.",
+    credits: "Credits theo từng dng AI",
+    validity: "Dnh cho cường  sử dụng cao",
+    bullets: ["Dung lượng ln hơn", "Ph hợp người dng chuyn su", "M rng linh hoạt"],
   },
   {
     name: "Max",
     badge: "Cho team",
-    subtitle: "Cho nhóm nhỏ",
-    desc: "Dung lượng cao hơn cho nhóm cộng tác và theo dõi usage chi tiết.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Chu kỳ dài hơn theo gói",
-    bullets: ["Phù hợp nhóm nhỏ", "Theo dõi sâu hơn", "Ưu tiên độ ổn định"],
+    subtitle: "Cho nhm nhỏ",
+    desc: "Dung lượng cao hơn cho nhm cng tc v theo di usage chi tiết.",
+    credits: "Credits theo từng dng AI",
+    validity: "Chu kỳ di hơn theo gi",
+    bullets: ["Ph hợp nhm nhỏ", "Theo di su hơn", "Ưu tin  n nh"],
   },
   {
     name: "Ultra",
     subtitle: "Cho nhu cầu rất cao",
-    desc: "Tối ưu cho workload lớn, ưu tiên hiệu năng và khả năng mở rộng liên tục.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Dành cho vận hành cường độ lớn",
-    bullets: ["Khối lượng xử lý lớn", "Ưu tiên hiệu năng", "Đáp ứng workload cao"],
+    desc: "Ti ưu cho workload ln, ưu tin hiu nng v khả nng m rng lin tục.",
+    credits: "Credits theo từng dng AI",
+    validity: "Dnh cho vận hnh cường  ln",
+    bullets: ["Khi lượng xử l ln", "Ưu tin hiu nng", "Đp ứng workload cao"],
   },
   {
     name: "Enterprise",
-    badge: "Liên hệ",
-    subtitle: "Cho team/doanh nghiệp",
-    desc: "Gói tùy chỉnh theo quy mô tổ chức với nhu cầu tư vấn và hỗ trợ riêng.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Thiết kế theo nhu cầu doanh nghiệp",
-    bullets: ["Tư vấn chuyên biệt", "Hỗ trợ riêng", "Tùy chỉnh theo quy mô"],
+    badge: "Lin h",
+    subtitle: "Cho team/doanh nghip",
+    desc: "Gi ty chnh theo quy m t chức vi nhu cầu tư vấn v h trợ ring.",
+    credits: "Credits theo từng dng AI",
+    validity: "Thiết kế theo nhu cầu doanh nghip",
+    bullets: ["Tư vấn chuyn bit", "H trợ ring", "Ty chnh theo quy m"],
   },
 ];
 
 const benefits = [
-  "BẮT ĐẦU SỬ DỤNG TRONG VÀI PHÚT",
-  "DÙNG LINH HOẠT VỚI CÔNG CỤ QUEN THUỘC",
-  "THEO DÕI CREDITS RÕ RÀNG",
-  "KIỂM SOÁT CHI PHÍ DỄ DÀNG",
-  "HỖ TRỢ NHIỀU DÒNG AI PHỔ BIẾN",
-  "PHÙ HỢP CÁ NHÂN VÀ TEAM NHỎ",
-  "QUẢN LÝ GÓI TẬP TRUNG",
-  "MUA GÓI NHANH, SỬ DỤNG NGAY",
+  "BẮT ĐẦU SỬ DỤNG TRONG VI PHT",
+  "DNG LINH HOẠT VỚI CNG CỤ QUEN THUC",
+  "THEO DI CREDITS R RNG",
+  "KIM SOT CHI PH D DNG",
+  "H TRỢ NHIU DNG AI PH BIẾN",
+  "PH HỢP C NHN V TEAM NHỎ",
+  "QUẢN L GI TẬP TRUNG",
+  "MUA GI NHANH, SỬ DỤNG NGAY",
 ];
 
 const cardClass =
@@ -304,15 +304,15 @@ function PublicNavbar({ onOpenAuth }: { onOpenAuth: (mode: AuthMode) => void }) 
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <button type="button" className={secondaryButtonClass} onClick={() => onOpenAuth("login")}>Đăng nhập</button>
-          <button type="button" className={primaryButtonClass} onClick={() => onOpenAuth("register")}>Bắt đầu</button>
+          <button type="button" className={secondaryButtonClass} onClick={() => onOpenAuth("login")}>Đng nhập</button>
+          <button type="button" className={primaryButtonClass} onClick={() => onOpenAuth("register")}>Bắt ầu</button>
         </div>
 
         <button
           type="button"
           className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-700 lg:hidden"
           onClick={() => setIsOpen((prev) => !prev)}
-          aria-label="Mở menu"
+          aria-label="M menu"
         >
           {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -333,10 +333,10 @@ function PublicNavbar({ onOpenAuth }: { onOpenAuth: (mode: AuthMode) => void }) 
             ))}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <button type="button" className={secondaryButtonClass} onClick={() => { setIsOpen(false); onOpenAuth("login"); }}>
-                Đăng nhập
+                Đng nhập
               </button>
               <button type="button" className={primaryButtonClass} onClick={() => { setIsOpen(false); onOpenAuth("register"); }}>
-                Bắt đầu
+                Bắt ầu
               </button>
             </div>
           </nav>
@@ -361,25 +361,25 @@ function HeroSection({ onOpenAuth }: { onOpenAuth: (mode: AuthMode) => void }) {
       <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
         <div>
           <p className="inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-indigo-700 tz-animate-fade-up sm:text-sm">
-            GIẢI PHÁP AI CREDITS LINH HOẠT
+            GIẢI PHP AI CREDITS LINH HOẠT
           </p>
           <h1 className="mt-6 max-w-4xl text-4xl font-extrabold leading-[1.08] tracking-tight text-slate-950 tz-animate-fade-up tz-delay-100 sm:text-5xl lg:text-6xl">
-            Mua credits AI dễ dàng,{" "}
+            Mua credits AI d dng,{" "}
             <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
-              dùng ngay cho công việc mỗi ngày
+              dng ngay cho cng vic mi ngy
             </span>
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 tz-animate-fade-up tz-delay-200 sm:text-lg">
-            TzoShop giúp bạn chọn gói phù hợp, kích hoạt nhanh và sử dụng linh hoạt với các công cụ AI quen thuộc - rõ ràng, tiện lợi và dễ kiểm soát chi phí.
+            TzoShop gip bạn chọn gi ph hợp, kch hoạt nhanh v sử dụng linh hoạt vi cc cng cụ AI quen thuc - r rng, tin lợi v d kim sot chi ph.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 tz-animate-fade-up tz-delay-300 sm:flex-row">
             <CosmicButton type="button" onClick={() => onOpenAuth("register")} className="group">
-              Bắt đầu ngay
+              Bắt ầu ngay
               <ArrowRight className="ml-2 h-4 w-4 text-white transition-transform duration-200 group-hover:translate-x-1" />
             </CosmicButton>
             <CosmicButton href="/plans" variant="secondary" className="group hover:shadow-[0_8px_24px_0_rgba(79,70,229,0.16)]">
-              Xem gói credits
+              Xem gi credits
               <ArrowRight className="ml-2 h-4 w-4 text-slate-700 transition-transform duration-200 group-hover:translate-x-1" />
             </CosmicButton>
           </div>
@@ -389,23 +389,23 @@ function HeroSection({ onOpenAuth }: { onOpenAuth: (mode: AuthMode) => void }) {
           <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 backdrop-blur-xl shadow-[0_20px_60px_-20px_rgba(79,70,229,0.35)] perspective-[2000px] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_-24px_rgba(79,70,229,0.45)] hover:rotate-x-[2deg] hover:rotate-y-[-8deg] lg:rotate-x-[5deg] lg:rotate-y-[-12deg]">
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 tz-animate-fade-up tz-delay-100">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-bold text-slate-950">Bắt đầu với TzoShop</h3>
+                <h3 className="text-lg font-bold text-slate-950">Bắt ầu vi TzoShop</h3>
                 <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">Nhanh gọn</span>
               </div>
 
               <div className="mt-4 space-y-3">
                 {[
                   {
-                    title: "Chọn gói phù hợp",
-                    desc: "Lựa chọn theo nhu cầu cá nhân hoặc team nhỏ.",
+                    title: "Chọn gi ph hợp",
+                    desc: "Lựa chọn theo nhu cầu c nhn hoặc team nhỏ.",
                   },
                   {
-                    title: "Kích hoạt tài khoản",
-                    desc: "Thông tin sử dụng được sắp xếp rõ ràng trong tài khoản.",
+                    title: "Kch hoạt ti khoản",
+                    desc: "Thng tin sử dụng ược sắp xếp r rng trong ti khoản.",
                   },
                   {
-                    title: "Dùng với công cụ quen thuộc",
-                    desc: "Bắt đầu làm việc với extension, IDE hoặc ứng dụng hỗ trợ.",
+                    title: "Dng vi cng cụ quen thuc",
+                    desc: "Bắt ầu lm vic vi extension, IDE hoặc ứng dụng h trợ.",
                   },
                 ].map((step, idx) => (
                   <article key={step.title} className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
@@ -424,10 +424,10 @@ function HeroSection({ onOpenAuth }: { onOpenAuth: (mode: AuthMode) => void }) {
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-indigo-100 bg-indigo-50/80 p-3">
-                  <p className="text-xs font-semibold text-indigo-700">Sẵn sàng trong vài phút</p>
+                  <p className="text-xs font-semibold text-indigo-700">Sẵn sng trong vi pht</p>
                 </div>
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50/80 p-3">
-                  <p className="text-xs font-semibold text-emerald-700">Không cần thao tác phức tạp</p>
+                  <p className="text-xs font-semibold text-emerald-700">Khng cần thao tc phức tạp</p>
                 </div>
               </div>
             </div>
@@ -445,8 +445,8 @@ function ProviderSection() {
         <p className="inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
           AI Providers
         </p>
-        <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Linh hoạt chọn dòng AI theo nhu cầu</h2>
-        <p className="mt-3 max-w-3xl text-slate-600">Tận dụng nhiều lựa chọn model phổ biến trong cùng một nền tảng quản lý tập trung.</p>
+        <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Linh hoạt chọn dng AI theo nhu cầu</h2>
+        <p className="mt-3 max-w-3xl text-slate-600">Tận dụng nhiều lựa chọn model ph biến trong cng mt nền tảng quản l tập trung.</p>
 
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {providers.map((provider) => (
@@ -462,7 +462,7 @@ function ProviderSection() {
               </div>
               <h3 className="mt-4 text-xl font-bold text-slate-900">{provider.name}</h3>
               <p className="mt-2 text-sm leading-7 text-slate-600">{provider.desc}</p>
-              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-violet-600">Hỗ trợ nhiều model phổ biến</p>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-violet-600">H trợ nhiều model ph biến</p>
             </article>
           ))}
         </div>
@@ -481,7 +481,7 @@ function BenefitsMarqueeBar() {
           {marqueeItems.map((item, idx) => (
             <div key={`benefit-${idx}-${item}`} className="inline-flex items-center gap-4">
               <span className="whitespace-nowrap text-xs font-bold uppercase tracking-wide text-white sm:text-sm">{item}</span>
-              <span aria-hidden className="text-sm text-white/80 sm:text-base">•</span>
+              <span aria-hidden className="text-sm text-white/80 sm:text-base"></span>
             </div>
           ))}
         </div>
@@ -504,13 +504,12 @@ function AuthDrawer({
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
-  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     name: "",
@@ -521,6 +520,7 @@ function AuthDrawer({
   });
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
 
   const resetForgotState = () => {
     setForgotEmail("");
@@ -528,7 +528,8 @@ function AuthDrawer({
   };
 
   const closeDrawerAndReset = useCallback(() => {
-    resetForgotState();
+    setForgotEmail("");
+    setForgotPasswordSent(false);
     setErrorMessage("");
     setSuccessMessage("");
     onClose();
@@ -579,22 +580,20 @@ function AuthDrawer({
       document.body.style.overflow = "";
     };
   }, [isOpen, closeDrawerAndReset]);
-
   const handleSwitchMode = (nextMode: AuthMode) => {
-    setForgotPasswordSent(false);
-    setErrorMessage("");
     if (mode === "forgot-password" && nextMode !== "forgot-password") {
       resetForgotState();
+      setErrorMessage("");
+      setSuccessMessage("");
     }
     onSwitchMode(nextMode);
   };
-
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
     if (!loginData.email || !loginData.password) {
-      setErrorMessage("Vui lòng nhập đầy đủ email và mật khẩu.");
+      setErrorMessage("Vui lng nhập ầy ủ email v mật khẩu.");
       return;
     }
     setIsSubmitting(true);
@@ -613,7 +612,7 @@ function AuthDrawer({
       const role = sessionData?.user?.role;
       window.location.href = role === "ADMIN" ? "/admin" : "/dashboard";
     } catch {
-      setErrorMessage("Đã có lỗi xảy ra.");
+      setErrorMessage("Đ c li xảy ra.");
     } finally {
       setIsSubmitting(false);
     }
@@ -624,19 +623,19 @@ function AuthDrawer({
     setErrorMessage("");
     setSuccessMessage("");
     if (!registerData.name || !registerData.email || !registerData.password || !registerData.confirmPassword) {
-      setErrorMessage("Vui lòng điền đầy đủ thông tin.");
+      setErrorMessage("Vui lng iền ầy ủ thng tin.");
       return;
     }
     if (registerData.password !== registerData.confirmPassword) {
-      setErrorMessage("Mật khẩu xác nhận không khớp.");
+      setErrorMessage("Mật khẩu xc nhận khng khp.");
       return;
     }
     if (registerData.password.length < 8) {
-      setErrorMessage("Mật khẩu phải từ 8 ký tự trở lên.");
+      setErrorMessage("Mật khẩu phải từ 8 k tự tr ln.");
       return;
     }
     if (!registerData.agree) {
-      setErrorMessage("Bạn cần đồng ý với điều khoản sử dụng.");
+      setErrorMessage("Bạn cần ng  vi iều khoản sử dụng.");
       return;
     }
     setIsSubmitting(true);
@@ -652,29 +651,29 @@ function AuthDrawer({
       });
       const result = await res.json();
       if (!res.ok) {
-        setErrorMessage(result.error?.message || "Đăng ký thất bại.");
+        setErrorMessage(result.error?.message || "Đng k thất bại.");
         return;
       }
-      onSwitchMode("login");
+      handleSwitchMode("login");
       setErrorMessage("");
-      setSuccessMessage("Đăng ký thành công. Vui lòng đăng nhập để tiếp tục.");
+      setSuccessMessage("Đng k thnh cng. Vui lng ng nhập  tiếp tục.");
     } catch {
-      setErrorMessage("Đã có lỗi xảy ra.");
+      setErrorMessage("Đ c li xảy ra.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleForgotSubmit = async (e: React.FormEvent) => {
+    const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const email = forgotEmail.trim().toLowerCase();
     setErrorMessage("");
     setSuccessMessage("");
     if (!email) {
-      setErrorMessage("Vui lòng nhập email hợp lệ.");
+      setErrorMessage("Vui lng nhp email hp l.");
       return;
     }
-    setForgotPasswordSent(false);
+
     setIsSendingResetEmail(true);
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -684,13 +683,13 @@ function AuthDrawer({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setErrorMessage(data?.error ?? data?.message ?? "Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.");
+        setErrorMessage(data?.error ?? "Khng th gi email t li mt khu. Vui lng th li.");
         return;
       }
       setForgotPasswordSent(true);
-      setSuccessMessage(data?.message ?? "Nếu email tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu.");
+      setSuccessMessage(data?.message ?? "Nu email tn ti, chng ti  gi lin kt t li mt khu.");
     } catch {
-      setErrorMessage("Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.");
+      setErrorMessage("Khng th gi email t li mt khu. Vui lng th li.");
     } finally {
       setIsSendingResetEmail(false);
     }
@@ -721,8 +720,8 @@ function AuthDrawer({
           <div className="px-5 pt-4">
             {mode !== "forgot-password" ? (
               <div className="grid grid-cols-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
-                <button type="button" onClick={() => handleSwitchMode("login")} className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${mode === "login" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>Đăng nhập</button>
-                <button type="button" onClick={() => handleSwitchMode("register")} className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${mode === "register" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>Đăng ký</button>
+                <button type="button" onClick={() => handleSwitchMode("login")} className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${mode === "login" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>Đng nhập</button>
+                <button type="button" onClick={() => handleSwitchMode("register")} className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${mode === "register" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>Đng k</button>
               </div>
             ) : null}
           </div>
@@ -730,8 +729,8 @@ function AuthDrawer({
           <div className="flex-1 px-5 py-5">
             {mode === "login" ? (
               <>
-                <h2 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Đăng nhập</h2>
-                <p className="mt-3 text-base leading-8 text-slate-600">Tiếp tục quản lý gói credits và đơn hàng của bạn.</p>
+                <h2 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Đng nhập</h2>
+                <p className="mt-3 text-base leading-8 text-slate-600">Tiếp tục quản l gi credits v ơn hng của bạn.</p>
                 <form onSubmit={handleLoginSubmit} className="mt-6 space-y-5">
                   <div>
                     <label htmlFor="drawer-login-email" className="mb-2 block text-base font-semibold text-slate-700">Email</label>
@@ -753,7 +752,7 @@ function AuthDrawer({
                   <div className="flex items-center justify-between">
                     <label className="inline-flex items-center gap-2 text-base text-slate-600">
                       <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 rounded border-slate-300 accent-indigo-600" />
-                      Ghi nhớ đăng nhập
+                      Ghi nh ng nhập
                     </label>
                     <button
                       type="button"
@@ -761,18 +760,16 @@ function AuthDrawer({
                         setErrorMessage("");
                         setSuccessMessage("");
                         resetForgotState();
-                        setForgotEmail(loginData.email);
                         handleSwitchMode("forgot-password");
                       }}
                       className="text-base font-medium text-indigo-600 hover:text-indigo-700"
                     >
-                      Quên mật khẩu
+                      Qun mật khẩu
                     </button>
                   </div>
                   {errorMessage ? <p className="text-sm text-rose-600">{errorMessage}</p> : null}
-                  {successMessage ? <p className="text-sm text-emerald-600">{successMessage}</p> : null}
                   <CosmicButton type="submit" disabled={isSubmitting} className="w-full" size="lg">
-                    Đăng nhập
+                    Đng nhập
                   </CosmicButton>
                 </form>
                 <div className="my-5 flex items-center gap-3">
@@ -787,23 +784,23 @@ function AuthDrawer({
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
-                  Đăng nhập với Google
+                  Đng nhập vi Google
                 </button>
                 <p className="mt-5 text-center text-base text-slate-600">
-                  Chưa có tài khoản?{" "}
-                  <button type="button" onClick={() => handleSwitchMode("register")} className="font-semibold text-indigo-600 hover:text-indigo-700">Đăng ký ngay</button>
+                  Chưa c ti khoản?{" "}
+                  <button type="button" onClick={() => handleSwitchMode("register")} className="font-semibold text-indigo-600 hover:text-indigo-700">Đng k ngay</button>
                 </p>
               </>
             ) : mode === "register" ? (
               <>
-                <h2 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Tạo tài khoản</h2>
-                <p className="mt-3 text-base leading-8 text-slate-600">Bắt đầu chọn gói credits và sử dụng AI linh hoạt cho công việc hằng ngày.</p>
+                <h2 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Tạo ti khoản</h2>
+                <p className="mt-3 text-base leading-8 text-slate-600">Bắt ầu chọn gi credits v sử dụng AI linh hoạt cho cng vic hằng ngy.</p>
                 <form onSubmit={handleRegisterSubmit} className="mt-6 space-y-5">
                   <div>
-                    <label htmlFor="drawer-register-name" className="mb-2 block text-base font-semibold text-slate-700">Họ tên</label>
+                    <label htmlFor="drawer-register-name" className="mb-2 block text-base font-semibold text-slate-700">Họ tn</label>
                     <div className="relative">
                       <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input id="drawer-register-name" type="text" required value={registerData.name} onChange={(e) => setRegisterData((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nhập họ tên" className="h-14 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-base text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                      <input id="drawer-register-name" type="text" required value={registerData.name} onChange={(e) => setRegisterData((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nhập họ tn" className="h-14 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-base text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                     </div>
                   </div>
                   <div>
@@ -824,7 +821,7 @@ function AuthDrawer({
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="drawer-register-confirm-password" className="mb-2 block text-base font-semibold text-slate-700">Xác nhận mật khẩu</label>
+                    <label htmlFor="drawer-register-confirm-password" className="mb-2 block text-base font-semibold text-slate-700">Xc nhận mật khẩu</label>
                     <div className="relative">
                       <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <input id="drawer-register-confirm-password" type={showRegisterConfirmPassword ? "text" : "password"} required value={registerData.confirmPassword} onChange={(e) => setRegisterData((prev) => ({ ...prev, confirmPassword: e.target.value }))} placeholder="Nhập lại mật khẩu" className="h-14 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-11 text-base text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
@@ -836,15 +833,14 @@ function AuthDrawer({
                   <label className="inline-flex items-start gap-2 text-base text-slate-600">
                     <input type="checkbox" checked={registerData.agree} onChange={(e) => setRegisterData((prev) => ({ ...prev, agree: e.target.checked }))} className="mt-1 h-4 w-4 rounded border-slate-300 accent-indigo-600" />
                     <span>
-                      Tôi đồng ý với{" "}
-                      <Link href="/terms" className="font-semibold text-slate-900 hover:text-black">điều khoản sử dụng</Link> và{" "}
-                      <Link href="/privacy" className="font-semibold text-slate-900 hover:text-black">chính sách bảo mật</Link>.
+                      Ti ng  vi{" "}
+                      <Link href="/terms" className="font-semibold text-slate-900 hover:text-black">iều khoản sử dụng</Link> v{" "}
+                      <Link href="/privacy" className="font-semibold text-slate-900 hover:text-black">chnh sch bảo mật</Link>.
                     </span>
                   </label>
                   {errorMessage ? <p className="text-sm text-rose-600">{errorMessage}</p> : null}
-                  {successMessage ? <p className="text-sm text-emerald-600">{successMessage}</p> : null}
                   <CosmicButton type="submit" disabled={isSubmitting} className="w-full" size="lg">
-                    Tạo tài khoản
+                    Tạo ti khoản
                   </CosmicButton>
                 </form>
                 <div className="my-5 flex items-center gap-3">
@@ -859,20 +855,20 @@ function AuthDrawer({
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
-                  Đăng ký với Google
+                  Đng k vi Google
                 </button>
                 <p className="mt-5 text-center text-base text-slate-600">
-                  Đã có tài khoản?{" "}
-                  <button type="button" onClick={() => handleSwitchMode("login")} className="font-semibold text-indigo-600 hover:text-indigo-700">Đăng nhập</button>
+                  Đ c ti khoản?{" "}
+                  <button type="button" onClick={() => handleSwitchMode("login")} className="font-semibold text-indigo-600 hover:text-indigo-700">Đng nhập</button>
                 </p>
               </>
             ) : (
               <>
                 <div className="flex min-h-full flex-col">
                   <div>
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Quên mật khẩu?</h2>
+                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Qun mật khẩu?</h2>
                     <p className="mt-3 text-base leading-8 text-slate-600">
-                      Nhập email tài khoản của bạn, TzoShop sẽ gửi liên kết đặt lại mật khẩu nếu email tồn tại trong hệ thống.
+                      Nhập email ti khoản của bạn, TzoShop sẽ gửi lin kết ặt lại mật khẩu nếu email tn tại trong h thng.
                     </p>
                     <form onSubmit={handleForgotSubmit} className="mt-6 space-y-5">
                       <div>
@@ -884,31 +880,24 @@ function AuthDrawer({
                             type="email"
                             required
                             value={forgotEmail}
-                            onChange={(e) => {
-                              setForgotEmail(e.target.value);
-                              setForgotPasswordSent(false);
-                            }}
-                            placeholder="Nhập email đã đăng ký"
+                            onChange={(e) => { setForgotEmail(e.target.value); setForgotPasswordSent(false); }}
+                            placeholder="Nhập email ģ ng k"
                             className="h-14 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-base text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                           />
                         </div>
                       </div>
                       {errorMessage ? <p className="text-sm text-rose-600">{errorMessage}</p> : null}
-                      {mode === "forgot-password" && forgotPasswordSent ? (
-                        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
-                          {successMessage || "Nếu email tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu."}
-                        </div>
-                      ) : null}
+                      {mode === "forgot-password" && forgotPasswordSent ? (<div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">{successMessage || "Nu email tn ti, chng ti  gi lin kt t li mt khu."}</div>) : null}
                       <CosmicButton type="submit" disabled={isSendingResetEmail} className="w-full" size="lg">
-                        Gửi hướng dẫn
+                        {isSendingResetEmail ? "ang gi..." : "Gi hng dn"}
                       </CosmicButton>
                     </form>
-                    <p className="mt-4 text-sm leading-6 text-slate-500">Nếu không thấy email, hãy kiểm tra mục spam hoặc thử lại sau vài phút.</p>
+                    <p className="mt-4 text-sm leading-6 text-slate-500">Nếu khng thấy email, hy kim tra mục spam hoặc thử lại sau vi pht.</p>
                   </div>
 
                   <div className="mt-auto pt-6">
                     <p className="text-center text-base text-slate-600">
-                      Đã nhớ mật khẩu?{" "}
+                      Đ nh mật khẩu?{" "}
                       <button
                         type="button"
                         onClick={() => {
@@ -919,7 +908,7 @@ function AuthDrawer({
                         }}
                         className="font-semibold text-indigo-600 hover:text-indigo-700"
                       >
-                        Đăng nhập
+                        Đng nhập
                       </button>
                     </p>
                   </div>
@@ -941,24 +930,24 @@ function FeatureSection() {
         <>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Gợi ý nhanh</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Gợi  nhanh</p>
               <p className="mt-1 text-base font-bold text-slate-950">Chọn theo nhu cầu</p>
             </div>
-            <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Dễ hiểu</span>
+            <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">D hiu</span>
           </div>
           <div className="mt-4 space-y-3">
             {[
               {
-                title: "Trải nghiệm thử",
-                desc: "Bắt đầu nhanh, phù hợp nhu cầu nhỏ.",
+                title: "Trải nghim thử",
+                desc: "Bắt ầu nhanh, ph hợp nhu cầu nhỏ.",
               },
               {
-                title: "Dùng thường xuyên",
-                desc: "Cân bằng giữa chi phí và hiệu quả sử dụng.",
+                title: "Dng thường xuyn",
+                desc: "Cn bằng giữa chi ph v hiu quả sử dụng.",
               },
               {
                 title: "Nhu cầu cao",
-                desc: "Phù hợp workflow chuyên sâu và cường độ lớn hơn.",
+                desc: "Ph hợp workflow chuyn su v cường  ln hơn.",
               },
             ].map((item, idx) => (
               <div key={item.title} className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
@@ -976,10 +965,10 @@ function FeatureSection() {
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-indigo-100 bg-indigo-50/80 p-3">
-              <p className="text-xs font-semibold text-indigo-700">Dễ so sánh trước khi chọn</p>
+              <p className="text-xs font-semibold text-indigo-700">D so snh trưc khi chọn</p>
             </div>
             <div className="rounded-xl border border-emerald-100 bg-emerald-50/80 p-3">
-              <p className="text-xs font-semibold text-emerald-700">Có thể bắt đầu từ gói nhỏ trước</p>
+              <p className="text-xs font-semibold text-emerald-700">C th bắt ầu từ gi nhỏ trưc</p>
             </div>
           </div>
         </>
@@ -993,18 +982,18 @@ function FeatureSection() {
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Preview</p>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Hoạt động
+              Hoạt ng
             </span>
           </div>
           <div className="mt-4 space-y-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-semibold text-slate-900">1. Chọn gói phù hợp</p>
+              <p className="text-sm font-semibold text-slate-900">1. Chọn gi ph hợp</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-semibold text-slate-900">2. Kích hoạt nhanh</p>
+              <p className="text-sm font-semibold text-slate-900">2. Kch hoạt nhanh</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-semibold text-slate-900">3. Bắt đầu sử dụng</p>
+              <p className="text-sm font-semibold text-slate-900">3. Bắt ầu sử dụng</p>
             </div>
           </div>
         </>
@@ -1016,10 +1005,10 @@ function FeatureSection() {
         <>
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Usage dashboard</p>
-            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">Tuần này</span>
+            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">Tuần ny</span>
           </div>
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs text-slate-500">Credits đã dùng</p>
+            <p className="text-xs text-slate-500">Credits ģ dng</p>
             <p className="mt-1 text-xl font-bold text-slate-900">67%</p>
             <div className="mt-2 h-2 rounded-full bg-slate-200">
               <div className="h-2 w-2/3 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600" />
@@ -1031,7 +1020,7 @@ function FeatureSection() {
               <p className="mt-1 font-semibold text-slate-900">12.480</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Credits còn lại</p>
+              <p className="text-xs text-slate-500">Credits cn lại</p>
               <p className="mt-1 font-semibold text-slate-900">410.000</p>
             </div>
           </div>
@@ -1042,20 +1031,20 @@ function FeatureSection() {
     return (
       <>
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Đơn hàng & hỗ trợ</p>
-          <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">Theo dõi</span>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Đơn hng & h trợ</p>
+          <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">Theo di</span>
         </div>
         <div className="mt-4 space-y-3">
           <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
             <p className="text-sm text-slate-700">#TZO-2190</p>
-            <p className="text-sm font-medium text-emerald-700">Đã thanh toán</p>
+            <p className="text-sm font-medium text-emerald-700">Đ thanh ton</p>
           </div>
           <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
             <p className="text-sm text-slate-700">#TZO-2187</p>
-            <p className="text-sm font-medium text-amber-700">Chờ xử lý</p>
+            <p className="text-sm font-medium text-amber-700">Chờ xử l</p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs text-slate-500">Kênh hỗ trợ</p>
+            <p className="text-xs text-slate-500">Knh h trợ</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700">Email</span>
               <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700">Zalo</span>
@@ -1073,14 +1062,14 @@ function FeatureSection() {
       <div aria-hidden className="pointer-events-none absolute -right-16 bottom-20 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-300 to-violet-300 opacity-20 blur-3xl" />
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <p className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700">
-          Tính năng nổi bật
+          Tnh nng ni bật
         </p>
         <h2 className="mt-4 text-3xl font-extrabold text-slate-950 sm:text-4xl">
-          Xây workflow AI{" "}
-          <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">rõ ràng và dễ quản lý</span>
+          Xy workflow AI{" "}
+          <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">r rng v d quản l</span>
         </h2>
         <p className="mt-3 max-w-3xl text-slate-600 leading-7">
-          Từ chọn gói, tạo key, theo dõi usage đến kiểm soát chi phí - mọi bước được sắp xếp gọn gàng để bạn dùng AI dễ hơn mỗi ngày.
+          Từ chọn gi, tạo key, theo di usage ến kim sot chi ph - mọi bưc ược sắp xếp gọn gng  bạn dng AI d hơn mi ngy.
         </p>
 
         <div className="mt-12 space-y-8 sm:space-y-10 lg:space-y-12">
@@ -1128,9 +1117,9 @@ function HowItWorksSection() {
     <section id="how-it-works" className="py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <p className="inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
-          Quy trình sử dụng
+          Quy trnh sử dụng
         </p>
-        <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Bắt đầu chỉ với 4 bước</h2>
+        <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Bắt ầu ch vi 4 bưc</h2>
 
         <div className="relative mt-8 grid grid-cols-1 gap-5 lg:grid-cols-4">
           <div aria-hidden className="pointer-events-none absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-indigo-100 via-violet-200 to-indigo-100 lg:block" />
@@ -1154,10 +1143,10 @@ function PricingPreviewSection() {
     <section id="pricing" className="border-y border-slate-200 bg-white py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <p className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700">
-          Gói credits
+          Gi credits
         </p>
-        <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Preview các lựa chọn phổ biến</h2>
-        <p className="mt-3 text-slate-600">Chọn gói phù hợp trước, sau đó xem chi tiết đầy đủ trong trang bảng giá.</p>
+        <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Preview cc lựa chọn ph biến</h2>
+        <p className="mt-3 text-slate-600">Chọn gi ph hợp trưc, sau ĳ xem chi tiết ầy ủ trong trang bảng gi.</p>
 
         <div className="mt-14 min-h-[520px] pb-24">
           <Swiper
@@ -1208,7 +1197,7 @@ function PricingPreviewSection() {
                     href="/pricing"
                     className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3.5 text-base font-semibold text-white shadow-[0_4px_14px_0_rgba(79,70,229,0.30)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_0_rgba(79,70,229,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                   >
-                    Xem gói
+                    Xem gi
                   </Link>
                 </article>
               </SwiperSlide>
@@ -1218,7 +1207,7 @@ function PricingPreviewSection() {
 
         <div className="mt-12 text-center">
           <Link href="/pricing" className={`${secondaryButtonClass} group`}>
-            Xem tất cả gói credits
+            Xem tất cả gi credits
             <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
           </Link>
         </div>
@@ -1234,7 +1223,7 @@ function WhyChooseSection() {
         <div className="mx-auto max-w-3xl text-center tz-animate-fade-up">
           <TextFadeInUp as="h2" className="text-3xl font-extrabold text-slate-950 sm:text-4xl lg:text-5xl">Tại sao chọn TzoShop?</TextFadeInUp>
           <p className="mt-4 text-slate-600 leading-7">
-            Mọi thứ được thiết kế để bạn mua credits, bắt đầu nhanh và kiểm soát chi phí AI rõ ràng hơn.
+            Mọi thứ ược thiết kế  bạn mua credits, bắt ầu nhanh v kim sot chi ph AI r rng hơn.
           </p>
         </div>
 
@@ -1268,14 +1257,14 @@ function WhyChooseSection() {
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
-                    <p className="text-xs text-white/75">Gói đang dùng</p>
+                    <p className="text-xs text-white/75">Gi ang dng</p>
                     <p className="mt-1 text-xl font-bold text-white">Plus</p>
-                    <p className="mt-1 text-xs text-white/70">Chu kỳ còn 24 ngày</p>
+                    <p className="mt-1 text-xs text-white/70">Chu kỳ cn 24 ngy</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
-                    <p className="text-xs text-white/75">Credits còn lại</p>
+                    <p className="text-xs text-white/75">Credits cn lại</p>
                     <p className="mt-1 text-xl font-bold text-white">1.250.000</p>
-                    <p className="mt-1 text-xs text-white/70">67% ngân sách tuần này</p>
+                    <p className="mt-1 text-xs text-white/70">67% ngn sch tuần ny</p>
                   </div>
                 </div>
 
@@ -1283,7 +1272,7 @@ function WhyChooseSection() {
                   <div className="h-2 rounded-full bg-white/20">
                     <div className="h-2 w-2/3 rounded-full bg-gradient-to-r from-white/90 to-emerald-300/85" />
                   </div>
-                  <p className="mt-2 text-xs text-white/75">Mức sử dụng ổn định</p>
+                  <p className="mt-2 text-xs text-white/75">Mức sử dụng n nh</p>
                 </div>
 
                 <div className="mt-4 rounded-xl border border-white/10 bg-white/12 p-3">
@@ -1303,12 +1292,12 @@ function WhyChooseSection() {
                     <p className="mt-1 text-sm font-semibold text-white">4 API keys</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
-                    <p className="text-xs text-white/70">Đơn hàng</p>
-                    <p className="mt-1 text-sm font-semibold text-white">12 đơn hàng</p>
+                    <p className="text-xs text-white/70">Đơn hng</p>
+                    <p className="mt-1 text-sm font-semibold text-white">12 ơn hng</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
                     <p className="text-xs text-white/70">Uptime</p>
-                    <p className="mt-1 text-sm font-semibold text-white">99.9% ổn định</p>
+                    <p className="mt-1 text-sm font-semibold text-white">99.9% n nh</p>
                   </div>
                 </div>
               </div>
@@ -1327,9 +1316,9 @@ function TestimonialsMarqueeSection() {
     <section id="testimonials" className="bg-gradient-to-b from-slate-50 to-white py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <TextFadeInUp as="h2" className="text-3xl font-extrabold text-slate-950 sm:text-4xl lg:text-5xl">Người dùng nói gì về TzoShop?</TextFadeInUp>
+          <TextFadeInUp as="h2" className="text-3xl font-extrabold text-slate-950 sm:text-4xl lg:text-5xl">Người dng ni g về TzoShop?</TextFadeInUp>
           <p className="mt-4 text-slate-600 leading-7">
-            Phản hồi từ người dùng đang sử dụng TzoShop cho công việc hằng ngày, từ cá nhân đến team nhỏ.
+            Phản hi từ người dng ang sử dụng TzoShop cho cng vic hằng ngy, từ c nhn ến team nhỏ.
           </p>
         </div>
       </div>
@@ -1388,17 +1377,17 @@ function ReadyCTASection() {
           />
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-              Sẵn sàng dùng AI linh hoạt hơn cùng TzoShop?
+              Sẵn sng dng AI linh hoạt hơn cng TzoShop?
             </h2>
             <p className="mt-5 text-base leading-8 text-indigo-100 sm:text-lg">
-              Chọn gói credits phù hợp, bắt đầu nhanh và kiểm soát chi phí rõ ràng trong một không gian duy nhất.
+              Chọn gi credits ph hợp, bắt ầu nhanh v kim sot chi ph r rng trong mt khng gian duy nhất.
             </p>
             <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <CosmicButton href="/plans" className="rounded-full group" variant="primary">
-                Xem gói credits
+                Xem gi credits
               </CosmicButton>
               <CosmicButton href="/?auth=register" variant="secondary" className="rounded-full">
-                Bắt đầu sử dụng
+                Bắt ầu sử dụng
               </CosmicButton>
             </div>
           </div>
@@ -1450,6 +1439,7 @@ export default function HomePage() {
 
   const closeAuthDrawer = () => {
     setIsAuthDrawerOpen(false);
+    setAuthMode("login");
     router.replace("/", { scroll: false });
   };
 
@@ -1480,6 +1470,12 @@ export default function HomePage() {
     </div>
   );
 }
+
+
+
+
+
+
 
 
 

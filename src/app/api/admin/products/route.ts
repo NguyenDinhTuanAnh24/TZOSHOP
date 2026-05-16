@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     if (!name || !apiFamily || !durationDays || (!isContactOnly && priceVnd === undefined)) {
       return NextResponse.json(
-        { success: false, message: "Thi?u thông tin b?t bu?c." },
+        { success: false, message: "Thiếu thông tin bắt buộc." },
         { status: 400 }
       );
     }

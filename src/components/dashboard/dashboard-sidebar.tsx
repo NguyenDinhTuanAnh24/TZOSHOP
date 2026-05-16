@@ -155,7 +155,7 @@ export default function DashboardSidebar({
           cancelLabel: "Hủy",
           type: "danger",
           onConfirm: async () => {
-            await signOut({ callbackUrl: "/login" });
+            await signOut({ callbackUrl: "/" });
           },
         });
       }, 120);
@@ -169,7 +169,7 @@ export default function DashboardSidebar({
       cancelLabel: "Hủy",
       type: "danger",
       onConfirm: async () => {
-        await signOut({ callbackUrl: "/login" });
+        await signOut({ callbackUrl: "/" });
       },
     });
   };

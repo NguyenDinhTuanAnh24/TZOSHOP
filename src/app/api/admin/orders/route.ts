@@ -109,7 +109,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!orderId || !status) {
       return NextResponse.json(
-        { error: { message: "Thi?u thông tin c?p nh?t." } },
+        { error: { message: "Thiếu thông tin cập nhật." } },
         { status: 400 }
       );
     }

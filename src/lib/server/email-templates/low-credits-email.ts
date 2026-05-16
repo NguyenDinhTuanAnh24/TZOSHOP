@@ -1,4 +1,4 @@
-import { escapeHtml, renderTextEmail, renderTzoShopEmail } from "./base-email";
+﻿import { buildBaseEmail, escapeHtml, renderTextEmail } from "./base-email";
 
 type LowCreditsEmailProps = {
   name?: string | null;
@@ -10,29 +10,31 @@ type LowCreditsEmailProps = {
 };
 
 export function createLowCreditsEmail(props: LowCreditsEmailProps) {
-  return renderTzoShopEmail({
-    title: "CREDITS SẮP HẾT",
-    subtitle: "Gói credits của bạn đang gần hết, hãy nạp thêm để tránh gián đoạn.",
-    previewText: "Credits TzoShop sắp hết",
-    content: `
-      <p style="margin:0 0 14px 0;">Xin chào <strong>${escapeHtml(props.name?.trim() || "bạn")}</strong>, số dư credits của gói đang ở mức thấp.</p>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:3px solid #000000;background:#FFFDF5;box-shadow:4px 4px 0 #000000;padding:12px;">
-        <tr><td style="padding:6px 0;font-size:14px;">Tên gói</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.productName)}</td></tr>
-        <tr><td style="padding:6px 0;font-size:14px;">Credits còn lại</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.creditsRemaining)}</td></tr>
-        ${props.threshold ? `<tr><td style="padding:6px 0;font-size:14px;">Ngưỡng cảnh báo</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.threshold)}</td></tr>` : ""}
-        ${props.apiKeyRef ? `<tr><td style="padding:6px 0;font-size:14px;">API key</td><td align="right" style="padding:6px 0;font-size:14px;font-weight:900;">${escapeHtml(props.apiKeyRef)}</td></tr>` : ""}
-      </table>
+  return buildBaseEmail({
+    title: "Credits sắp hết",
+    preview: "Gói credits của bạn đang gần hết, hãy nạp thêm để tránh gián đoạn.",
+    children: `
+      <h1 style="margin:0;font-size:26px;line-height:34px;font-weight:800;color:#0f172a;">Credits sắp hết</h1>
+      <p style="margin:16px 0 0 0;font-size:15px;line-height:26px;color:#475569;">Xin chào <strong>${escapeHtml(props.name?.trim() || "bạn")}</strong>, số dư credits của bạn đang ở mức thấp.</p>
+
+      <div style="margin:20px 0;padding:16px;border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc;">
+        <p style="margin:0;font-size:14px;color:#475569;">Tên gói: <strong>${escapeHtml(props.productName)}</strong></p>
+        <p style="margin:8px 0 0 0;font-size:14px;color:#475569;">Credits còn lại: <strong>${escapeHtml(props.creditsRemaining)}</strong></p>
+        ${props.threshold ? `<p style="margin:8px 0 0 0;font-size:14px;color:#475569;">Ngưỡng cảnh báo: <strong>${escapeHtml(props.threshold)}</strong></p>` : ""}
+        ${props.apiKeyRef ? `<p style="margin:8px 0 0 0;font-size:14px;color:#475569;">API key: <strong>${escapeHtml(props.apiKeyRef)}</strong></p>` : ""}
+      </div>
+
+      <div style="margin:28px 0;">
+        <a href="${escapeHtml(props.rechargeUrl)}" style="display:inline-block;border-radius:16px;background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:14px 22px;font-size:14px;font-weight:800;color:#ffffff;text-decoration:none;">Mua thêm credits</a>
+      </div>
     `,
-    actionLabel: "MUA THÊM CREDITS",
-    actionUrl: props.rechargeUrl,
-    footerNote: "Bạn có thể bỏ qua email này nếu không còn nhu cầu sử dụng gói hiện tại.",
   });
 }
 
 export function createLowCreditsEmailText(props: LowCreditsEmailProps) {
   return renderTextEmail([
     "CREDITS SẮP HẾT - TzoShop",
-    `Xin chào ${props.name?.trim() || "bạn"}, gói credits của bạn đang gần hết.`,
+    `Xin chào ${props.name?.trim() || "bạn"}, số dư credits của bạn đang thấp.`,
     `Tên gói: ${props.productName}`,
     `Credits còn lại: ${props.creditsRemaining}`,
     props.threshold ? `Ngưỡng cảnh báo: ${props.threshold}` : "",
