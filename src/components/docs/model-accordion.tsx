@@ -26,7 +26,7 @@ export function DocsModelAccordion() {
       const json = await response.json();
       if (!response.ok) throw new Error(json?.error?.message ?? "Không thể tải model.");
 
-      const models = (json.data ?? []) as Array<{ apiFamily: string; publicName: string }>;
+      const models = (json.items ?? json.models ?? json.data ?? []) as Array<{ apiFamily: string; publicName: string }>;
       const grouped: Record<string, string[]> = {};
       models.forEach((m) => {
         const family = m.apiFamily;

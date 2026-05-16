@@ -7,22 +7,25 @@ export async function GET() {
   try {
     const models = await prisma.aiModel.findMany({
       where: { isActive: true },
+      orderBy: [{ apiFamily: "asc" }, { publicName: "asc" }],
       select: {
         id: true,
         publicName: true,
         apiFamily: true,
+        providerId: true,
+        inputCreditRate: true,
+        outputCreditRate: true,
+        isActive: true,
       },
-      orderBy: [{ apiFamily: "asc" }, { publicName: "asc" }],
     });
 
     return NextResponse.json({
-      data: models,
       items: models,
       models,
       total: models.length,
     });
   } catch (error) {
-    console.error("GET /api/models failed:", error);
-    return NextResponse.json({ error: { message: "Không thể tải danh sách model." } }, { status: 500 });
+    console.error("[PUBLIC_MODEL_OPTIONS_ERROR]", error);
+    return NextResponse.json({ error: "Không thể tải danh sách model" }, { status: 500 });
   }
 }

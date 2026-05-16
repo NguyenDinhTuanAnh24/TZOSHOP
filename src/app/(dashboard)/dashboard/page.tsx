@@ -316,9 +316,8 @@ export default function DashboardPage() {
                       {formatCreditsValue(plan.creditsRemaining)} / {formatCreditsValue(plan.creditsTotal)}
                     </p>
                   </div>
-                  <div className="mt-4 flex items-center justify-between gap-3 text-xs text-slate-600">
-                    <span>Hạn dùng: {new Date(plan.expiresAt).toLocaleDateString("vi-VN")}</span>
-                    <Link href="/api-keys" className="font-semibold text-indigo-600 transition-colors duration-200 hover:text-indigo-700">Tạo API key</Link>
+                  <div className="mt-4 flex justify-end">
+                    <Link href="/api-keys" className="text-xs font-semibold text-indigo-600 transition-colors duration-200 hover:text-indigo-700">Tạo API key</Link>
                   </div>
                 </article>
               );

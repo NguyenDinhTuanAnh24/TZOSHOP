@@ -1,4 +1,4 @@
-import { ApiFamily } from "@prisma/client";
+import { ApiFamily, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -13,20 +13,51 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const { page, pageSize, skip, take } = getPagination(searchParams);
     const search = searchParams.get("search")?.trim() || "";
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" as const } },
-            { slug: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {};
+    const family = searchParams.get("family")?.trim() || "ALL";
+    const status = searchParams.get("status")?.trim() || "ALL";
+    const tier = searchParams.get("tier")?.trim() || "ALL";
+    const sort = searchParams.get("sort")?.trim() || "NEWEST";
 
-    const [total, products] = await Promise.all([
+    const where: Prisma.ProductWhereInput = {
+      AND: [
+        search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { slug: { contains: search, mode: "insensitive" } },
+                { allowedModels: { hasSome: [search] } },
+              ],
+            }
+          : {},
+        family !== "ALL" ? { apiFamily: family as ApiFamily } : {},
+        status === "ACTIVE" ? { isActive: true } : status === "INACTIVE" ? { isActive: false } : {},
+        tier !== "ALL" ? { name: { contains: tier, mode: "insensitive" } } : {},
+      ],
+    };
+
+    const orderBy: Prisma.ProductOrderByWithRelationInput[] =
+      sort === "PRICE_LOW"
+        ? [{ priceVnd: "asc" }]
+        : sort === "PRICE_HIGH"
+          ? [{ priceVnd: "desc" }]
+          : sort === "CREDITS_HIGH"
+            ? [{ credits: "desc" }]
+            : sort === "DURATION_HIGH"
+              ? [{ durationDays: "desc" }]
+              : [{ createdAt: "desc" }];
+
+    const [total, activeProducts, hiddenProducts, familyGroups, products] = await Promise.all([
       prisma.product.count({ where }),
+      prisma.product.count({ where: { ...where, isActive: true } }),
+      prisma.product.count({ where: { ...where, isActive: false } }),
+      prisma.product.groupBy({
+        by: ["apiFamily"],
+        where,
+        _count: { apiFamily: true },
+      }),
       prisma.product.findMany({
         where,
-        orderBy: [{ apiFamily: "asc" }, { priceVnd: "asc" }],
+        orderBy,
         skip,
         take,
       }),
@@ -42,6 +73,12 @@ export async function GET(request: NextRequest) {
       data,
       items: data,
       pagination: buildPagination({ page, pageSize, total }),
+      summary: {
+        totalProducts: total,
+        activeProducts,
+        hiddenProducts,
+        familyCount: familyGroups.length,
+      },
     });
   } catch (error) {
     if (error instanceof Error) {

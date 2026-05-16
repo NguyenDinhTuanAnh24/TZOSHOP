@@ -25,7 +25,7 @@ export function AdminPagination({
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-slate-600">
-        Hiển thị <span className="font-bold text-slate-950">{start}</span> - <span className="font-bold text-slate-950">{end}</span> trong <span className="font-bold text-slate-950">{total}</span> kết quả
+        Hien thi <span className="font-bold text-slate-950">{start}</span> - <span className="font-bold text-slate-950">{end}</span> trong <span className="font-bold text-slate-950">{total}</span> ket qua
       </p>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -35,8 +35,9 @@ export function AdminPagination({
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
             className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
           >
-            <option value={10}>10 / trang</option>
-            <option value={20}>20 / trang</option>
+            <option value={9}>9 / trang</option>
+            <option value={18}>18 / trang</option>
+            <option value={36}>36 / trang</option>
             <option value={50}>50 / trang</option>
           </select>
         ) : null}
@@ -49,7 +50,7 @@ export function AdminPagination({
             className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ChevronLeft className="h-4 w-4" />
-            Trước
+            Truoc
           </button>
 
           <span className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700">
