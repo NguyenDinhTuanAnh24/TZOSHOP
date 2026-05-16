@@ -13,12 +13,14 @@ import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CosmicButton } from "@/components/ui/cosmic-button";
 import { TextFadeInUp } from "@/components/animations/text-fade-in-up";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 
 type Product = {
   id: string;
   name: string;
   slug: string;
   apiFamily: string;
+  tier?: string;
   credits: string;
   durationDays: number | null;
   priceVnd: number;
@@ -29,11 +31,27 @@ type Product = {
   isContactOnly: boolean;
 };
 
-type AiModel = {
+type ModelOption = {
   id: string;
   publicName: string;
   apiFamily: string;
   isActive: boolean;
+};
+
+type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+
+type ProductSummary = {
+  totalProducts: number;
+  activeProducts: number;
+  hiddenProducts: number;
+  familyCount: number;
 };
 
 type FamilyFilter = "ALL" | "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
@@ -60,8 +78,8 @@ function ProductSkeleton() {
         <Skeleton className="mt-3 h-5 w-[660px] max-w-full rounded-full" />
       </section>
       <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <Skeleton className="h-10 w-10 rounded-2xl" />
             <Skeleton className="mt-5 h-4 w-24 rounded-full" />
             <Skeleton className="mt-3 h-8 w-20 rounded-xl" />
@@ -74,7 +92,7 @@ function ProductSkeleton() {
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [models, setModels] = useState<AiModel[]>([]);
+  const [modelOptions, setModelOptions] = useState<ModelOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -83,6 +101,10 @@ export default function AdminProductsPage() {
   const [filterTier, setFilterTier] = useState<TierFilter>("ALL");
   const [sortBy, setSortBy] = useState<SortFilter>("NEWEST");
   const [expandedModels, setExpandedModels] = useState<Record<string, boolean>>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [summary, setSummary] = useState<ProductSummary | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -107,33 +129,60 @@ export default function AdminProductsPage() {
     try {
       setIsLoading(true);
       setLoadError(null);
-      const resProducts = await fetch("/api/admin/products", { cache: "no-store" });
-      const dataProducts = await resProducts.json();
-      if (!resProducts.ok || !dataProducts.success) throw new Error();
-      setProducts(dataProducts.data || []);
-      const allModels: AiModel[] = [];
-      let page = 1;
-      let hasNextPage = true;
-      while (hasNextPage) {
-        const resModels = await fetch(`/api/admin/models?page=${page}&pageSize=50`, { cache: "no-store" });
-        const dataModels = await resModels.json();
-        if (!resModels.ok || !dataModels.success) break;
-        allModels.push(...((dataModels.data || []) as AiModel[]));
-        hasNextPage = Boolean(dataModels.pagination?.hasNextPage);
-        page += 1;
+
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        search,
+        family: filterFamily,
+        status: filterActive,
+        tier: filterTier,
+        sort: sortBy,
+      });
+
+      const [productsRes, modelsRes] = await Promise.all([
+        fetch(`/api/admin/products?${params.toString()}`, { cache: "no-store" }),
+        fetch("/api/admin/models/options", { cache: "no-store" }),
+      ]);
+
+      const [productsJson, modelsJson] = await Promise.all([productsRes.json(), modelsRes.json()]);
+
+      if (!productsRes.ok || !productsJson.success) {
+        throw new Error("LOAD_PRODUCTS_FAILED");
       }
-      setModels(allModels.filter((m) => m.isActive));
+
+      setProducts((productsJson.items ?? productsJson.products ?? productsJson.data ?? []) as Product[]);
+      setPagination((productsJson.pagination ?? null) as Pagination | null);
+      setSummary((productsJson.summary ?? null) as ProductSummary | null);
+
+      if (modelsRes.ok) {
+        setModelOptions((modelsJson.items ?? modelsJson.models ?? []) as ModelOption[]);
+      }
     } catch {
-      setLoadError("Vui lòng thử lại sau ít phút.");
+      setLoadError("Không thể tải danh sách gói credits. Vui lòng thử lại sau ít phút.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [filterActive, filterFamily, filterTier, page, pageSize, search, sortBy]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void fetchData(), 0);
     return () => window.clearTimeout(timer);
   }, [fetchData]);
+
+  const availableModels = useMemo(
+    () =>
+      modelOptions
+        .filter((model) => model.apiFamily === formData.apiFamily && model.isActive)
+        .sort((left, right) => left.publicName.localeCompare(right.publicName)),
+    [formData.apiFamily, modelOptions]
+  );
+
+  const filteredAvailableModels = useMemo(() => {
+    const keyword = modelSearch.trim().toLowerCase();
+    if (!keyword) return availableModels;
+    return availableModels.filter((model) => model.publicName.toLowerCase().includes(keyword));
+  }, [availableModels, modelSearch]);
 
   const handleOpenModal = (product?: Product) => {
     if (product) {
@@ -146,7 +195,7 @@ export default function AdminProductsPage() {
         durationDays: product.durationDays,
         priceVnd: product.priceVnd,
         apiKeyLimit: product.apiKeyLimit,
-        allowedModels: product.allowedModels || [],
+        allowedModels: Array.isArray(product.allowedModels) ? product.allowedModels : [],
         isActive: product.isActive,
         isPopular: product.isPopular,
         isContactOnly: product.isContactOnly,
@@ -173,116 +222,79 @@ export default function AdminProductsPage() {
 
   const handleSave = async () => {
     if (formData.allowedModels.length === 0) {
-      showToast("Chưa chọn model", "warning");
+      showToast("Chưa chọn model cho gói credits.", "warning");
       return;
     }
 
     try {
       const url = editingId ? `/api/admin/products/${editingId}` : "/api/admin/products";
       const method = editingId ? "PATCH" : "POST";
-      const res = await fetch(url, {
+      const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      const result = await res.json();
-      if (res.ok && result.success) {
-        showToast(editingId ? "Đã lưu gói credits" : "Đã tạo gói credits", "success");
-        setIsModalOpen(false);
-        void fetchData();
-      } else {
-        showToast(result?.error?.message || result?.message || "Không thể lưu gói credits", "error");
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result?.error?.message || result?.message || "SAVE_PRODUCT_FAILED");
       }
+
+      showToast(editingId ? "Đã cập nhật gói credits." : "Đã tạo gói credits.", "success");
+      setIsModalOpen(false);
+      void fetchData();
     } catch {
-      showToast("Không thể lưu gói credits", "error");
+      showToast("Không thể lưu gói credits.", "error");
     }
   };
 
   const handleToggleActive = (productId: string, currentStatus: boolean) => {
-    const nextActive = !currentStatus;
+    const nextStatus = !currentStatus;
     askConfirm({
-      title: nextActive ? "Hiển thị gói credits?" : "Ẩn gói credits này?",
-      description: nextActive
-        ? "Gói này sẽ xuất hiện lại trong danh sách mua credits của người dùng."
-        : "Gói này sẽ không còn hiển thị cho người dùng mua mới, nhưng các đơn hàng và gói đã mua trước đó vẫn được giữ nguyên.",
-      confirmLabel: nextActive ? "Hiển thị" : "Ẩn gói",
-      type: nextActive ? "primary" : "warning",
+      title: nextStatus ? "Hiển thị gói credits?" : "Ẩn gói credits?",
+      description: nextStatus
+        ? "Gói này sẽ hiển thị lại trên trang mua credits."
+        : "Gói này sẽ bị ẩn với người dùng mới, nhưng dữ liệu đơn hàng cũ vẫn được giữ nguyên.",
+      confirmLabel: nextStatus ? "Hiển thị" : "Ẩn gói",
+      type: nextStatus ? "primary" : "warning",
       onConfirm: async () => {
-        const res = await fetch(`/api/admin/products/${productId}`, {
+        const response = await fetch(`/api/admin/products/${productId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isActive: nextActive }),
+          body: JSON.stringify({ isActive: nextStatus }),
         });
-        const result = await res.json();
-        if (res.ok && result.success) {
-          showToast(nextActive ? "Đã hiển thị gói credits" : "Đã ẩn gói credits", "success");
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast(nextStatus ? "Đã hiển thị gói credits." : "Đã ẩn gói credits.", "success");
           void fetchData();
         } else {
-          showToast("Không thể lưu gói credits", "error");
+          showToast("Không thể cập nhật trạng thái gói credits.", "error");
         }
       },
     });
   };
 
-  const filteredProducts = useMemo(() => {
-    const list = products
-      .filter((p) => {
-        const kw = search.trim().toLowerCase();
-        if (!kw) return true;
-        return (
-          p.name.toLowerCase().includes(kw) ||
-          p.slug.toLowerCase().includes(kw) ||
-          (p.allowedModels || []).some((m) => m.toLowerCase().includes(kw))
-        );
-      })
-      .filter((p) => (filterFamily === "ALL" ? true : p.apiFamily === filterFamily))
-      .filter((p) => (filterActive === "ALL" ? true : filterActive === "ACTIVE" ? p.isActive : !p.isActive))
-      .filter((p) => {
-        if (filterTier === "ALL") return true;
-        const tierName = p.name.toUpperCase();
-        return tierName.includes(filterTier);
-      });
-
-    if (sortBy === "PRICE_LOW") return [...list].sort((a, b) => a.priceVnd - b.priceVnd);
-    if (sortBy === "PRICE_HIGH") return [...list].sort((a, b) => b.priceVnd - a.priceVnd);
-    if (sortBy === "CREDITS_HIGH") return [...list].sort((a, b) => Number(b.credits) - Number(a.credits));
-    if (sortBy === "DURATION_HIGH") return [...list].sort((a, b) => (b.durationDays || 0) - (a.durationDays || 0));
-    return list;
-  }, [products, search, filterFamily, filterActive, filterTier, sortBy]);
-
-  const availableModels = useMemo(
-    () =>
-      models
-        .filter((m) => m.apiFamily === formData.apiFamily)
-        .sort((a, b) => a.publicName.localeCompare(b.publicName)),
-    [models, formData.apiFamily]
-  );
-
-  const filteredAvailableModels = useMemo(
-    () => availableModels.filter((m) => m.publicName.toLowerCase().includes(modelSearch.toLowerCase())),
-    [availableModels, modelSearch]
-  );
-
-  const toggleModel = (model: string) => {
+  const toggleModel = (modelName: string) => {
     setFormData((prev) => {
-      const exists = prev.allowedModels.includes(model);
+      const exists = prev.allowedModels.includes(modelName);
       return {
         ...prev,
         allowedModels: exists
-          ? prev.allowedModels.filter((item) => item !== model)
-          : [...prev.allowedModels, model],
+          ? prev.allowedModels.filter((item) => item !== modelName)
+          : [...prev.allowedModels, modelName],
       };
     });
   };
 
   const handleFamilyChange = (nextFamily: string) => {
-    const nextFamilyModelNames = models
-      .filter((m) => m.apiFamily === nextFamily && m.isActive)
-      .map((m) => m.publicName);
+    const nextFamilyModelNames = modelOptions
+      .filter((model) => model.apiFamily === nextFamily && model.isActive)
+      .map((model) => model.publicName);
+
     setFormData((prev) => ({
       ...prev,
       apiFamily: nextFamily,
-      allowedModels: prev.allowedModels.filter((model) => nextFamilyModelNames.includes(model)),
+      allowedModels: prev.allowedModels.filter((modelName) => nextFamilyModelNames.includes(modelName)),
     }));
   };
 
@@ -300,14 +312,6 @@ export default function AdminProductsPage() {
     }));
   };
 
-  const summary = useMemo(() => {
-    const total = products.length;
-    const active = products.filter((p) => p.isActive).length;
-    const inactive = total - active;
-    const families = new Set(products.map((p) => p.apiFamily)).size;
-    return { total, active, inactive, families };
-  }, [products]);
-
   if (isLoading && !products.length) return <ProductSkeleton />;
 
   if (loadError && !products.length) {
@@ -315,37 +319,81 @@ export default function AdminProductsPage() {
       <section className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
         <h2 className="text-2xl font-extrabold text-slate-950">Không thể tải danh sách gói credits</h2>
         <p className="mt-2 text-sm text-slate-600">{loadError}</p>
-        <button type="button" onClick={() => void fetchData()} className="mt-6 inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">Thử lại</button>
+        <button
+          type="button"
+          onClick={() => void fetchData()}
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+        >
+          Thử lại
+        </button>
       </section>
     );
   }
 
+  const summaryCards = [
+    {
+      label: "Tổng gói credits",
+      value: summary?.totalProducts ?? 0,
+      desc: "Tất cả gói trong cơ sở dữ liệu",
+      cls: "bg-indigo-50 text-indigo-700",
+    },
+    {
+      label: "Đang bán",
+      value: summary?.activeProducts ?? 0,
+      desc: "Gói đang hiển thị công khai",
+      cls: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "Đang ẩn",
+      value: summary?.hiddenProducts ?? 0,
+      desc: "Gói tạm thời ẩn",
+      cls: "bg-slate-100 text-slate-700",
+    },
+    {
+      label: "Dòng AI hỗ trợ",
+      value: summary?.familyCount ?? 0,
+      desc: "Số dòng AI có gói credits",
+      cls: "bg-violet-50 text-violet-700",
+    },
+  ];
+
   return (
     <div className="space-y-6 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 p-1">
-      <TextFadeInUp as="section" className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-28px_rgba(79,70,229,0.25)] sm:p-8">
+      <TextFadeInUp
+        as="section"
+        className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-28px_rgba(79,70,229,0.25)] sm:p-8"
+      >
         <div className="pointer-events-none absolute right-0 top-0 h-44 w-44 rounded-full bg-indigo-500/10 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 left-1/3 h-32 w-32 rounded-full bg-violet-500/10 blur-3xl" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <span className="inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-indigo-700">Quản trị sản phẩm</span>
+            <span className="inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-indigo-700">
+              Quản trị sản phẩm
+            </span>
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Gói credits</h1>
-            <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">Quản lý các gói credits, giá bán, thời hạn, giới hạn API key và danh sách model hỗ trợ.</p>
+            <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">
+              Quản lý gói credits, giá bán, thời hạn, API key limit và danh sách model hỗ trợ.
+            </p>
           </div>
           <div className="flex flex-wrap gap-3 lg:justify-end">
-            <CosmicButton onClick={() => handleOpenModal()}><Plus className="h-4 w-4" />Thêm gói credits</CosmicButton>
+            <CosmicButton onClick={() => handleOpenModal()}>
+              <Plus className="h-4 w-4" />
+              Thêm gói credits
+            </CosmicButton>
           </div>
         </div>
       </TextFadeInUp>
 
       <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "Tổng gói credits", value: summary.total, desc: "Tất cả gói sản phẩm", cls: "bg-indigo-50 text-indigo-700" },
-          { label: "Đang bán", value: summary.active, desc: "Gói hiển thị công khai", cls: "bg-emerald-50 text-emerald-700" },
-          { label: "Đang ẩn", value: summary.inactive, desc: "Gói tạm thời ẩn", cls: "bg-slate-100 text-slate-700" },
-          { label: "Dòng AI hỗ trợ", value: summary.families, desc: "Số dòng AI đang có", cls: "bg-violet-50 text-violet-700" },
-        ].map((card, i) => (
-          <TextFadeInUp key={card.label} delay={Math.min(i * 0.05, 0.25)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-200">
-            <div className={cn("flex h-11 w-11 items-center justify-center rounded-2xl", card.cls)}><Package className="h-5 w-5" /></div>
+        {summaryCards.map((card, index) => (
+          <TextFadeInUp
+            key={card.label}
+            delay={Math.min(index * 0.05, 0.25)}
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-200"
+          >
+            <div className={cn("flex h-11 w-11 items-center justify-center rounded-2xl", card.cls)}>
+              <Package className="h-5 w-5" />
+            </div>
             <p className="mt-5 text-xs font-bold uppercase tracking-wide text-slate-500">{card.label}</p>
             <p className="mt-3 text-2xl font-extrabold text-slate-950">{card.value.toLocaleString("vi-VN")}</p>
             <p className="mt-2 text-sm text-slate-600">{card.desc}</p>
@@ -355,67 +403,224 @@ export default function AdminProductsPage() {
 
       <TextFadeInUp as="section" delay={0.05} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
-          <div className="relative lg:col-span-2"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên gói, slug hoặc model..." className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" /></div>
-          <select value={filterFamily} onChange={(e) => setFilterFamily(e.target.value as FamilyFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"><option value="ALL">Tất cả dòng AI</option><option value="CODEXAI">CodexAI</option><option value="CLAUDE">Claude</option><option value="GEMINI">Gemini</option><option value="DEEPSEEK">DeepSeek</option></select>
-          <select value={filterActive} onChange={(e) => setFilterActive(e.target.value as ActiveFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"><option value="ALL">Tất cả trạng thái</option><option value="ACTIVE">Đang bán</option><option value="INACTIVE">Đang ẩn</option></select>
-          <div className="grid grid-cols-2 gap-3"><select value={filterTier} onChange={(e) => setFilterTier(e.target.value as TierFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"><option value="ALL">Tất cả cấp độ</option><option value="TRIAL">Trial</option><option value="MINI">Mini</option><option value="PLUS">Plus</option><option value="PRO">Pro</option><option value="MAX">Max</option><option value="ULTRA">Ultra</option><option value="ENTERPRISE">Enterprise</option></select><select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"><option value="NEWEST">Mới nhất</option><option value="PRICE_LOW">Giá thấp</option><option value="PRICE_HIGH">Giá cao</option><option value="CREDITS_HIGH">Credits nhiều</option><option value="DURATION_HIGH">Thời hạn dài</option></select></div>
+          <div className="relative lg:col-span-2">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Tìm theo tên gói, slug hoặc model..."
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
+          <select
+            value={filterFamily}
+            onChange={(event) => {
+              setFilterFamily(event.target.value as FamilyFilter);
+              setPage(1);
+            }}
+            className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+          >
+            <option value="ALL">Tất cả dòng AI</option>
+            <option value="CODEXAI">CodexAI</option>
+            <option value="CLAUDE">Claude</option>
+            <option value="GEMINI">Gemini</option>
+            <option value="DEEPSEEK">DeepSeek</option>
+          </select>
+          <select
+            value={filterActive}
+            onChange={(event) => {
+              setFilterActive(event.target.value as ActiveFilter);
+              setPage(1);
+            }}
+            className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="ACTIVE">Đang bán</option>
+            <option value="INACTIVE">Đang ẩn</option>
+          </select>
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              value={filterTier}
+              onChange={(event) => {
+                setFilterTier(event.target.value as TierFilter);
+                setPage(1);
+              }}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+            >
+              <option value="ALL">Tất cả cấp độ</option>
+              <option value="TRIAL">Trial</option>
+              <option value="MINI">Mini</option>
+              <option value="PLUS">Plus</option>
+              <option value="PRO">Pro</option>
+              <option value="MAX">Max</option>
+              <option value="ULTRA">Ultra</option>
+              <option value="ENTERPRISE">Enterprise</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(event) => {
+                setSortBy(event.target.value as SortFilter);
+                setPage(1);
+              }}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+            >
+              <option value="NEWEST">Mới nhất</option>
+              <option value="PRICE_LOW">Giá thấp</option>
+              <option value="PRICE_HIGH">Giá cao</option>
+              <option value="CREDITS_HIGH">Credits nhiều</option>
+              <option value="DURATION_HIGH">Thời hạn dài</option>
+            </select>
+          </div>
         </div>
       </TextFadeInUp>
 
-      {filteredProducts.length === 0 ? (
+      {products.length === 0 ? (
         <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600"><Package className="h-7 w-7" /></div>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <Package className="h-7 w-7" />
+          </div>
           <h2 className="text-2xl font-extrabold text-slate-950">Chưa có gói credits</h2>
-          <p className="mt-2 text-sm text-slate-600">Tạo gói credits đầu tiên để người dùng có thể mua và sử dụng AI qua TzoShop.</p>
-          <div className="mt-6 flex justify-center"><CosmicButton onClick={() => handleOpenModal()}><Plus className="h-4 w-4" />Thêm gói credits</CosmicButton></div>
+          <p className="mt-2 text-sm text-slate-600">
+            Tạo gói credits đầu tiên để người dùng có thể mua và sử dụng AI qua TzoShop.
+          </p>
+          <div className="mt-6 flex justify-center">
+            <CosmicButton onClick={() => handleOpenModal()}>
+              <Plus className="h-4 w-4" />
+              Thêm gói credits
+            </CosmicButton>
+          </div>
         </section>
       ) : (
-        <section className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
-          {filteredProducts.map((p, index) => {
-            const isExpanded = expandedModels[p.id] || false;
-            const visibleModels = isExpanded ? p.allowedModels : p.allowedModels.slice(0, MAX_VISIBLE_MODELS);
-            const hiddenCount = Math.max(p.allowedModels.length - MAX_VISIBLE_MODELS, 0);
-            return (
-              <TextFadeInUp key={p.id} delay={Math.min(index * 0.04, 0.25)} as="article" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_18px_45px_-22px_rgba(79,70,229,0.30)]">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-xl font-extrabold text-slate-950">{p.name}</h3>
-                    <p className="mt-1 text-xs text-slate-500">{p.slug}</p>
+        <>
+          <section className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
+            {products.map((product, index) => {
+              const isExpanded = expandedModels[product.id] || false;
+              const models = Array.isArray(product.allowedModels) ? product.allowedModels : [];
+              const visibleModels = isExpanded ? models : models.slice(0, MAX_VISIBLE_MODELS);
+              const hiddenCount = Math.max(models.length - visibleModels.length, 0);
+
+              return (
+                <TextFadeInUp
+                  key={product.id}
+                  delay={Math.min(index * 0.04, 0.25)}
+                  as="article"
+                  className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_18px_45px_-22px_rgba(79,70,229,0.30)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-xl font-extrabold text-slate-950">{product.name}</h3>
+                      <p className="mt-1 text-xs text-slate-500">{product.slug}</p>
+                    </div>
+                    {product.isPopular ? (
+                      <span className="inline-flex rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                        Ưu tiên
+                      </span>
+                    ) : null}
                   </div>
-                  {p.isPopular ? <span className="inline-flex rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">Ưu tiên</span> : null}
-                </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", familyClass(p.apiFamily))}>{p.apiFamily}</span>
-                  <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", p.isActive ? "border-emerald-100 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-100 text-slate-600")}>{p.isActive ? "Đang bán" : "Đang ẩn"}</span>
-                </div>
-
-                <p className="mt-5 text-3xl font-extrabold text-slate-950">{p.isContactOnly ? "Liên hệ" : formatVnd(p.priceVnd ?? 0)}</p>
-
-                <div className="mt-4 grid grid-cols-3 gap-3">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3"><p className="text-xs text-slate-500">Credits</p><p className="mt-1 text-sm font-semibold text-slate-900">{Number(p.credits).toLocaleString("vi-VN")}</p></div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3"><p className="text-xs text-slate-500">Thời hạn</p><p className="mt-1 text-sm font-semibold text-slate-900">{p.durationDays ? `${p.durationDays} ngày` : "Vĩnh viễn"}</p></div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3"><p className="text-xs text-slate-500">API key limit</p><p className="mt-1 text-sm font-semibold text-slate-900">{p.apiKeyLimit}</p></div>
-                </div>
-
-                <button type="button" onClick={() => setExpandedModels((prev) => ({ ...prev, [p.id]: !prev[p.id] }))} className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50/40">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Models hỗ trợ</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {visibleModels.map((model) => (
-                      <span key={model} className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{model}</span>
-                    ))}
-                    {!isExpanded && hiddenCount > 0 ? <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">+{hiddenCount} model</span> : null}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", familyClass(product.apiFamily))}>
+                      {product.apiFamily}
+                    </span>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                        product.isActive
+                          ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                          : "border-slate-200 bg-slate-100 text-slate-600"
+                      )}
+                    >
+                      {product.isActive ? "Đang bán" : "Đang ẩn"}
+                    </span>
                   </div>
-                </button>
 
-                <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
-                  <button type="button" onClick={() => handleOpenModal(p)} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"><Pencil className="h-4 w-4" />Sửa</button>
-                  <button type="button" onClick={() => handleToggleActive(p.id, p.isActive)} className={cn("inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition", p.isActive ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100" : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100")}>{p.isActive ? "Ẩn" : "Hiện"}</button>
-                </div>
-              </TextFadeInUp>
-            );
-          })}
-        </section>
+                  <p className="mt-5 text-3xl font-extrabold text-slate-950">
+                    {product.isContactOnly ? "Liên hệ" : formatVnd(product.priceVnd ?? 0)}
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                      <p className="text-xs text-slate-500">Credits</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
+                        {Number(product.credits).toLocaleString("vi-VN")}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                      <p className="text-xs text-slate-500">Thời hạn</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
+                        {product.durationDays ? `${product.durationDays} ngày` : "Vĩnh viễn"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                      <p className="text-xs text-slate-500">API key limit</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{product.apiKeyLimit}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setExpandedModels((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
+                    className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50/40"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Models hỗ trợ</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {visibleModels.map((model) => (
+                        <span key={model} className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                          {model}
+                        </span>
+                      ))}
+                      {!isExpanded && hiddenCount > 0 ? (
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                          +{hiddenCount} model
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+
+                  <div className="mt-5 grid grid-cols-[1fr_auto] gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenModal(product)}
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Sửa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(product.id, product.isActive)}
+                      className={cn(
+                        "inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition",
+                        product.isActive
+                          ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                          : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      )}
+                    >
+                      {product.isActive ? "Ẩn" : "Hiện"}
+                    </button>
+                  </div>
+                </TextFadeInUp>
+              );
+            })}
+          </section>
+
+          {pagination ? (
+            <AdminPagination
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              total={pagination.total}
+              totalPages={pagination.totalPages}
+              onPageChange={setPage}
+              onPageSizeChange={(nextPageSize) => {
+                setPageSize(nextPageSize);
+                setPage(1);
+              }}
+            />
+          ) : null}
+        </>
       )}
 
       <Modal
@@ -426,7 +631,13 @@ export default function AdminProductsPage() {
         maxWidthClassName="max-w-6xl"
         footer={
           <>
-            <button type="button" onClick={() => setIsModalOpen(false)} className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Hủy</button>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Hủy
+            </button>
             <CosmicButton onClick={handleSave}>{editingId ? "Lưu gói credits" : "Thêm gói credits"}</CosmicButton>
           </>
         }
@@ -435,24 +646,92 @@ export default function AdminProductsPage() {
           <div className="space-y-4">
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tên gói</label>
-              <input value={formData.name} onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+              <input
+                value={formData.name}
+                onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
               <label className="mb-2 mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Slug</label>
-              <input value={formData.slug} onChange={(e) => setFormData((f) => ({ ...f, slug: e.target.value }))} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+              <input
+                value={formData.slug}
+                onChange={(event) => setFormData((prev) => ({ ...prev, slug: event.target.value }))}
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
               <label className="mb-2 mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Dòng AI</label>
-              <select value={formData.apiFamily} onChange={(e) => handleFamilyChange(e.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"><option value="CODEXAI">CodexAI</option><option value="CLAUDE">Claude</option><option value="GEMINI">Gemini</option><option value="DEEPSEEK">DeepSeek</option></select>
+              <select
+                value={formData.apiFamily}
+                onChange={(event) => handleFamilyChange(event.target.value)}
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+              >
+                <option value="CODEXAI">CodexAI</option>
+                <option value="CLAUDE">Claude</option>
+                <option value="GEMINI">Gemini</option>
+                <option value="DEEPSEEK">DeepSeek</option>
+              </select>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Credits</label><input type="number" min={0} value={formData.credits} onChange={(e) => setFormData((f) => ({ ...f, credits: e.target.value }))} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950" /></div>
-                <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Thời hạn ngày</label><input type="number" min={0} value={formData.durationDays ?? ""} onChange={(e) => setFormData((f) => ({ ...f, durationDays: e.target.value === "" ? null : Number(e.target.value) }))} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950" /></div>
-                <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Giá VND</label><input type="number" min={0} value={formData.priceVnd} onChange={(e) => setFormData((f) => ({ ...f, priceVnd: Number(e.target.value) }))} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950" disabled={formData.isContactOnly} /></div>
-                <div><label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">API key limit</label><input type="number" min={1} value={formData.apiKeyLimit} onChange={(e) => setFormData((f) => ({ ...f, apiKeyLimit: Number(e.target.value) }))} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950" /></div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Credits</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={formData.credits}
+                    onChange={(event) => setFormData((prev) => ({ ...prev, credits: event.target.value }))}
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Thời hạn ngày</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={formData.durationDays ?? ""}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        durationDays: event.target.value === "" ? null : Number(event.target.value),
+                      }))
+                    }
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Giá VND</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={formData.priceVnd}
+                    onChange={(event) => setFormData((prev) => ({ ...prev, priceVnd: Number(event.target.value) }))}
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+                    disabled={formData.isContactOnly}
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">API key limit</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={formData.apiKeyLimit}
+                    onChange={(event) => setFormData((prev) => ({ ...prev, apiKeyLimit: Number(event.target.value) }))}
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950"
+                  />
+                </div>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2"><span>Đang bán</span><Switch checked={formData.isActive} onCheckedChange={(v) => setFormData((f) => ({ ...f, isActive: v }))} /></label>
-                <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2"><span>Ưu tiên</span><Switch checked={formData.isPopular} onCheckedChange={(v) => setFormData((f) => ({ ...f, isPopular: v }))} /></label>
-                <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2"><span>Liên hệ</span><Switch checked={formData.isContactOnly} onCheckedChange={(v) => setFormData((f) => ({ ...f, isContactOnly: v }))} /></label>
+                <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+                  <span>Đang bán</span>
+                  <Switch checked={formData.isActive} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, isActive: value }))} />
+                </label>
+                <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+                  <span>Ưu tiên</span>
+                  <Switch checked={formData.isPopular} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, isPopular: value }))} />
+                </label>
+                <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+                  <span>Liên hệ</span>
+                  <Switch checked={formData.isContactOnly} onCheckedChange={(value) => setFormData((prev) => ({ ...prev, isContactOnly: value }))} />
+                </label>
               </div>
             </div>
           </div>
@@ -460,37 +739,53 @@ export default function AdminProductsPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold text-slate-900">Models hỗ trợ ({formData.allowedModels.length})</p>
-              <div className="relative w-full sm:w-72"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={modelSearch} onChange={(e) => setModelSearch(e.target.value)} placeholder="Tìm model..." className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-950" /></div>
+              <div className="relative w-full sm:w-72">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={modelSearch}
+                  onChange={(event) => setModelSearch(event.target.value)}
+                  placeholder="Tìm model..."
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-950"
+                />
+              </div>
             </div>
             <div className="mb-3 flex flex-wrap gap-2">
-              <button type="button" onClick={selectAllModels} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+              <button
+                type="button"
+                onClick={selectAllModels}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              >
                 Chọn tất cả
               </button>
-              <button type="button" onClick={clearAllModels} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+              <button
+                type="button"
+                onClick={clearAllModels}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              >
                 Bỏ chọn
               </button>
             </div>
             <div className="max-h-64 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {filteredAvailableModels.map((model) => {
-                    const checked = formData.allowedModels.includes(model.publicName);
-                    return (
-                      <button
-                        type="button"
-                        key={model.publicName}
-                        onClick={() => toggleModel(model.publicName)}
-                        className={cn(
-                          "flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left text-sm font-semibold transition",
-                          checked
-                            ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/60"
-                        )}
-                      >
-                        <span className="min-w-0 truncate font-mono text-xs">{model.publicName}</span>
-                        {checked ? <Check className="h-4 w-4 shrink-0" /> : null}
-                      </button>
-                    );
-                  })}
+                  const checked = formData.allowedModels.includes(model.publicName);
+                  return (
+                    <button
+                      type="button"
+                      key={model.id}
+                      onClick={() => toggleModel(model.publicName)}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left text-sm font-semibold transition",
+                        checked
+                          ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/60"
+                      )}
+                    >
+                      <span className="min-w-0 truncate font-mono text-xs">{model.publicName}</span>
+                      {checked ? <Check className="h-4 w-4 shrink-0" /> : null}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

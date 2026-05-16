@@ -27,6 +27,9 @@ export async function PATCH(
       inputCreditRate, 
       outputCreditRate, 
       upstreamEndpointType, 
+      supportsStreaming,
+      supportsTools,
+      supportsAgent,
       isActive 
     } = body;
 
@@ -44,6 +47,9 @@ export async function PATCH(
       (updateData as Record<string, unknown>).upstreamEndpointType = type;
     }
     if (isActive !== undefined) updateData.isActive = isActive;
+    if (supportsStreaming !== undefined) updateData.supportsStreaming = Boolean(supportsStreaming);
+    if (supportsTools !== undefined) updateData.supportsTools = Boolean(supportsTools);
+    if (supportsAgent !== undefined) updateData.supportsAgent = Boolean(supportsAgent);
 
     if (providerId) {
       updateData.provider = {

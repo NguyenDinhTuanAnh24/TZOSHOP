@@ -18,6 +18,9 @@ export async function GET() {
         providerId: true,
         inputCreditRate: true,
         outputCreditRate: true,
+        supportsStreaming: true,
+        supportsTools: true,
+        supportsAgent: true,
         isActive: true,
       },
     });

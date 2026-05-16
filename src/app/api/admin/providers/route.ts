@@ -1,4 +1,4 @@
-import { ApiFamily } from "@prisma/client";
+import { ApiFamily, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";
@@ -20,18 +20,40 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const { page, pageSize, skip, take } = getPagination(searchParams);
     const search = searchParams.get("search")?.trim() || "";
-    const where = search
-      ? {
-        OR: [
-          { name: { contains: search, mode: "insensitive" as const } },
-          { baseUrl: { contains: search, mode: "insensitive" as const } },
-        ],
-      }
-      : {};
-    const [total, providers] = await Promise.all([
+    const family = searchParams.get("family")?.trim() || "ALL";
+    const status = searchParams.get("status")?.trim() || "ALL";
+
+    const where: Prisma.AiProviderWhereInput = {
+      AND: [
+        search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" as const } },
+                { baseUrl: { contains: search, mode: "insensitive" as const } },
+              ],
+            }
+          : {},
+        family !== "ALL" ? { apiFamily: family as ApiFamily } : {},
+        status === "ACTIVE" ? { isActive: true } : status === "INACTIVE" ? { isActive: false } : {},
+      ],
+    };
+
+    const [totalProviders, activeProviders, disabledProviders, providers] = await Promise.all([
       prisma.aiProvider.count({ where }),
+      prisma.aiProvider.count({ where: { ...where, isActive: true } }),
+      prisma.aiProvider.count({ where: { ...where, isActive: false } }),
       prisma.aiProvider.findMany({
         where,
+        select: {
+          id: true,
+          name: true,
+          apiFamily: true,
+          baseUrl: true,
+          encryptedApiKey: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         orderBy: {
           createdAt: "desc",
         },
@@ -57,7 +79,13 @@ export async function GET(request: NextRequest) {
       success: true,
       data: maskedProviders,
       items: maskedProviders,
-      pagination: buildPagination({ page, pageSize, total }),
+      providers: maskedProviders,
+      pagination: buildPagination({ page, pageSize, total: totalProviders }),
+      summary: {
+        totalProviders,
+        activeProviders,
+        disabledProviders,
+      },
     });
 
   } catch (error) {
@@ -135,6 +163,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
 
 

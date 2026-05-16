@@ -1,5 +1,5 @@
 ﻿export const DEFAULT_PAGE_SIZE = 10;
-export const MAX_PAGE_SIZE = 50;
+export const MAX_PAGE_SIZE = 100;
 
 export function getPagination(searchParams: URLSearchParams) {
   const page = Math.max(Number(searchParams.get("page") || "1"), 1);

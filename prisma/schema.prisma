@@ -348,6 +348,9 @@ model AiModel {
   inputCreditRate  Decimal   @default(1)
   outputCreditRate Decimal   @default(1)
   upstreamEndpointType UpstreamEndpointType @default(CHAT_COMPLETIONS)
+  supportsStreaming Boolean @default(true)
+  supportsTools     Boolean @default(false)
+  supportsAgent     Boolean @default(false)
   isActive         Boolean   @default(true)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt

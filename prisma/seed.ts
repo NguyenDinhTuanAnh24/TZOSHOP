@@ -249,10 +249,21 @@ async function seedModels() {
   ];
 
   for (const model of models) {
+    const isAgentModel = model.publicName.includes("-agent");
     await prisma.aiModel.upsert({
       where: { publicName: model.publicName },
-      update: model,
-      create: model,
+      update: {
+        ...model,
+        supportsStreaming: true,
+        supportsTools: isAgentModel,
+        supportsAgent: isAgentModel,
+      },
+      create: {
+        ...model,
+        supportsStreaming: true,
+        supportsTools: isAgentModel,
+        supportsAgent: isAgentModel,
+      },
     });
   }
 

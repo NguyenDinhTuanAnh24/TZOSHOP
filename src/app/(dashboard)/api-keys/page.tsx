@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { CosmicButton } from "@/components/ui/cosmic-button";
 import { TextFadeInUp } from "@/components/animations/text-fade-in-up";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 
 type ApiFamily = "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
 type StatusFilter = "all" | "active" | "revoked";
@@ -147,6 +148,8 @@ function ApiKeysPageContent() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [familyFilter, setFamilyFilter] = useState<ApiFamily | "all">("all");
   const [searchText, setSearchText] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
 
   const [revokeTarget, setRevokeTarget] = useState<ApiKeyItem | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
@@ -297,6 +300,14 @@ function ApiKeysPageContent() {
     });
   }, [apiKeys, familyFilter, searchText, statusFilter]);
 
+  const totalPages = useMemo(() => Math.max(Math.ceil(filteredKeys.length / pageSize), 1), [filteredKeys.length, pageSize]);
+  const currentPage = Math.min(page, totalPages);
+
+  const paginatedKeys = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredKeys.slice(start, start + pageSize);
+  }, [currentPage, filteredKeys, pageSize]);
+
   const stats = useMemo(() => {
     const total = apiKeys.length;
     const active = apiKeys.filter((k) => k.isActive).length;
@@ -383,20 +394,23 @@ function ApiKeysPageContent() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setPage(1);
+              }}
               placeholder="Tìm theo tên key hoặc prefix..."
               className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 text-sm text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto">
-            <FilterChip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>Tất cả</FilterChip>
-            <FilterChip active={statusFilter === "active"} onClick={() => setStatusFilter("active")}>Đang hoạt động</FilterChip>
-            <FilterChip active={statusFilter === "revoked"} onClick={() => setStatusFilter("revoked")}>Đã thu hồi</FilterChip>
+            <FilterChip active={statusFilter === "all"} onClick={() => { setStatusFilter("all"); setPage(1); }}>Tất cả</FilterChip>
+            <FilterChip active={statusFilter === "active"} onClick={() => { setStatusFilter("active"); setPage(1); }}>Đang hoạt động</FilterChip>
+            <FilterChip active={statusFilter === "revoked"} onClick={() => { setStatusFilter("revoked"); setPage(1); }}>Đã thu hồi</FilterChip>
           </div>
           <div className="flex gap-2 overflow-x-auto">
-            <FilterChip active={familyFilter === "all"} onClick={() => setFamilyFilter("all")}>Tất cả dòng AI</FilterChip>
+            <FilterChip active={familyFilter === "all"} onClick={() => { setFamilyFilter("all"); setPage(1); }}>Tất cả dòng AI</FilterChip>
             {families.map((family) => (
-              <FilterChip key={family} active={familyFilter === family} onClick={() => setFamilyFilter(family)}>
+              <FilterChip key={family} active={familyFilter === family} onClick={() => { setFamilyFilter(family); setPage(1); }}>
                 {getFamilyLabel(family)}
               </FilterChip>
             ))}
@@ -435,7 +449,7 @@ function ApiKeysPageContent() {
         </section>
       ) : (
         <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-          {filteredKeys.map((apiKey) => {
+          {paginatedKeys.map((apiKey) => {
             const isVisible = visibleKeyIds.includes(apiKey.id);
             const displayKey = isVisible && apiKey.key ? apiKey.key : apiKey.maskedKey ?? apiKey.keyPrefix;
             return (
@@ -505,6 +519,20 @@ function ApiKeysPageContent() {
           })}
         </section>
       )}
+
+      {filteredKeys.length > 0 ? (
+        <AdminPagination
+          page={currentPage}
+          pageSize={pageSize}
+          total={filteredKeys.length}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          onPageSizeChange={(nextPageSize) => {
+            setPageSize(nextPageSize);
+            setPage(1);
+          }}
+        />
+      ) : null}
 
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">

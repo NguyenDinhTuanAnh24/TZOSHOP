@@ -24,6 +24,7 @@ import {
   PlanGridSkeleton,
   SummaryCardsSkeleton,
 } from "@/components/skeletons/dashboard-skeletons";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 
 type ApiFamily = "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
 type StatusFilter = "all" | "active" | "expiring" | "expired";
@@ -123,6 +124,8 @@ export default function MyPlansPage() {
   const [openInstructionBucketId, setOpenInstructionBucketId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [familyFilter, setFamilyFilter] = useState<ApiFamily | "all">("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
 
   const [createModalBucket, setCreateModalBucket] = useState<MyPlanItem | null>(null);
   const [newKeyName, setNewKeyName] = useState("");
@@ -206,6 +209,14 @@ export default function MyPlansPage() {
       return statusMatched && familyMatched;
     });
   }, [buckets, familyFilter, nowTs, statusFilter]);
+
+  const totalPages = useMemo(() => Math.max(Math.ceil(filteredBuckets.length / pageSize), 1), [filteredBuckets.length, pageSize]);
+  const currentPage = Math.min(page, totalPages);
+
+  const paginatedBuckets = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredBuckets.slice(start, start + pageSize);
+  }, [currentPage, filteredBuckets, pageSize]);
 
   return (
     <div className="space-y-8 overflow-x-hidden" aria-busy={isLoading}>
@@ -294,16 +305,16 @@ export default function MyPlansPage() {
 
           <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
             <div className="flex gap-2 overflow-x-auto">
-              <FilterChip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>Tất cả</FilterChip>
-              <FilterChip active={statusFilter === "active"} onClick={() => setStatusFilter("active")}>Đang hoạt động</FilterChip>
-              <FilterChip active={statusFilter === "expiring"} onClick={() => setStatusFilter("expiring")}>Sắp hết hạn</FilterChip>
-              <FilterChip active={statusFilter === "expired"} onClick={() => setStatusFilter("expired")}>Đã hết hạn</FilterChip>
+              <FilterChip active={statusFilter === "all"} onClick={() => { setStatusFilter("all"); setPage(1); }}>Tất cả</FilterChip>
+              <FilterChip active={statusFilter === "active"} onClick={() => { setStatusFilter("active"); setPage(1); }}>Đang hoạt động</FilterChip>
+              <FilterChip active={statusFilter === "expiring"} onClick={() => { setStatusFilter("expiring"); setPage(1); }}>Sắp hết hạn</FilterChip>
+              <FilterChip active={statusFilter === "expired"} onClick={() => { setStatusFilter("expired"); setPage(1); }}>Đã hết hạn</FilterChip>
             </div>
             {availableFamilies.length > 1 && (
               <div className="mt-2 flex gap-2 overflow-x-auto border-t border-slate-100 pt-2">
-                <FilterChip active={familyFilter === "all"} onClick={() => setFamilyFilter("all")}>Tất cả dòng AI</FilterChip>
+                <FilterChip active={familyFilter === "all"} onClick={() => { setFamilyFilter("all"); setPage(1); }}>Tất cả dòng AI</FilterChip>
                 {availableFamilies.map((family) => (
-                  <FilterChip key={family} active={familyFilter === family} onClick={() => setFamilyFilter(family)}>
+                  <FilterChip key={family} active={familyFilter === family} onClick={() => { setFamilyFilter(family); setPage(1); }}>
                     {getFamilyLabel(family)}
                   </FilterChip>
                 ))}
@@ -332,7 +343,7 @@ export default function MyPlansPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-              {filteredBuckets.map((bucket) => {
+              {paginatedBuckets.map((bucket) => {
                 const status = getPlanStatus(bucket, nowTs);
                 const remainingNum = Number(bucket.creditsRemaining);
                 const totalNum = Number(bucket.creditsTotal);
@@ -470,6 +481,20 @@ export default function MyPlansPage() {
               })}
             </div>
           )}
+
+          {filteredBuckets.length > 0 ? (
+            <AdminPagination
+              page={currentPage}
+              pageSize={pageSize}
+              total={filteredBuckets.length}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              onPageSizeChange={(nextPageSize) => {
+                setPageSize(nextPageSize);
+                setPage(1);
+              }}
+            />
+          ) : null}
         </>
       )}
 

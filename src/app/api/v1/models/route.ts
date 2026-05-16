@@ -1,12 +1,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { findActiveApiKeyByPlainTextKey } from "@/lib/api-key-auth";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const authorization = request.headers.get("authorization");
+    const token = authorization?.startsWith("Bearer ") ? authorization.replace("Bearer ", "").trim() : null;
+
+    let allowedModels: string[] | null = null;
+    if (token) {
+      const apiKey = await findActiveApiKeyByPlainTextKey(token);
+      if (apiKey && !apiKey.revokedAt && apiKey.creditBucket?.isActive) {
+        allowedModels = apiKey.creditBucket.allowedModels;
+      }
+    }
+
     const activeModels = await prisma.aiModel.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        ...(allowedModels ? { publicName: { in: allowedModels } } : {}),
+      },
       include: { provider: true },
       orderBy: { publicName: "asc" }
     });
@@ -16,11 +31,8 @@ export async function GET() {
       data: activeModels.map((model) => ({
         id: model.publicName,
         object: "model",
-        name: model.publicName,
-        family: model.apiFamily,
-        provider_model: model.upstreamModel,
-        provider: model.provider.name,
-        description: `TzoShop AI Model - ${model.publicName}`,
+        created: 0,
+        owned_by: "tzoshop",
       })),
     });
   } catch (error) {

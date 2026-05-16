@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { UsagePageSkeleton } from "@/components/dashboard/usage/usage-page-skeleton";
 import { CosmicButton } from "@/components/ui/cosmic-button";
 import { TextFadeInUp } from "@/components/animations/text-fade-in-up";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 
 type ApiFamily = "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
 type TimeFilter = "today" | "7d" | "30d" | "all";
@@ -93,6 +94,8 @@ export default function UsagePage() {
   const [filterModel, setFilterModel] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchText, setSearchText] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
   const [nowTs] = useState(() => Date.now());
 
   const { toast, showToast, clearToast } = useToast(3000);
@@ -172,6 +175,14 @@ export default function UsagePage() {
     });
   }, [usageLogs, timeFilter, filterFamily, filterApiKeyId, filterModel, filterStatus, searchText, nowTs]);
 
+  const totalPages = useMemo(() => Math.max(Math.ceil(filteredLogs.length / pageSize), 1), [filteredLogs.length, pageSize]);
+  const currentPage = Math.min(page, totalPages);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLogs.slice(start, start + pageSize);
+  }, [currentPage, filteredLogs, pageSize]);
+
   const stats = useMemo(() => {
     const totalRequests = filteredLogs.length;
     const creditsUsed = filteredLogs.reduce((sum, log) => sum + Number(log.creditsCharged), 0);
@@ -231,16 +242,19 @@ export default function UsagePage() {
           <TextFadeInUp as="section" delay={0.1} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
             <div className="grid gap-3 lg:grid-cols-2">
               <div className="flex gap-2 overflow-x-auto">
-                <FilterChip active={timeFilter === "today"} onClick={() => setTimeFilter("today")}>Hôm nay</FilterChip>
-                <FilterChip active={timeFilter === "7d"} onClick={() => setTimeFilter("7d")}>7 ngày</FilterChip>
-                <FilterChip active={timeFilter === "30d"} onClick={() => setTimeFilter("30d")}>30 ngày</FilterChip>
-                <FilterChip active={timeFilter === "all"} onClick={() => setTimeFilter("all")}>Tất cả</FilterChip>
+                <FilterChip active={timeFilter === "today"} onClick={() => { setTimeFilter("today"); setPage(1); }}>Hôm nay</FilterChip>
+                <FilterChip active={timeFilter === "7d"} onClick={() => { setTimeFilter("7d"); setPage(1); }}>7 ngày</FilterChip>
+                <FilterChip active={timeFilter === "30d"} onClick={() => { setTimeFilter("30d"); setPage(1); }}>30 ngày</FilterChip>
+                <FilterChip active={timeFilter === "all"} onClick={() => { setTimeFilter("all"); setPage(1); }}>Tất cả</FilterChip>
               </div>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
+                  onChange={(e) => {
+                    setSearchText(e.target.value);
+                    setPage(1);
+                  }}
                   placeholder="Tìm theo model, API key hoặc endpoint..."
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 text-sm text-slate-950 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
@@ -248,19 +262,19 @@ export default function UsagePage() {
             </div>
 
             <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <select value={filterFamily} onChange={(e) => setFilterFamily(e.target.value as ApiFamily | "all")} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
+              <select value={filterFamily} onChange={(e) => { setFilterFamily(e.target.value as ApiFamily | "all"); setPage(1); }} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
                 <option value="all">Tất cả dòng AI</option>
                 {families.map((f) => (<option key={f} value={f}>{getFamilyLabel(f)}</option>))}
               </select>
-              <select value={filterModel} onChange={(e) => setFilterModel(e.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
+              <select value={filterModel} onChange={(e) => { setFilterModel(e.target.value); setPage(1); }} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
                 <option value="all">Tất cả model</option>
                 {models.map((m) => (<option key={m} value={m}>{m}</option>))}
               </select>
-              <select value={filterApiKeyId} onChange={(e) => setFilterApiKeyId(e.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
+              <select value={filterApiKeyId} onChange={(e) => { setFilterApiKeyId(e.target.value); setPage(1); }} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
                 <option value="all">Tất cả key</option>
                 {apiKeys.map((k) => (<option key={k.id} value={k.id}>{k.name}</option>))}
               </select>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
+              <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700">
                 <option value="all">Tất cả trạng thái</option>
                 <option value="SUCCESS">Thành công</option>
                 <option value="FAILED">Lỗi</option>
@@ -316,7 +330,7 @@ export default function UsagePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredLogs.map((log) => (
+                      {paginatedLogs.map((log) => (
                         <tr key={log.id} className="border-t border-slate-100 text-sm text-slate-700 transition-colors hover:bg-indigo-50/30">
                           <td className="whitespace-nowrap px-4 py-4">{new Date(log.createdAt).toLocaleString("vi-VN")}</td>
                           <td className="px-4 py-4"><code className="font-mono text-xs text-slate-900">{log.model}</code></td>
@@ -342,7 +356,7 @@ export default function UsagePage() {
               </section>
 
               <section className="space-y-4 lg:hidden">
-                {filteredLogs.map((log) => (
+                {paginatedLogs.map((log) => (
                   <article key={log.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <code className="font-mono text-sm font-semibold text-slate-900">{log.model}</code>
@@ -366,6 +380,20 @@ export default function UsagePage() {
           )}
         </>
       )}
+
+      {filteredLogs.length > 0 ? (
+        <AdminPagination
+          page={currentPage}
+          pageSize={pageSize}
+          total={filteredLogs.length}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          onPageSizeChange={(nextPageSize) => {
+            setPageSize(nextPageSize);
+            setPage(1);
+          }}
+        />
+      ) : null}
 
       {toast && <ToastMessage message={toast.message} type={toast.type} onClose={clearToast} />}
     </main>

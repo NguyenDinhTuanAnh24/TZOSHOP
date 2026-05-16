@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
               ? [{ durationDays: "desc" }]
               : [{ createdAt: "desc" }];
 
-    const [total, activeProducts, hiddenProducts, familyGroups, products] = await Promise.all([
+    const [totalProducts, activeProducts, hiddenProducts, familyGroups, products] = await Promise.all([
       prisma.product.count({ where }),
       prisma.product.count({ where: { ...where, isActive: true } }),
       prisma.product.count({ where: { ...where, isActive: false } }),
@@ -60,6 +60,23 @@ export async function GET(request: NextRequest) {
         orderBy,
         skip,
         take,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          apiFamily: true,
+          tier: true,
+          credits: true,
+          durationDays: true,
+          priceVnd: true,
+          apiKeyLimit: true,
+          allowedModels: true,
+          isActive: true,
+          isPopular: true,
+          isContactOnly: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       }),
     ]);
 
@@ -72,9 +89,10 @@ export async function GET(request: NextRequest) {
       success: true,
       data,
       items: data,
-      pagination: buildPagination({ page, pageSize, total }),
+      products: data,
+      pagination: buildPagination({ page, pageSize, total: totalProducts }),
       summary: {
-        totalProducts: total,
+        totalProducts,
         activeProducts,
         hiddenProducts,
         familyCount: familyGroups.length,
@@ -120,7 +138,17 @@ export async function POST(request: NextRequest) {
       ? allowedModels.map((item: unknown) => String(item).trim()).filter(Boolean)
       : [];
 
-    if (!name || !apiFamily || !durationDays || (!isContactOnly && priceVnd === undefined)) {
+    const normalizedDurationDays =
+      durationDays === null || durationDays === undefined || durationDays === ""
+        ? null
+        : Number(durationDays);
+
+    if (
+      !name ||
+      !apiFamily ||
+      Number.isNaN(normalizedDurationDays ?? 0) ||
+      (!isContactOnly && priceVnd === undefined)
+    ) {
       return NextResponse.json(
         { success: false, message: "Thiếu thông tin bắt buộc." },
         { status: 400 }
@@ -141,7 +169,7 @@ export async function POST(request: NextRequest) {
         apiFamily: apiFamily as ApiFamily,
         tier: "Standard",
         credits: BigInt(credits || 0),
-        durationDays: Number(durationDays),
+        durationDays: normalizedDurationDays,
         priceVnd: Number(priceVnd || 0),
         apiKeyLimit: Number(apiKeyLimit || 1),
         allowedModels: normalizedAllowedModels,

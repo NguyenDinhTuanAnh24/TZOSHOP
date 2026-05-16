@@ -1,26 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { ApiFamily } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { findActiveApiKeyByPlainTextKey } from "@/lib/api-key-auth";
 import { decryptText } from "@/lib/crypto";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 import { calculateCreditsUsed, consumeCredits } from "@/lib/server/credits";
 import { checkCreditAlertsForUser } from "@/lib/server/notifications";
+import { tryParseToolCallFromText } from "@/lib/ai-gateway/adapters/agent-tool-fallback";
 
 export const runtime = "nodejs";
 
-/**
- * Lấy Bearer token từ header Authorization
- */
+// --- IN-MEMORY CACHE ---
+const modelCache = new Map<string, { data: AiModelWithProvider | null, expiresAt: number }>();
+const allModelsCache = new Map<string, { data: AiModelWithProvider[], expiresAt: number }>();
+
+async function getCachedAiModel(modelName: string): Promise<AiModelWithProvider | null> {
+  const now = Date.now();
+  const cached = modelCache.get(modelName);
+  if (cached && cached.expiresAt > now) return cached.data;
+
+  const model = await prisma.aiModel.findFirst({
+    where: { publicName: modelName },
+    include: { provider: true },
+  }) as unknown as AiModelWithProvider | null;
+
+  modelCache.set(modelName, { data: model, expiresAt: now + 60000 }); // 60s
+  return model;
+}
+
+async function getCachedAllModels(upstreamModel: string): Promise<AiModelWithProvider[]> {
+  const now = Date.now();
+  const cached = allModelsCache.get(upstreamModel);
+  if (cached && cached.expiresAt > now) return cached.data;
+
+  const models = await prisma.aiModel.findMany({
+    where: {
+      upstreamModel: upstreamModel,
+      isActive: true,
+      provider: { isActive: true },
+    },
+    include: { provider: true },
+  }) as unknown as AiModelWithProvider[];
+
+  allModelsCache.set(upstreamModel, { data: models, expiresAt: now + 60000 }); // 60s
+  return models;
+}
+
 function getBearerToken(request: NextRequest) {
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) return null;
   return authorization.replace("Bearer ", "").trim();
 }
 
-/**
- * Ghi nhật ký sử dụng thất bại (UsageLog FAILED)
- */
 async function logFailedUsage(params: {
   userId: string;
   apiKeyId: string;
@@ -57,17 +88,9 @@ async function logFailedUsage(params: {
   }
 }
 
-/**
- * Trích xuất nội dung từ Responses API response
- */
-/**
- * Trích xuất nội dung từ Responses API response
- */
 function extractResponsesText(data: unknown): string {
   if (!data || typeof data !== "object") return "";
-  
   const d = data as Record<string, unknown>;
-  
   if (typeof d.output_text === "string") return d.output_text;
   if (typeof d.text === "string") return d.text;
   if (typeof d.content === "string") return d.content;
@@ -75,27 +98,28 @@ function extractResponsesText(data: unknown): string {
   if (Array.isArray(d.output)) {
     const output = d.output as Array<Record<string, unknown>>;
     const outputText = output
-      ?.flatMap((item) => (item.content as unknown[]) ?? [])
-      ?.map((content) => (content as Record<string, string>).text ?? "")
-      ?.join("");
+      .flatMap((item) => (Array.isArray(item.content) ? item.content : []))
+      .map((content) => {
+        const c = content as Record<string, unknown>;
+        return typeof c.text === "string" ? c.text : "";
+      })
+      .join("");
     if (outputText) return outputText;
   }
 
   const choices = d.choices as Array<{ message?: { content?: string } }> | undefined;
   if (choices?.[0]?.message?.content) return choices[0].message.content;
-
   return "";
 }
 
-/**
- * Kiểm tra xem lỗi từ upstream có thể thử lại với provider khác không
- */
 function isRetryableError(status: number, bodyText: string) {
   if (status === 429) return true;
   const lowerText = bodyText.toLowerCase();
-  return lowerText.includes("saturated") ||
+  return (
+    lowerText.includes("saturated") ||
     lowerText.includes("too many requests") ||
-    lowerText.includes("please try again later");
+    lowerText.includes("please try again later")
+  );
 }
 
 interface AiModelWithProvider {
@@ -103,6 +127,9 @@ interface AiModelWithProvider {
   publicName: string;
   upstreamModel: string;
   upstreamEndpointType: string;
+  supportsStreaming: boolean;
+  supportsTools: boolean;
+  supportsAgent: boolean;
   inputCreditRate: number | string;
   outputCreditRate: number | string;
   isActive: boolean;
@@ -116,31 +143,188 @@ interface AiModelWithProvider {
   };
 }
 
-interface ChatMessage {
+type ChatMessage = {
   role: string;
-  content: string;
+  content: string | unknown;
+  tool_call_id?: string;
+};
+
+type IncomingBody = {
+  model?: string;
+  messages?: ChatMessage[];
+  stream?: boolean;
+  temperature?: number;
+  max_tokens?: number;
+  max_completion_tokens?: number;
+  top_p?: number;
+  presence_penalty?: number;
+  frequency_penalty?: number;
+  stop?: string | string[];
+  tools?: unknown[];
+  tool_choice?: unknown;
+  parallel_tool_calls?: boolean;
+  response_format?: unknown;
+  completionOptions?: {
+    temperature?: number;
+    topP?: number;
+    maxTokens?: number;
+    reasoning?: boolean;
+    reasoningBudgetTokens?: number;
+  };
+};
+
+function hasToolSignals(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  if (Array.isArray(value)) return value.some((item) => hasToolSignals(item));
+
+  const obj = value as Record<string, unknown>;
+  if (Array.isArray(obj.tool_calls) && obj.tool_calls.length > 0) return true;
+  if (obj.type === "function_call" || obj.type === "tool_call") return true;
+
+  for (const v of Object.values(obj)) {
+    if (hasToolSignals(v)) return true;
+  }
+  return false;
 }
 
-/**
- * Xử lý Streaming Chat Completion (OpenAI-compatible)
- */
+function buildToolInstruction(tools: unknown[], toolChoice: unknown) {
+  return `You are an AI assistant. Call tools by outputting ONLY valid JSON:
+{"tool":"name","arguments":{}}
+Tools: ${JSON.stringify(tools)}
+Choice: ${JSON.stringify(toolChoice ?? "auto")}`;
+}
+
+function normalizeToolMessages(messages: ChatMessage[]) {
+  return messages.map((message) => {
+    if (message.role === "tool") {
+      return {
+        role: "user",
+        content: `Tool result for ${message.tool_call_id ?? "tool"}:\n${String(message.content ?? "")}`,
+      };
+    }
+
+    return {
+      ...message,
+      role: message.role === "developer" ? "system" : message.role,
+    };
+  });
+}
+
+function buildUpstreamBody(params: {
+  aiModel: AiModelWithProvider;
+  body: IncomingBody;
+  messages: ChatMessage[];
+  stream: boolean;
+  modelSupportsTools: boolean;
+  agentFallbackEnabled: boolean;
+}) {
+  const { aiModel, body, messages, stream, modelSupportsTools, agentFallbackEnabled } = params;
+  const isResponsesAPI = aiModel.upstreamEndpointType === "RESPONSES";
+  const completionOptions = body.completionOptions;
+  let normalizedMessages = normalizeToolMessages(messages);
+
+  if (agentFallbackEnabled && Array.isArray(body.tools) && body.tools.length > 0) {
+    console.log("[AGENT_FALLBACK_ORIGINAL_MESSAGES_COUNT]", messages.length);
+
+    let lastUserMessage = [...normalizedMessages].reverse().find((m) => m.role === "user");
+    if (!lastUserMessage && normalizedMessages.length > 0) {
+      lastUserMessage = normalizedMessages[normalizedMessages.length - 1];
+    }
+
+    normalizedMessages = [
+      {
+        role: "system",
+        content: buildToolInstruction(body.tools, body.tool_choice),
+      },
+      ...(lastUserMessage ? [lastUserMessage] : []),
+    ];
+
+    console.log("[AGENT_FALLBACK_NORMALIZED_MESSAGES]", normalizedMessages.length);
+  }
+
+  const payload: Record<string, unknown> = isResponsesAPI
+    ? {
+        model: aiModel.upstreamModel,
+        input: normalizedMessages.map((m) => ({
+          role: m.role,
+          content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+        })),
+        instructions: normalizedMessages.find((m) => m.role === "system")?.content || undefined,
+        stream,
+      }
+    : {
+        model: aiModel.upstreamModel,
+        messages: normalizedMessages,
+        stream,
+      };
+
+  const safeTemperature =
+    body.temperature !== undefined ? body.temperature : completionOptions?.temperature;
+  const safeTopP = body.top_p !== undefined ? body.top_p : completionOptions?.topP;
+  const safeMaxTokens =
+    body.max_tokens !== undefined
+      ? body.max_tokens
+      : body.max_completion_tokens !== undefined
+        ? body.max_completion_tokens
+        : completionOptions?.maxTokens;
+
+  if (safeTemperature !== undefined) payload.temperature = safeTemperature;
+  if (safeTopP !== undefined) payload.top_p = safeTopP;
+  if (safeMaxTokens !== undefined) payload.max_tokens = safeMaxTokens;
+  if (body.presence_penalty !== undefined) payload.presence_penalty = body.presence_penalty;
+  if (body.frequency_penalty !== undefined) payload.frequency_penalty = body.frequency_penalty;
+  if (body.stop !== undefined) payload.stop = body.stop;
+  if (body.response_format !== undefined) payload.response_format = body.response_format;
+
+  if (modelSupportsTools && body.tools !== undefined) {
+    payload.tools = body.tools;
+  }
+  if (modelSupportsTools && body.tool_choice !== undefined) {
+    payload.tool_choice = body.tool_choice;
+  }
+  if (modelSupportsTools && body.parallel_tool_calls !== undefined) {
+    payload.parallel_tool_calls = body.parallel_tool_calls;
+  }
+
+  console.log("[TZOSHOP_UPSTREAM_PAYLOAD_DEBUG]", {
+    model: payload.model,
+    stream: payload.stream,
+    hasTools: Array.isArray(payload.tools),
+    toolsCount: Array.isArray(payload.tools) ? payload.tools.length : 0,
+    toolChoice: payload.tool_choice,
+    parallelToolCalls: payload.parallel_tool_calls,
+  });
+  console.log("[UPSTREAM_SAFE_PAYLOAD_KEYS]", Object.keys(payload));
+  console.log(
+    "[UPSTREAM_MESSAGES_ROLES]",
+    Array.isArray(payload.messages)
+      ? (payload.messages as Array<{ role?: string }>).map((m) => m.role ?? "")
+      : Array.isArray(payload.input)
+        ? (payload.input as Array<{ role?: string }>).map((m) => m.role ?? "")
+        : [],
+  );
+
+  return payload;
+}
+
 async function handleStreamingChatCompletion(params: {
   apiKey: { userId: string; id: string; apiFamily: ApiFamily };
   bucket: { id: string };
   candidates: AiModelWithProvider[];
   messages: ChatMessage[];
-  temperature: number;
-  max_tokens: number;
   modelName: string;
+  body: IncomingBody;
+  requestHasTools: boolean;
+  startTime: number;
 }) {
-  const { apiKey, bucket, candidates, messages, temperature, max_tokens, modelName } = params;
+  const { apiKey, bucket, candidates, messages, modelName, body, requestHasTools, startTime } = params;
 
   for (let i = 0; i < candidates.length; i++) {
     const aiModel = candidates[i];
     const provider = aiModel.provider;
     const isResponsesAPI = aiModel.upstreamEndpointType === "RESPONSES";
 
-    let providerApiKey;
+    let providerApiKey: string;
     try {
       providerApiKey = decryptText(provider.encryptedApiKey);
     } catch (err) {
@@ -152,54 +336,48 @@ async function handleStreamingChatCompletion(params: {
     const baseUrl = provider.baseUrl.endsWith("/") ? provider.baseUrl.slice(0, -1) : provider.baseUrl;
     const upstreamUrl = `${baseUrl}${endpointPath}`;
 
-    console.log(`[TzoShop upstream debug] Attempt ${i + 1}/${candidates.length}: ${provider.name} -> ${aiModel.upstreamModel} (Stream)`);
-
-    let upstreamBody: Record<string, unknown>;
-    if (isResponsesAPI) {
-      upstreamBody = {
-        model: aiModel.upstreamModel,
-        input: messages.map((m) => ({
-          role: m.role,
-          content: typeof m.content === "string" ? m.content : JSON.stringify(m.content)
-        })),
-        stream: true,
-        instructions: messages.find((m) => m.role === "system")?.content || undefined
-      };
-    } else {
-      upstreamBody = {
-        model: aiModel.upstreamModel,
-        messages,
-        temperature,
-        max_tokens,
-        stream: true,
-      };
-    }
+    const upstreamBody = buildUpstreamBody({
+      aiModel,
+      body,
+      messages,
+      stream: true,
+      modelSupportsTools: aiModel.supportsTools === true,
+      agentFallbackEnabled: requestHasTools && aiModel.supportsAgent === true && aiModel.supportsTools !== true,
+    });
+    const isAgentFallbackMode = requestHasTools && aiModel.supportsAgent === true && aiModel.supportsTools !== true;
 
     try {
+      const upstreamHeaders = {
+        Authorization: `Bearer ${providerApiKey}`,
+        "Content-Type": "application/json",
+        Accept: body.stream ? "text/event-stream" : "application/json",
+      };
+      console.log("[UPSTREAM_HEADERS_KEYS]", Object.keys(upstreamHeaders));
+
+      const validateMs = Date.now() - startTime;
+      const fetchStartTime = Date.now();
+
       const upstreamResponse = await fetch(upstreamUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${providerApiKey}`,
-        },
+        headers: upstreamHeaders,
         body: JSON.stringify(upstreamBody),
       });
 
       if (!upstreamResponse.ok) {
         const errorText = await upstreamResponse.text();
-        console.error(`[Upstream Error Response] Provider: ${provider.name}, Status: ${upstreamResponse.status}, Body: ${errorText}`);
+        console.error(
+          `[Upstream Error Response] Provider: ${provider.name}, Status: ${upstreamResponse.status}, Body: ${errorText}`,
+        );
 
         if (isRetryableError(upstreamResponse.status, errorText) && i < candidates.length - 1) {
-          console.warn(`[Fallback] Provider ${provider.name} failed. Trying next...`);
           continue;
         }
 
-        // Not retryable or last candidate
         let errorMsg = `Upstream error: ${upstreamResponse.status}`;
         try {
           const errorJson = JSON.parse(errorText);
           errorMsg = errorJson.error?.message || errorJson.message || errorMsg;
-        } catch { }
+        } catch {}
 
         await logFailedUsage({
           userId: apiKey.userId,
@@ -208,131 +386,188 @@ async function handleStreamingChatCompletion(params: {
           apiFamily: apiKey.apiFamily,
           model: modelName,
           errorMessage: errorMsg,
-          errorCode: (upstreamResponse.status === 429 || errorText.toLowerCase().includes("saturated")) ? "PROVIDER_RATE_LIMITED" : "UPSTREAM_ERROR",
+          errorCode:
+            upstreamResponse.status === 429 || errorText.toLowerCase().includes("saturated")
+              ? "PROVIDER_RATE_LIMITED"
+              : "UPSTREAM_ERROR",
           httpStatus: upstreamResponse.status,
         });
 
-        return NextResponse.json({
-          error: {
-            message: "Nhà cung cấp dịch vụ AI đang quá tải hoặc bận. Vui lòng thử lại sau giây lát.",
-            type: "upstream_error",
-            code: "PROVIDER_RATE_LIMITED"
-          }
-        }, { status: upstreamResponse.status === 429 ? 429 : 503 });
+        return NextResponse.json(
+          {
+            error: {
+              message:
+                "Nhà cung cấp dịch vụ AI đang quá tải hoặc bận. Vui lòng thử lại sau giây lát.",
+              type: "upstream_error",
+              code: "PROVIDER_RATE_LIMITED",
+            },
+          },
+          { status: upstreamResponse.status === 429 ? 429 : 503 },
+        );
       }
 
-      // SUCCESS! Start streaming
-      console.log(`[Fallback] Success with provider: ${provider.name}`);
-      const encoder = new TextEncoder();
       const reader = upstreamResponse.body?.getReader();
       if (!reader) throw new Error("Failed to get reader from upstream response");
 
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
       const stream = new ReadableStream({
         async start(controller) {
-          let fullAssistantContent = "";
+          let buffer = "";
           let promptTokens = 0;
           let completionTokens = 0;
-          const decoder = new TextDecoder();
-          let buffer = "";
+          let assistantText = "";
+          let hasToolCalls = false;
+
+          let firstByteTime = 0;
 
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
+              if (!value) continue;
 
-              const chunk = decoder.decode(value, { stream: true });
-              buffer += chunk;
+              if (firstByteTime === 0) firstByteTime = Date.now();
 
-              const lines = buffer.split("\n");
-              buffer = lines.pop() || "";
+              // 1. Pass-through immediately for non-fallback
+              if (!isAgentFallbackMode) {
+                controller.enqueue(value);
+              }
 
-              for (const line of lines) {
-                const trimmedLine = line.trim();
-                if (!trimmedLine || !trimmedLine.startsWith("data: ")) continue;
+              const chunkText = decoder.decode(value, { stream: true });
+              buffer += chunkText;
 
-                const data = trimmedLine.replace("data: ", "");
-                if (data === "[DONE]") continue;
+              const events = buffer.split("\n\n");
+              buffer = events.pop() ?? "";
 
-                try {
-                  const parsed = JSON.parse(data) as Record<string, unknown>;
+              for (const event of events) {
+                const lines = event.split("\n");
+                for (const line of lines) {
+                  const trimmed = line.trim();
+                  if (!trimmed.startsWith("data:")) continue;
+                  const rawData = trimmed.replace(/^data:\s?/, "");
+                  if (rawData === "[DONE]") continue;
 
-                  let content = "";
-                  if (isResponsesAPI) {
-                    const outputText = parsed.output_text as Record<string, string> | undefined;
-                    const contentObj = parsed.content as Record<string, string> | undefined;
-                    
-                    if (outputText?.delta) content = outputText.delta;
-                    else if (parsed.delta) content = parsed.delta as string;
-                    else if (contentObj?.delta) content = contentObj.delta;
-                    else content = extractResponsesText(parsed);
-                  } else {
-                    const choices = parsed.choices as Array<{ delta?: { content?: string }, message?: { content?: string }, finish_reason?: string }> | undefined;
-                    const delta = parsed.delta as { content?: string } | undefined;
+                  try {
+                    const parsed = JSON.parse(rawData) as Record<string, unknown>;
+                    if (hasToolSignals(parsed)) hasToolCalls = true;
 
-                    if (choices?.[0]?.delta?.content) content = choices[0].delta.content;
-                    else if (choices?.[0]?.message?.content) content = choices[0].message.content;
-                    else if (delta?.content) content = delta.content;
-                    else if (parsed.content) content = parsed.content as string;
-                    else if (parsed.text) content = parsed.text as string;
-                  }
+                    const usage = parsed.usage as Record<string, number> | undefined;
+                    if (usage) {
+                      promptTokens = usage.prompt_tokens ?? usage.input_tokens ?? promptTokens;
+                      completionTokens = usage.completion_tokens ?? usage.output_tokens ?? completionTokens;
+                    }
 
-                  if (content) {
-                    fullAssistantContent += content;
-                  }
-
-                  if (parsed.usage) {
-                    const usage = parsed.usage as Record<string, number>;
-                    promptTokens = usage.prompt_tokens || promptTokens;
-                    completionTokens = usage.completion_tokens || completionTokens;
-                  }
-
-                  const choices = parsed.choices as Array<{ finish_reason?: string }> | undefined;
-                  const clientChunk = {
-                    id: (parsed.id as string) || `chatcmpl-${Date.now()}`,
-                    object: "chat.completion.chunk",
-                    created: (parsed.created as number) || Math.floor(Date.now() / 1000),
-                    model: modelName,
-                    choices: [{
-                      index: 0,
-                      delta: content ? { content } : {},
-                      finish_reason: choices?.[0]?.finish_reason || (parsed.done ? "stop" : null)
-                    }]
-                  };
-
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(clientChunk)}\n\n`));
-                } catch { }
+                    if (isResponsesAPI) {
+                      const contentPart = extractResponsesText(parsed);
+                      if (contentPart) assistantText += contentPart;
+                    } else {
+                      const choices = parsed.choices as Array<{ delta?: { content?: string } }> | undefined;
+                      const deltaContent = choices?.[0]?.delta?.content;
+                      if (typeof deltaContent === "string") assistantText += deltaContent;
+                    }
+                  } catch {}
+                }
               }
             }
 
-            if (fullAssistantContent.trim().length === 0) {
-              await logFailedUsage({
+            if (isAgentFallbackMode) {
+              const parsedToolCall = tryParseToolCallFromText(assistantText);
+              console.log("[AGENT_FALLBACK_UPSTREAM_TEXT]", assistantText.slice(0, 2000));
+              console.log("[AGENT_FALLBACK_PARSED_TOOL_CALL]", parsedToolCall);
+
+              if (parsedToolCall) {
+                const created = Math.floor(Date.now() / 1000);
+                const chunkId = `chatcmpl-${Date.now()}`;
+                const toolChunk = {
+                  id: chunkId,
+                  object: "chat.completion.chunk",
+                  created,
+                  model: modelName,
+                  choices: [
+                    {
+                      index: 0,
+                      delta: {
+                        tool_calls: [
+                          {
+                            index: 0,
+                            id: parsedToolCall.id,
+                            type: "function",
+                            function: {
+                              name: parsedToolCall.function.name,
+                              arguments: parsedToolCall.function.arguments,
+                            },
+                          },
+                        ],
+                      },
+                      finish_reason: null,
+                    },
+                  ],
+                };
+
+                const finishChunk = {
+                  id: chunkId,
+                  object: "chat.completion.chunk",
+                  created,
+                  model: modelName,
+                  choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }],
+                };
+
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(toolChunk)}\n\n`));
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(finishChunk)}\n\n`));
+                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              } else {
+                const created = Math.floor(Date.now() / 1000);
+                const chunkId = `chatcmpl-${Date.now()}`;
+                const contentChunk = {
+                  id: chunkId,
+                  object: "chat.completion.chunk",
+                  created,
+                  model: modelName,
+                  choices: [{ index: 0, delta: { content: assistantText }, finish_reason: "stop" }],
+                };
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentChunk)}\n\n`));
+                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              }
+            }
+
+            const hasOutput = assistantText.trim().length > 0 || hasToolCalls;
+            if (!hasOutput && isAgentFallbackMode) {
+              logFailedUsage({
                 userId: apiKey.userId,
                 apiKeyId: apiKey.id,
                 creditBucketId: bucket.id,
                 apiFamily: apiKey.apiFamily,
                 model: modelName,
-                errorMessage: "Upstream returned empty content",
+                errorMessage: "Upstream returned empty stream payload",
                 errorCode: "EMPTY_PROVIDER_RESPONSE",
                 httpStatus: 200,
-              });
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: { message: "Nhà cung cấp AI trả về phản hồi rỗng." } })}\n\n`));
-            } else {
-              if (promptTokens === 0) {
-                const inputContent = messages?.map((m: { content: string }) => m.content).join(" ") || "";
-                promptTokens = Math.ceil(inputContent.length / 4);
-              }
-              if (completionTokens === 0) {
-                completionTokens = Math.ceil(fullAssistantContent.length / 4);
-              }
+              }).catch(console.error);
+              return;
+            }
 
-              const creditsUsed = calculateCreditsUsed({
-                promptTokens,
-                completionTokens,
-                inputRate: Number(aiModel.inputCreditRate),
-                outputRate: Number(aiModel.outputCreditRate),
-              });
+            if (promptTokens === 0) {
+              const inputContent = messages
+                .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
+                .join(" ");
+              promptTokens = Math.ceil(inputContent.length / 4);
+            }
+            if (completionTokens === 0) {
+              completionTokens = Math.ceil(assistantText.length / 4);
+            }
 
-              await consumeCredits({
+            const creditsUsed = calculateCreditsUsed({
+              promptTokens,
+              completionTokens,
+              inputRate: Number(aiModel.inputCreditRate),
+              outputRate: Number(aiModel.outputCreditRate),
+            });
+
+            const dbLogStart = Date.now();
+            // Non-blocking DB logging
+            Promise.all([
+              consumeCredits({
                 userId: apiKey.userId,
                 apiKeyId: apiKey.id,
                 creditBucketId: bucket.id,
@@ -345,14 +580,18 @@ async function handleStreamingChatCompletion(params: {
                   outputTokens: completionTokens,
                   totalTokens: promptTokens + completionTokens,
                 },
-              });
-              checkCreditAlertsForUser(apiKey.userId).catch(() => { });
-            }
-            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              }),
+              checkCreditAlertsForUser(apiKey.userId),
+            ]).catch(console.error);
+
+            console.log("[STREAM_PERFORMANCE_LOG]", {
+              validateMs,
+              upstreamFirstByteMs: firstByteTime > 0 ? firstByteTime - fetchStartTime : 0,
+              totalMs: Date.now() - startTime,
+              dbLogTriggeredMs: Date.now() - dbLogStart,
+            });
           } catch (error) {
             console.error("[Stream] Stream error:", error);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: { message: "Mất kết nối stream với nhà cung cấp AI." } })}\n\n`));
-            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           } finally {
             controller.close();
           }
@@ -360,157 +599,259 @@ async function handleStreamingChatCompletion(params: {
       });
 
       return new Response(stream, {
+        status: upstreamResponse.status,
         headers: {
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
-          "Connection": "keep-alive",
+          Connection: "keep-alive",
           "X-Accel-Buffering": "no",
         },
       });
     } catch (error) {
       console.error(`[Stream] Fetch error for provider ${provider.name}:`, error);
       if (i < candidates.length - 1) continue;
-      return NextResponse.json({ error: { message: "Lỗi kết nối tới nhà cung cấp AI.", type: "server_error", code: "internal_error" } }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: {
+            message: "Lỗi kết nối tới nhà cung cấp AI.",
+            type: "server_error",
+            code: "internal_error",
+          },
+        },
+        { status: 500 },
+      );
     }
   }
+
+  return NextResponse.json(
+    { error: { message: "Không có provider khả dụng.", type: "upstream_error", code: "no_provider_available" } },
+    { status: 503 },
+  );
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
   try {
     const token = getBearerToken(request);
     if (!token) {
-      return NextResponse.json({ error: { message: "Vui lòng cung cấp API key trong header Authorization.", type: "invalid_request_error", code: "missing_api_key" } }, { status: 401 });
+      return NextResponse.json(
+        {
+          error: {
+            message: "Vui lòng cung cấp API key trong header Authorization.",
+            type: "invalid_request_error",
+            code: "missing_api_key",
+          },
+        },
+        { status: 401 },
+      );
     }
 
     const apiKey = await findActiveApiKeyByPlainTextKey(token);
     if (!apiKey || apiKey.revokedAt) {
-      return NextResponse.json({ error: { message: "API key không hợp lệ hoặc đã bị thu hồi.", type: "invalid_request_error", code: "invalid_api_key" } }, { status: 401 });
+      return NextResponse.json(
+        {
+          error: {
+            message: "API key không hợp lệ hoặc đã bị thu hồi.",
+            type: "invalid_request_error",
+            code: "invalid_api_key",
+          },
+        },
+        { status: 401 },
+      );
     }
 
     const rateLimit = await checkRateLimit(apiKey.id, 60);
     if (!rateLimit.success) {
-      return NextResponse.json({ error: { message: "Bạn đã vượt giới hạn request. Vui lòng thử lại sau.", type: "rate_limit_exceeded" } }, { status: 429 });
+      return NextResponse.json(
+        {
+          error: {
+            message: "Bạn đã vượt giới hạn request. Vui lòng thử lại sau.",
+            type: "rate_limit_exceeded",
+          },
+        },
+        { status: 429 },
+      );
     }
 
     const bucket = apiKey.creditBucket;
     const isExpired = bucket?.expiresAt && new Date(bucket.expiresAt) < new Date();
-
     if (!bucket || !bucket.isActive || isExpired) {
-      return NextResponse.json({ error: { message: "Gói credits không khả dụng.", type: "insufficient_quota", code: "quota_exceeded" } }, { status: 401 });
+      return NextResponse.json(
+        {
+          error: { message: "Gói credits không khả dụng.", type: "insufficient_quota", code: "quota_exceeded" },
+        },
+        { status: 401 },
+      );
     }
-
     if (bucket.creditsRemaining <= BigInt(0)) {
-      return NextResponse.json({ error: { message: "Tài khoản đã hết credits.", type: "insufficient_quota", code: "quota_exceeded" } }, { status: 402 });
+      return NextResponse.json(
+        {
+          error: { message: "Tài khoản đã hết credits.", type: "insufficient_quota", code: "quota_exceeded" },
+        },
+        { status: 402 },
+      );
     }
 
-    const body = await request.json().catch(() => ({}));
-    const { model: modelName, messages, temperature = 0.7, max_tokens = 1000, stream } = body;
+    const body = (await request.json().catch(() => ({}))) as IncomingBody;
+    console.log("[INCOMING_BODY_KEYS]", Object.keys(body ?? {}));
+
+    console.log("[TZOSHOP_INCOMING_DEBUG]", {
+      model: body?.model,
+      stream: body?.stream,
+      messagesCount: Array.isArray(body?.messages) ? body.messages.length : 0,
+      hasTools: Array.isArray(body?.tools),
+      toolsCount: Array.isArray(body?.tools) ? body.tools.length : 0,
+      toolChoice: body?.tool_choice,
+      parallelToolCalls: body?.parallel_tool_calls,
+      responseFormat: body?.response_format,
+      maxTokens: body?.max_tokens,
+      temperature: body?.temperature,
+      userAgent: request.headers.get("user-agent"),
+      hasAuthorization: Boolean(request.headers.get("authorization")),
+    });
+
+    const modelName = body.model;
+    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const stream = body.stream === true;
 
     if (!modelName) {
-      return NextResponse.json({ error: { message: "Vui lòng chỉ định model.", type: "invalid_request_error", code: "missing_model" } }, { status: 400 });
+      return NextResponse.json(
+        { error: { message: "Vui lòng chỉ định model.", type: "invalid_request_error", code: "missing_model" } },
+        { status: 400 },
+      );
     }
 
     if (!bucket.allowedModels.includes(modelName)) {
-      return NextResponse.json({ error: { message: "Model không nằm trong gói đã mua.", type: "invalid_request_error", code: "model_not_allowed" } }, { status: 403 });
+      return NextResponse.json(
+        {
+          error: {
+            message: "Model không nằm trong gói đã mua.",
+            type: "invalid_request_error",
+            code: "model_not_allowed",
+          },
+        },
+        { status: 403 },
+      );
     }
 
-    const aiModel = await prisma.aiModel.findFirst({
-      where: { publicName: modelName },
-      include: { provider: true }
-    }) as unknown as AiModelWithProvider | null;
+    const aiModel = await getCachedAiModel(modelName);
 
     if (!aiModel) {
-      return NextResponse.json({ error: { message: "Model không tồn tại.", type: "invalid_request_error", code: "model_not_found" } }, { status: 404 });
+      return NextResponse.json(
+        { error: { message: "Model không tồn tại.", type: "invalid_request_error", code: "model_not_found" } },
+        { status: 404 },
+      );
     }
 
     if (!aiModel.isActive) {
-      return NextResponse.json({
-        error: {
-          message: "Model này hiện đang tạm ngưng. Vui lòng chọn model khác.",
-          type: "model_inactive",
-          code: "MODEL_INACTIVE"
-        }
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          error: {
+            message: "Model này hiện đang tạm ngưng. Vui lòng chọn model khác.",
+            type: "model_inactive",
+            code: "MODEL_INACTIVE",
+          },
+        },
+        { status: 403 },
+      );
     }
 
-    // --- Fallback Selection ---
-    const allModels = await prisma.aiModel.findMany({
-      where: {
-        upstreamModel: aiModel.upstreamModel,
-        isActive: true,
-        provider: { isActive: true }
-      },
-      include: { provider: true }
-    }) as unknown as AiModelWithProvider[];
+    const requestHasTools = Array.isArray(body.tools) && body.tools.length > 0;
+    const supportsTools = aiModel.supportsTools === true;
+    const supportsAgent = aiModel.supportsAgent === true;
 
-    const candidates = [
-      aiModel,
-      ...allModels.filter(m => m.id !== aiModel.id)
-    ];
+    console.log("[TOOLS_GUARD_DEBUG]", {
+      model: body.model,
+      requestHasTools,
+      supportsTools,
+      supportsAgent,
+      toolsType: typeof body.tools,
+      toolsCount: Array.isArray(body.tools) ? body.tools.length : 0,
+      toolChoice: body.tool_choice,
+    });
 
-    if (stream === true) {
+    console.log("[AGENT_FALLBACK_ENABLED]", {
+      model: body.model,
+      requestHasTools,
+      supportsTools,
+      supportsAgent,
+    });
+
+    if (requestHasTools && !supportsTools && !supportsAgent) {
+      return NextResponse.json(
+        {
+          error: {
+            message:
+              "Model này chưa hỗ trợ tool calling/function calling. Vui lòng dùng model Agent hoặc chuyển extension sang Chat/Edit/Apply.",
+            type: "unsupported_feature",
+            code: "tools_not_supported",
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const allModels = await getCachedAllModels(aiModel.upstreamModel);
+
+    const candidates = [aiModel, ...allModels.filter((m) => m.id !== aiModel.id)];
+
+    if (stream) {
       return handleStreamingChatCompletion({
         apiKey,
         bucket,
         candidates,
         messages,
-        temperature,
-        max_tokens,
         modelName,
+        body,
+        requestHasTools,
+        startTime,
       });
     }
 
-    // --- Non-Streaming with Fallback ---
     for (let i = 0; i < candidates.length; i++) {
       const currentModel = candidates[i];
       const currentProvider = currentModel.provider;
       const isResponsesAPI = currentModel.upstreamEndpointType === "RESPONSES";
 
-      let currentProviderApiKey;
+      let currentProviderApiKey: string;
       try {
         currentProviderApiKey = decryptText(currentProvider.encryptedApiKey);
-      } catch { continue; }
+      } catch {
+        continue;
+      }
 
       const endpointPath = isResponsesAPI ? "/responses" : "/chat/completions";
       const baseUrl = currentProvider.baseUrl.endsWith("/") ? currentProvider.baseUrl.slice(0, -1) : currentProvider.baseUrl;
       const upstreamUrl = `${baseUrl}${endpointPath}`;
 
-      console.log(`[TzoShop upstream debug] Attempt ${i + 1}/${candidates.length}: ${currentProvider.name} -> ${currentModel.upstreamModel} (Non-Stream)`);
-
-      let upstreamBody: Record<string, unknown>;
-      if (isResponsesAPI) {
-        upstreamBody = {
-          model: currentModel.upstreamModel,
-          input: messages.map((m: ChatMessage) => ({
-            role: m.role,
-            content: typeof m.content === "string" ? m.content : JSON.stringify(m.content)
-          })),
-          stream: false,
-          instructions: messages.find((m: ChatMessage) => m.role === "system")?.content || undefined
-        };
-      } else {
-        upstreamBody = {
-          model: currentModel.upstreamModel,
-          messages,
-          temperature,
-          max_tokens,
-          stream: false,
-        };
-      }
+      const upstreamBody = buildUpstreamBody({
+        aiModel: currentModel,
+        body,
+        messages,
+        stream: false,
+        modelSupportsTools: currentModel.supportsTools === true,
+        agentFallbackEnabled: requestHasTools && currentModel.supportsAgent === true && currentModel.supportsTools !== true,
+      });
 
       try {
+        const upstreamHeaders = {
+          Authorization: `Bearer ${currentProviderApiKey}`,
+          "Content-Type": "application/json",
+          Accept: body.stream ? "text/event-stream" : "application/json",
+        };
+        console.log("[UPSTREAM_HEADERS_KEYS]", Object.keys(upstreamHeaders));
+
         const upstreamResponse = await fetch(upstreamUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${currentProviderApiKey}`,
-          },
+          headers: upstreamHeaders,
           body: JSON.stringify(upstreamBody),
         });
 
         if (!upstreamResponse.ok) {
           const errorText = await upstreamResponse.text();
-          console.error(`[Upstream Error Response] Provider: ${currentProvider.name}, Status: ${upstreamResponse.status}, Body: ${errorText}`);
+          console.error(
+            `[Upstream Error Response] Provider: ${currentProvider.name}, Status: ${upstreamResponse.status}, Body: ${errorText}`,
+          );
 
           if (isRetryableError(upstreamResponse.status, errorText) && i < candidates.length - 1) {
             continue;
@@ -520,7 +861,7 @@ export async function POST(request: NextRequest) {
           try {
             const errorJson = JSON.parse(errorText);
             errorMsg = errorJson.error?.message || errorJson.message || errorMsg;
-          } catch { }
+          } catch {}
 
           await logFailedUsage({
             userId: apiKey.userId,
@@ -529,38 +870,60 @@ export async function POST(request: NextRequest) {
             apiFamily: apiKey.apiFamily,
             model: modelName,
             errorMessage: errorMsg,
-            errorCode: (upstreamResponse.status === 429 || errorText.toLowerCase().includes("saturated")) ? "PROVIDER_RATE_LIMITED" : "UPSTREAM_ERROR",
+            errorCode:
+              upstreamResponse.status === 429 || errorText.toLowerCase().includes("saturated")
+                ? "PROVIDER_RATE_LIMITED"
+                : "UPSTREAM_ERROR",
             httpStatus: upstreamResponse.status,
           });
 
-          return NextResponse.json({
-            error: {
-              message: "Nhà cung cấp dịch vụ AI đang quá tải hoặc bận. Vui lòng thử lại sau giây lát.",
-              type: "upstream_error",
-              code: "PROVIDER_RATE_LIMITED"
-            }
-          }, { status: upstreamResponse.status === 429 ? 429 : 503 });
+          return NextResponse.json(
+            {
+              error: {
+                message:
+                  "Nhà cung cấp dịch vụ AI đang quá tải hoặc bận. Vui lòng thử lại sau giây lát.",
+                type: "upstream_error",
+                code: "PROVIDER_RATE_LIMITED",
+              },
+            },
+            { status: upstreamResponse.status === 429 ? 429 : 503 },
+          );
         }
 
-        const responseData = await upstreamResponse.json();
-        let assistantContent = "";
-        if (isResponsesAPI) {
-          assistantContent = extractResponsesText(responseData);
-        } else {
-          assistantContent = responseData.choices?.[0]?.message?.content || "";
+        const responseData = (await upstreamResponse.json()) as Record<string, unknown>;
+        const hasToolCalls = hasToolSignals(responseData);
+        const isAgentFallbackMode =
+          requestHasTools && currentModel.supportsAgent === true && currentModel.supportsTools !== true;
+        const assistantContent = isResponsesAPI
+          ? extractResponsesText(responseData)
+          : ((responseData.choices as Array<{ message?: { content?: string } }> | undefined)?.[0]?.message?.content ?? "");
+
+        let parsedFallbackToolCall: ReturnType<typeof tryParseToolCallFromText> = null;
+        if (isAgentFallbackMode && assistantContent) {
+          parsedFallbackToolCall = tryParseToolCallFromText(assistantContent);
+          console.log("[AGENT_FALLBACK_UPSTREAM_TEXT]", assistantContent.slice(0, 2000));
+          console.log("[AGENT_FALLBACK_PARSED_TOOL_CALL]", parsedFallbackToolCall);
         }
 
-        if (!assistantContent || assistantContent.trim().length === 0) {
+        if ((!assistantContent || assistantContent.trim().length === 0) && !hasToolCalls && !parsedFallbackToolCall) {
           if (i < candidates.length - 1) continue;
-          return NextResponse.json({ error: { message: "Nhà cung cấp AI trả về phản hồi rỗng." } }, { status: 502 });
+          return NextResponse.json(
+            { error: { message: "Nhà cung cấp AI trả về phản hồi rỗng." } },
+            { status: 502 },
+          );
         }
 
-        // SUCCESS
-        let promptTokens = responseData.usage?.prompt_tokens || responseData.usage?.input_tokens;
-        let completionTokens = responseData.usage?.completion_tokens || responseData.usage?.output_tokens;
+        let promptTokens =
+          (responseData.usage as Record<string, number> | undefined)?.prompt_tokens ??
+          (responseData.usage as Record<string, number> | undefined)?.input_tokens;
+        let completionTokens =
+          (responseData.usage as Record<string, number> | undefined)?.completion_tokens ??
+          (responseData.usage as Record<string, number> | undefined)?.output_tokens;
 
         if (typeof promptTokens !== "number") {
-          const inputContent = messages?.map((m: { content: string }) => m.content).join(" ") || "";
+          const inputContent = messages
+            .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
+            .join(" ");
           promptTokens = Math.ceil(inputContent.length / 4);
         }
         if (typeof completionTokens !== "number") {
@@ -589,33 +952,77 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        checkCreditAlertsForUser(apiKey.userId).catch(() => { });
+        checkCreditAlertsForUser(apiKey.userId).catch(() => {});
 
-        const finalResponse = isResponsesAPI ? {
-          id: responseData.id || `chatcmpl-${Date.now()}`,
-          object: "chat.completion",
-          created: responseData.created || Math.floor(Date.now() / 1000),
-          model: modelName,
-          choices: [{ index: 0, message: { role: "assistant", content: assistantContent }, finish_reason: "stop" }],
-          usage: { prompt_tokens: promptTokens, completion_tokens: completionTokens, total_tokens: promptTokens + completionTokens }
-        } : responseData;
+        const finalResponse =
+          parsedFallbackToolCall
+            ? {
+                id: (responseData.id as string) || `chatcmpl-${Date.now()}`,
+                object: "chat.completion",
+                created: (responseData.created as number) || Math.floor(Date.now() / 1000),
+                model: modelName,
+                choices: [
+                  {
+                    index: 0,
+                    message: {
+                      role: "assistant",
+                      content: null,
+                      tool_calls: [parsedFallbackToolCall],
+                    },
+                    finish_reason: "tool_calls",
+                  },
+                ],
+                usage: {
+                  prompt_tokens: promptTokens,
+                  completion_tokens: completionTokens,
+                  total_tokens: promptTokens + completionTokens,
+                },
+              }
+            : isResponsesAPI && !("choices" in responseData)
+            ? {
+                id: (responseData.id as string) || `chatcmpl-${Date.now()}`,
+                object: "chat.completion",
+                created: (responseData.created as number) || Math.floor(Date.now() / 1000),
+                model: modelName,
+                choices: [
+                  {
+                    index: 0,
+                    message: { role: "assistant", content: assistantContent },
+                    finish_reason: "stop",
+                  },
+                ],
+                usage: {
+                  prompt_tokens: promptTokens,
+                  completion_tokens: completionTokens,
+                  total_tokens: promptTokens + completionTokens,
+                },
+              }
+            : responseData;
 
         return NextResponse.json({
           ...finalResponse,
           model: modelName,
           usage: {
-            ...finalResponse.usage,
+            ...((finalResponse as Record<string, unknown>).usage as Record<string, unknown> | undefined),
             credits_charged: creditsUsed,
             credits_remaining: result.remaining.toString(),
-          }
+          },
         });
       } catch (error) {
         if (i < candidates.length - 1) continue;
         throw error;
       }
     }
+
+    return NextResponse.json(
+      { error: { message: "Không có provider khả dụng.", type: "upstream_error", code: "no_provider_available" } },
+      { status: 503 },
+    );
   } catch (error) {
     console.error("[Gateway] /api/v1/chat/completions failed:", error);
-    return NextResponse.json({ error: { message: "Đã có lỗi xảy ra trên hệ thống Gateway." } }, { status: 500 });
+    return NextResponse.json(
+      { error: { message: "Đã có lỗi xảy ra trên hệ thống Gateway." } },
+      { status: 500 },
+    );
   }
 }

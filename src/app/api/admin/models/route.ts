@@ -13,28 +13,69 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const { page, pageSize, skip, take } = getPagination(searchParams);
     const search = searchParams.get("search")?.trim() || "";
-    const where = search
-      ? {
-          OR: [
-            { publicName: { contains: search, mode: "insensitive" as const } },
-            { upstreamModel: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {};
-    const [total, models] = await Promise.all([
+    const family = searchParams.get("family")?.trim() || "ALL";
+    const provider = searchParams.get("provider")?.trim() || "ALL";
+    const status = searchParams.get("status")?.trim() || "ALL";
+    const sort = searchParams.get("sort")?.trim() || "NEWEST";
+
+    const where: Prisma.AiModelWhereInput = {
+      AND: [
+        search
+          ? {
+              OR: [
+                { publicName: { contains: search, mode: "insensitive" as const } },
+                { upstreamModel: { contains: search, mode: "insensitive" as const } },
+              ],
+            }
+          : {},
+        family !== "ALL" ? { apiFamily: family as ApiFamily } : {},
+        provider !== "ALL" ? { providerId: provider } : {},
+        status === "ACTIVE" ? { isActive: true } : status === "INACTIVE" ? { isActive: false } : {},
+      ],
+    };
+
+    const orderBy: Prisma.AiModelOrderByWithRelationInput[] =
+      sort === "NAME_ASC"
+        ? [{ publicName: "asc" }]
+        : sort === "FAMILY"
+          ? [{ apiFamily: "asc" }, { publicName: "asc" }]
+          : sort === "USAGE"
+            ? [{ outputCreditRate: "desc" }, { publicName: "asc" }]
+            : [{ createdAt: "desc" }];
+
+    const [totalModels, activeModels, inactiveModels, familyGroups, models] = await Promise.all([
       prisma.aiModel.count({ where }),
+      prisma.aiModel.count({ where: { ...where, isActive: true } }),
+      prisma.aiModel.count({ where: { ...where, isActive: false } }),
+      prisma.aiModel.groupBy({
+        by: ["apiFamily"],
+        where,
+        _count: { apiFamily: true },
+      }),
       prisma.aiModel.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          publicName: true,
+          upstreamModel: true,
+          apiFamily: true,
+          providerId: true,
+          inputCreditRate: true,
+          outputCreditRate: true,
+          upstreamEndpointType: true,
+          supportsStreaming: true,
+          supportsTools: true,
+          supportsAgent: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
           provider: {
             select: {
-              name: true
-            }
-          }
+              name: true,
+            },
+          },
         },
-        orderBy: {
-          publicName: "asc",
-        },
+        orderBy,
         skip,
         take,
       }),
@@ -44,7 +85,14 @@ export async function GET(request: NextRequest) {
       success: true,
       data: models,
       items: models,
-      pagination: buildPagination({ page, pageSize, total }),
+      models,
+      pagination: buildPagination({ page, pageSize, total: totalModels }),
+      summary: {
+        totalModels,
+        activeModels,
+        inactiveModels,
+        familyCount: familyGroups.length,
+      },
     });
 
   } catch (error) {
@@ -91,6 +139,9 @@ export async function POST(request: NextRequest) {
       },
       inputCreditRate: Number(inputCreditRate) || 1,
       outputCreditRate: Number(outputCreditRate) || 1,
+      supportsStreaming: body.supportsStreaming ?? true,
+      supportsTools: body.supportsTools ?? false,
+      supportsAgent: body.supportsAgent ?? false,
       isActive: isActive ?? true,
     };
 
