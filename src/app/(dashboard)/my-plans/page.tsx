@@ -1,5 +1,6 @@
 "use client";
 
+
 import { PlanSetupInstructions } from "@/components/dashboard/plan-setup-instructions";
 import { formatModelName } from "@/lib/model-display";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -16,6 +17,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getAiLineFromProductSlug, getAiLineLabelFromSlug, getAiLineLabelFromApiFamily, type AiLine } from "@/lib/ai-line";
 import { TextFadeInUp } from "@/components/ui/text-fade-in-up";
 import { CosmicButton } from "@/components/ui/cosmic-button";
 import {
@@ -26,18 +28,21 @@ import {
 } from "@/components/skeletons/dashboard-skeletons";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 
-type ApiFamily = "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
 type StatusFilter = "all" | "active" | "expiring" | "expired";
 
 const MAX_VISIBLE_MODELS = 3;
-const EXPIRING_DAYS = 7;
+const EXPIRING_DAYS = 3;
 
 type MyPlanItem = {
   id: string;
-  apiFamily: ApiFamily;
+  apiFamily: "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
   creditsTotal: string;
   creditsRemaining: string;
   usedCredits: string;
+  newApiQuotaRemaining?: string | null;
+  newApiQuotaTotal?: string | null;
+  newApiQuotaUsed?: string | null;
+  quotaSource?: "DB" | "NEWAPI";
   apiKeyLimit: number;
   activeApiKeys: number;
   apiKeys: import("@/components/dashboard/plan-setup-instructions").ApiKey[];
@@ -53,19 +58,18 @@ type MyPlanItem = {
   } | null;
 };
 
-function getFamilyLabel(apiFamily: ApiFamily) {
-  const familyMap: Record<ApiFamily, string> = {
-    CODEXAI: "CodexAI",
-    CLAUDE: "Claude",
-    GEMINI: "Gemini",
-    DEEPSEEK: "DeepSeek",
-  };
-  return familyMap[apiFamily];
+function getDisplayAiFamily(bucket: { product?: { slug: string } | null; apiFamily: string }) {
+  if (bucket.product?.slug) return getAiLineLabelFromSlug(bucket.product.slug);
+  return getAiLineLabelFromApiFamily(bucket.apiFamily);
 }
 
 function formatCredits(value: string | number) {
   const num = typeof value === "string" ? Number(value) : value;
-  return new Intl.NumberFormat("vi-VN").format(num);
+  if (Number.isInteger(num)) {
+    return new Intl.NumberFormat("vi-VN").format(num);
+  }
+  const formatted = num.toFixed(2).replace(".", ",");
+  return formatted.replace(/,00$/, "");
 }
 
 function getPlanStatus(bucket: MyPlanItem, nowTs: number): "active" | "expiring" | "expired" {
@@ -123,7 +127,7 @@ export default function MyPlansPage() {
   const [expandedModelBucketIds, setExpandedModelBucketIds] = useState<Set<string>>(new Set());
   const [openInstructionBucketId, setOpenInstructionBucketId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [familyFilter, setFamilyFilter] = useState<ApiFamily | "all">("all");
+  const [familyFilter, setFamilyFilter] = useState<AiLine | "all">("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(9);
 
@@ -190,14 +194,23 @@ export default function MyPlansPage() {
     const withStatus = buckets.map((b) => ({ ...b, status: getPlanStatus(b, nowTs) }));
     const activeCount = withStatus.filter((b) => b.status === "active").length;
     const expiringCount = withStatus.filter((b) => b.status === "expiring").length;
-    const totalRemaining = withStatus.reduce((sum, b) => sum + Number(b.creditsRemaining), 0);
+    const totalRemaining = withStatus.reduce((sum, b) => {
+      const isNewApi = b.quotaSource === "NEWAPI";
+      const rem = isNewApi && b.newApiQuotaRemaining != null
+        ? Number(b.newApiQuotaRemaining)
+        : Number(b.creditsRemaining);
+      return sum + rem;
+    }, 0);
     const activeKeys = withStatus.reduce((sum, b) => sum + b.activeApiKeys, 0);
     return { activeCount, expiringCount, totalRemaining, activeKeys };
   }, [buckets, nowTs]);
 
   const availableFamilies = useMemo(() => {
-    const set = new Set<ApiFamily>();
-    buckets.forEach((b) => set.add(b.apiFamily));
+    const set = new Set<AiLine>();
+    buckets.forEach((b) => {
+      const line = b.product?.slug ? getAiLineFromProductSlug(b.product.slug) : null;
+      if (line) set.add(line);
+    });
     return Array.from(set);
   }, [buckets]);
 
@@ -205,7 +218,8 @@ export default function MyPlansPage() {
     return buckets.filter((bucket) => {
       const status = getPlanStatus(bucket, nowTs);
       const statusMatched = statusFilter === "all" ? true : status === statusFilter;
-      const familyMatched = familyFilter === "all" ? true : bucket.apiFamily === familyFilter;
+      const line = bucket.product?.slug ? getAiLineFromProductSlug(bucket.product.slug) : null;
+      const familyMatched = familyFilter === "all" ? true : line === familyFilter;
       return statusMatched && familyMatched;
     });
   }, [buckets, familyFilter, nowTs, statusFilter]);
@@ -229,7 +243,7 @@ export default function MyPlansPage() {
             <TextFadeInUp as="p" delay={0.08} className="text-sm leading-7 text-slate-600 md:text-base">
               Theo dõi credits, thời hạn sử dụng và các key đang gắn với từng gói.
             </TextFadeInUp>
-          </div>
+</div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <CosmicButton href="/plans">
               <Plus className="h-4 w-4" /> Mua thêm credits
@@ -267,7 +281,7 @@ export default function MyPlansPage() {
               },
               {
                 label: "Tổng credits còn lại",
-                value: formatCredits(stats.totalRemaining),
+                value: `${formatCredits(stats.totalRemaining)} credits`,
                 sub: "Có thể dùng",
                 icon: Wallet,
                 iconClass: "bg-violet-50 text-violet-600",
@@ -315,7 +329,7 @@ export default function MyPlansPage() {
                 <FilterChip active={familyFilter === "all"} onClick={() => { setFamilyFilter("all"); setPage(1); }}>Tất cả dòng AI</FilterChip>
                 {availableFamilies.map((family) => (
                   <FilterChip key={family} active={familyFilter === family} onClick={() => { setFamilyFilter(family); setPage(1); }}>
-                    {getFamilyLabel(family)}
+                    {family === "ALL_MODELS" ? "All Models" : getAiLineLabelFromApiFamily(family)}
                   </FilterChip>
                 ))}
               </div>
@@ -345,9 +359,16 @@ export default function MyPlansPage() {
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
               {paginatedBuckets.map((bucket) => {
                 const status = getPlanStatus(bucket, nowTs);
-                const remainingNum = Number(bucket.creditsRemaining);
-                const totalNum = Number(bucket.creditsTotal);
-                const usedNum = Math.max(totalNum - remainingNum, 0);
+                const isNewApi = bucket.quotaSource === "NEWAPI";
+                const remainingNum = isNewApi && bucket.newApiQuotaRemaining != null
+                  ? Number(bucket.newApiQuotaRemaining)
+                  : Number(bucket.creditsRemaining);
+                const totalNum = isNewApi && bucket.newApiQuotaTotal != null
+                  ? Number(bucket.newApiQuotaTotal)
+                  : Number(bucket.creditsTotal);
+                const usedNum = isNewApi && bucket.newApiQuotaUsed != null
+                  ? Number(bucket.newApiQuotaUsed)
+                  : Math.max(totalNum - remainingNum, 0);
                 const usedPercent = totalNum > 0 ? Math.min(100, Math.round((usedNum / totalNum) * 100)) : 0;
                 const isInstructionOpen = openInstructionBucketId === bucket.id;
                 const isExpandedModel = expandedModelBucketIds.has(bucket.id);
@@ -370,7 +391,7 @@ export default function MyPlansPage() {
                     <div className="mb-5 flex flex-wrap items-center gap-2">
                       <h3 className="text-2xl font-extrabold tracking-tight text-slate-950">{bucket.product?.name ?? "Gói tùy chỉnh"}</h3>
                       <span className="inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-                        {getFamilyLabel(bucket.apiFamily)}
+                        {getDisplayAiFamily(bucket)}
                       </span>
                       <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", statusBadgeClass)}>
                         {status === "active" ? "Đang hoạt động" : status === "expiring" ? "Sắp hết hạn" : "Đã hết hạn"}
@@ -381,12 +402,14 @@ export default function MyPlansPage() {
                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Credits còn lại / tổng</p>
                         <p className="mt-1 text-xl font-bold text-slate-950">
-                          {formatCredits(bucket.creditsRemaining)} / {formatCredits(bucket.creditsTotal)}
+                          {`${formatCredits(remainingNum)} / ${formatCredits(totalNum)} credits`}
                         </p>
                       </div>
                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Credits đã dùng</p>
-                        <p className="mt-1 text-xl font-bold text-slate-950">{formatCredits(bucket.usedCredits)}</p>
+                        <p className="mt-1 text-xl font-bold text-slate-950">
+                          {`${formatCredits(usedNum)} credits`}
+                        </p>
                       </div>
                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hạn dùng</p>
@@ -415,7 +438,7 @@ export default function MyPlansPage() {
                         />
                       </div>
                       <p className="mt-2 text-xs text-slate-600">
-                        {formatCredits(bucket.creditsRemaining)} / {formatCredits(bucket.creditsTotal)} credits còn lại
+                        {formatCredits(remainingNum)} / {formatCredits(totalNum)} credits còn lại
                       </p>
                     </div>
 
@@ -440,11 +463,15 @@ export default function MyPlansPage() {
                         )}
                       >
                         <div className="flex flex-wrap gap-2">
-                          {visibleModels.map((m) => (
-                            <span key={m} className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
-                              {m}
-                            </span>
-                          ))}
+                          {modelNames.length > 0 ? (
+                            visibleModels.map((m) => (
+                              <span key={m} className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
+                                {m}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-slate-400 italic font-medium">Chưa có model khả dụng</span>
+                          )}
                           {!isExpandedModel && hiddenCount > 0 && (
                             <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">+{hiddenCount} model</span>
                           )}

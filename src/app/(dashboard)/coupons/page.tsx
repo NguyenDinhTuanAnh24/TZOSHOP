@@ -430,7 +430,7 @@ export default function CouponsPage() {
                       "inline-flex flex-1 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200",
                       isDisabled
                         ? "pointer-events-none border border-slate-200 bg-slate-100 text-slate-400"
-                        : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:-translate-y-0.5 active:scale-[0.98]"
+                        : "bg-gradient-to-r from-indigo-600 to-violet-600 !text-white hover:-translate-y-0.5 active:scale-[0.98]"
                     )}
                   >
                     Dùng ngay

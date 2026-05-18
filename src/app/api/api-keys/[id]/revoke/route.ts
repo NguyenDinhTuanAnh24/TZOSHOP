@@ -50,6 +50,18 @@ export async function PATCH(_request: NextRequest, context: RouteContext) {
       });
     }
 
+    // Giải mã key để gọi thu hồi từ xa trên NewAPI
+    if (apiKey.encryptedKey) {
+      try {
+        const { decryptText } = await import("@/lib/crypto");
+        const fullKey = decryptText(apiKey.encryptedKey);
+        const { revokeNewApiTokenByKey } = await import("@/lib/newapi");
+        await revokeNewApiTokenByKey(fullKey);
+      } catch (e) {
+        console.error("Failed to revoke token on NewAPI during local key revocation:", e);
+      }
+    }
+
     const revokedKey = await prisma.apiKey.update({
       where: {
         id: apiKey.id,
@@ -59,6 +71,26 @@ export async function PATCH(_request: NextRequest, context: RouteContext) {
         revokedAt: new Date(),
       },
     });
+
+    try {
+      await prisma.auditLog.create({
+        data: {
+          adminUserId: user.id,
+          action: "REVOKE_API_KEY",
+          entityType: "API Keys",
+          entityId: revokedKey.id,
+          metadata: {
+            actorName: user.name || user.email,
+            actorEmail: user.email,
+            description: `Thu hồi API key: ${revokedKey.name}`,
+            module: "API Keys",
+            status: "success",
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Create audit log for API key revoke failed:", error);
+    }
 
     return NextResponse.json({
       data: {

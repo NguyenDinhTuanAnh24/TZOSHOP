@@ -6,22 +6,19 @@ export function formatVnd(value: number) {
   }).format(value);
 }
 
+export const OLD_INTERNAL_CREDITS_PER_NEW_CREDIT = 500000;
+
 export function formatCredits(value: bigint | number) {
   const numberValue = typeof value === "bigint" ? Number(value) : value;
+  
+  if (numberValue === 0) return "0 credits";
 
-  if (numberValue >= 1_000_000_000) {
-    return `${numberValue / 1_000_000_000}B credits`;
+  if (Number.isInteger(numberValue)) {
+    return `${new Intl.NumberFormat("en-US").format(numberValue)} credits`;
   }
 
-  if (numberValue >= 1_000_000) {
-    return `${numberValue / 1_000_000}M credits`;
-  }
-
-  if (numberValue >= 1_000) {
-    return `${numberValue / 1_000}K credits`;
-  }
-
-  return `${numberValue} credits`;
+  const formatted = numberValue.toFixed(6).replace(/\.?0+$/, "");
+  return `${formatted} credits`;
 }
 
 export function formatDuration(days: number | null) {
@@ -79,4 +76,14 @@ export function translateStatus(status: string) {
     VIEW: "Xem",
   };
   return statusMap[status.toUpperCase()] || status;
+}
+
+export function formatTokenCount(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return "0";
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 0,
+  }).format(Number(value));
 }

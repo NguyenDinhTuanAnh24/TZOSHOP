@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatVnd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CosmicButton } from "@/components/ui/cosmic-button";
+import { getAiLineFromProductSlug, getAiLineLabelFromApiFamily, getAiLineLabelFromSlug, type AiLine } from "@/lib/ai-line";
 
 type OrderItem = {
   id: string;
@@ -29,6 +30,7 @@ type OrderItem = {
   };
   product: {
     name: string;
+    slug?: string;
     apiFamily: string;
   };
   couponCode?: string;
@@ -36,7 +38,7 @@ type OrderItem = {
 };
 
 type StatusFilter = "ALL" | "PENDING" | "PAID" | "CANCELLED" | "EXPIRED";
-type FamilyFilter = "ALL" | "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
+type FamilyFilter = "ALL" | AiLine;
 type TimeFilter = "ALL" | "TODAY" | "7D" | "30D" | "MONTH";
 type SortFilter = "NEWEST" | "OLDEST" | "PRICE_HIGH" | "PRICE_LOW";
 
@@ -57,11 +59,19 @@ function statusClass(status: string) {
 }
 
 function familyClass(family: string) {
-  if (family === "CODEXAI") return "border-indigo-100 bg-indigo-50 text-indigo-700";
-  if (family === "CLAUDE") return "border-orange-100 bg-orange-50 text-orange-700";
-  if (family === "GEMINI") return "border-sky-100 bg-sky-50 text-sky-700";
-  if (family === "DEEPSEEK") return "border-violet-100 bg-violet-50 text-violet-700";
+  const f = family.toUpperCase();
+  if (f === "CODEXAI") return "border-indigo-100 bg-indigo-50 text-indigo-700";
+  if (f === "CLAUDE") return "border-orange-100 bg-orange-50 text-orange-700";
+  if (f === "GEMINI") return "border-sky-100 bg-sky-50 text-sky-700";
+  if (f === "DEEPSEEK") return "border-violet-100 bg-violet-50 text-violet-700";
+  if (f === "ALL MODELS" || f === "ALL_MODELS") return "border-purple-100 bg-purple-50 text-purple-700";
   return "border-slate-200 bg-slate-100 text-slate-700";
+}
+
+function getDisplayAiFamily(product?: { slug?: string; apiFamily: string }) {
+  if (!product) return "N/A";
+  if (product.slug) return getAiLineLabelFromSlug(product.slug);
+  return getAiLineLabelFromApiFamily(product.apiFamily);
 }
 
 function getInitials(name?: string, email?: string) {
@@ -161,7 +171,11 @@ export default function AdminOrdersPage() {
         );
       })
       .filter((o) => (statusFilter === "ALL" ? true : o.status === statusFilter))
-      .filter((o) => (familyFilter === "ALL" ? true : o.product?.apiFamily === familyFilter))
+      .filter((o) => {
+        if (familyFilter === "ALL") return true;
+        const line = o.product?.slug ? getAiLineFromProductSlug(o.product.slug) : null;
+        return line === familyFilter;
+      })
       .filter((o) => {
         if (timeFilter === "ALL") return true;
         const createdAt = new Date(o.createdAt).getTime();
@@ -244,7 +258,7 @@ export default function AdminOrdersPage() {
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
           <div className="relative lg:col-span-2"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo mã đơn, email khách hàng hoặc tên gói..." className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" /></div>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"><option value="ALL">Tất cả</option><option value="PENDING">Chờ thanh toán</option><option value="PAID">Đã thanh toán</option><option value="CANCELLED">Đã hủy</option><option value="EXPIRED">Hết hạn</option></select>
-          <select value={familyFilter} onChange={(e) => setFamilyFilter(e.target.value as FamilyFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"><option value="ALL">Tất cả dòng AI</option><option value="CODEXAI">CodexAI</option><option value="CLAUDE">Claude</option><option value="GEMINI">Gemini</option><option value="DEEPSEEK">DeepSeek</option></select>
+          <select value={familyFilter} onChange={(e) => setFamilyFilter(e.target.value as FamilyFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"><option value="ALL">Tất cả dòng AI</option><option value="ALL_MODELS">All Models</option><option value="CODEXAI">CodexAI</option><option value="CLAUDE">Claude</option><option value="GEMINI">Gemini</option><option value="DEEPSEEK">DeepSeek</option></select>
           <div className="grid grid-cols-2 gap-3"><select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value as TimeFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"><option value="ALL">Tất cả</option><option value="TODAY">Hôm nay</option><option value="7D">7 ngày</option><option value="30D">30 ngày</option><option value="MONTH">Tháng này</option></select><select value={sortFilter} onChange={(e) => setSortFilter(e.target.value as SortFilter)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"><option value="NEWEST">Mới nhất</option><option value="OLDEST">Cũ nhất</option><option value="PRICE_HIGH">Giá cao</option><option value="PRICE_LOW">Giá thấp</option></select></div>
         </div>
       </TextFadeInUp>
@@ -267,7 +281,7 @@ export default function AdminOrdersPage() {
                     <td className="px-4 py-3"><p className="font-semibold text-slate-900">#{order.orderCode}</p><p className="text-xs text-slate-400">{order.id}</p></td>
                     <td className="px-4 py-3"><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-700">{getInitials(order.user.name, order.user.email)}</div><div className="min-w-0"><p className="truncate font-semibold text-slate-900">{order.user.name || "Khách hàng"}</p><p className="truncate text-sm text-slate-600">{order.user.email}</p></div></div></td>
                     <td className="px-4 py-3"><p className="truncate text-slate-900">{order.product?.name || "Không xác định"}</p></td>
-                    <td className="px-4 py-3"><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", familyClass(order.product?.apiFamily || ""))}>{order.product?.apiFamily || "N/A"}</span></td>
+                    <td className="px-4 py-3"><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", familyClass(getDisplayAiFamily(order.product)))}>{getDisplayAiFamily(order.product)}</span></td>
                     <td className="px-4 py-3 font-semibold text-slate-900">{formatVnd(order.amountVnd ?? 0)}</td>
                     <td className="px-4 py-3"><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", statusClass(order.status))}>{statusLabel(order.status)}</span></td>
                     <td className="px-4 py-3 text-slate-600">{format(new Date(order.createdAt), "dd/MM/yyyy HH:mm")}</td>
@@ -284,7 +298,7 @@ export default function AdminOrdersPage() {
                 <div className="flex items-center justify-between gap-3"><p className="font-semibold text-slate-900">#{order.orderCode}</p><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", statusClass(order.status))}>{statusLabel(order.status)}</span></div>
                 <p className="mt-2 truncate text-sm text-slate-700">{order.user.email}</p>
                 <p className="mt-1 truncate text-sm text-slate-700">{order.product?.name || "Không xác định"}</p>
-                <div className="mt-3 flex items-center gap-2"><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", familyClass(order.product?.apiFamily || ""))}>{order.product?.apiFamily || "N/A"}</span></div>
+                <div className="mt-3 flex items-center gap-2"><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", familyClass(getDisplayAiFamily(order.product)))}>{getDisplayAiFamily(order.product)}</span></div>
                 <div className="mt-3 flex items-center justify-between text-sm"><span className="font-semibold text-slate-900">{formatVnd(order.amountVnd ?? 0)}</span><span className="text-slate-600">{format(new Date(order.createdAt), "dd/MM/yyyy HH:mm")}</span></div>
                 <div className="mt-4 flex flex-wrap gap-2"><Link href={`/admin/orders/${order.id}`} className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">Chi tiết</Link>{order.status === "PENDING" ? <><button type="button" onClick={() => askConfirm({ title: "Kiểm tra thanh toán?", description: "Hệ thống sẽ kiểm tra trạng thái thanh toán mới nhất của đơn hàng.", confirmLabel: "Kiểm tra", type: "primary", onConfirm: async () => handleVerifyPayment(order.id) })} className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">Kiểm tra thanh toán</button><button type="button" onClick={() => askConfirm({ title: "Hủy đơn hàng này?", description: "Đơn hàng đang chờ thanh toán sẽ được chuyển sang trạng thái đã hủy. Hành động này không ảnh hưởng đến các đơn hàng khác.", confirmLabel: "Hủy đơn", type: "danger", onConfirm: async () => handleUpdateStatus(order.id, "CANCELLED") })} className="inline-flex h-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">Hủy đơn</button></> : null}</div>
               </article>

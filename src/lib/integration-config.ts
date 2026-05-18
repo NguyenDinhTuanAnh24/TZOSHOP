@@ -6,7 +6,11 @@ export function getAppBaseUrl() {
 }
 
 export function getApiBaseUrl() {
-  return `${getAppBaseUrl()}/api/v1`;
+  return (
+    process.env.NEXT_PUBLIC_NEWAPI_PUBLIC_BASE_URL ||
+    process.env.NEWAPI_PUBLIC_BASE_URL ||
+    "http://localhost:3000/v1"
+  );
 }
 
 export function getChatCompletionsUrl() {
@@ -52,7 +56,7 @@ model_provider = "tzoshop"
 name = "TzoShop"
 base_url = "${apiBase}"
 env_key = "TZOSHOP_API_KEY"
-wire_api = "chat"`;
+wire_api = "responses"`;
 }
 
 export function generatePowerShellExample({ apiKey, model }: { apiKey: string, model: string }) {

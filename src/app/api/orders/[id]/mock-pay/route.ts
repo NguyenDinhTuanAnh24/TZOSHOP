@@ -44,17 +44,22 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     }
 
     if (order.status === "PAID") {
-      return NextResponse.json({
-        data: {
-          message: "Đơn hàng đã được thanh toán trước đó.",
-          order: {
-            id: order.id,
-            orderCode: order.orderCode,
-            status: order.status,
-            paidAt: order.paidAt,
-          },
-        },
+      const existingBucket = await prisma.creditBucket.findFirst({
+        where: { userId: order.userId, productId: order.productId }
       });
+      if (existingBucket) {
+        return NextResponse.json({
+          data: {
+            message: "Đơn hàng đã được thanh toán trước đó.",
+            order: {
+              id: order.id,
+              orderCode: order.orderCode,
+              status: order.status,
+              paidAt: order.paidAt,
+            },
+          },
+        });
+      }
     }
 
     if (order.status !== "PENDING") {
@@ -71,6 +76,26 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     }
 
     const result = await completePaidOrder(order.id);
+
+    try {
+      await prisma.auditLog.create({
+        data: {
+          adminUserId: user.id,
+          action: "MARK_ORDER_PAID",
+          entityType: "Orders",
+          entityId: result.order.id,
+          metadata: {
+            actorName: user.name || user.email,
+            actorEmail: user.email,
+            description: `Mock-pay đơn hàng ${result.order.orderCode}`,
+            module: "Orders",
+            status: "success",
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Create audit log for mock-pay failed:", error);
+    }
 
     return NextResponse.json({
       data: {

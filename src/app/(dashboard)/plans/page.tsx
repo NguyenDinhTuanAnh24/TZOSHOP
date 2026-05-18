@@ -1,4 +1,5 @@
-"use client";
+﻿"use client";
+
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,6 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TextFadeInUp } from "@/components/ui/text-fade-in-up";
 import { CosmicButton } from "@/components/ui/cosmic-button";
 import { cn } from "@/lib/utils";
+import { getAiLineFromProductSlug, getAiLineLabelFromApiFamily, getAiLineLabelFromSlug, type AiLine } from "@/lib/ai-line";
+import { formatModelName } from "@/lib/model-display";
 import {
   FilterBarSkeleton,
   PageHeaderSkeleton,
@@ -50,14 +53,8 @@ type UserCoupon = {
   minOrderAmount: number;
 };
 
-function getFamilyLabel(apiFamily: ApiFamily) {
-  const familyMap: Record<ApiFamily, string> = {
-    CODEXAI: "CodexAI",
-    CLAUDE: "Claude",
-    GEMINI: "Gemini",
-    DEEPSEEK: "DeepSeek",
-  };
-  return familyMap[apiFamily];
+function getPlanFamilyLabel(plan: Pick<ApiPlan, "slug" | "apiFamily">) {
+  return getAiLineFromProductSlug(plan.slug) ? getAiLineLabelFromSlug(plan.slug) : getAiLineLabelFromApiFamily(plan.apiFamily);
 }
 
 function formatCreditAmount(value: string) {
@@ -68,8 +65,13 @@ function formatCreditAmount(value: string) {
   return amount.toLocaleString("vi-VN");
 }
 
+function formatCreditsWithUnit(value: string | number) {
+  const text = typeof value === "string" ? formatCreditAmount(value) : Number(value).toLocaleString("vi-VN");
+  return `${text} credits`;
+}
+
 function formatCurrency(value: number) {
-  return `${value.toLocaleString("vi-VN")}đ`;
+  return `${value.toLocaleString("vi-VN")}Ä‘`;
 }
 
 function parseCreditsValue(value: string | number | null | undefined): number {
@@ -103,7 +105,7 @@ function isContactPlan(plan: ApiPlan) {
     plan.priceVnd === 0 ||
     name.includes("enterprise") ||
     name.includes("custom") ||
-    name.includes("liên hệ") ||
+    name.includes("liĂªn há»‡") ||
     tier.includes("enterprise") ||
     tier.includes("custom")
   );
@@ -111,75 +113,82 @@ function isContactPlan(plan: ApiPlan) {
 
 function getPlanAudienceText(plan: ApiPlan) {
   const tier = plan.tier.toLowerCase();
-  if (tier.includes("enterprise")) return "Dành cho nhu cầu lớn hoặc đội nhóm.";
-  if (plan.apiFamily === "CODEXAI") return "Phù hợp lập trình, IDE và extension.";
-  if (plan.apiFamily === "CLAUDE") return "Phù hợp viết nội dung, phân tích và xử lý văn bản.";
-  if (plan.apiFamily === "GEMINI") return "Phù hợp đa nhiệm, tốc độ tốt và chi phí cân bằng.";
-  if (plan.apiFamily === "DEEPSEEK") return "Phù hợp tối ưu chi phí khi dùng thường xuyên.";
-  return "Phù hợp nhiều nhu cầu sử dụng khác nhau.";
+  if (tier.includes("enterprise")) return "DĂ nh cho nhu cáº§u lá»›n hoáº·c Ä‘á»™i nhĂ³m.";
+  if (plan.slug.startsWith("all_models_")) return "DĂ¹ng chung toĂ n bá»™ model CodexAI, Claude, Gemini vĂ  DeepSeek trong má»™t gĂ³i.";
+  if (plan.apiFamily === "CODEXAI") return "PhĂ¹ há»£p láº­p trĂ¬nh, IDE vĂ  extension.";
+  if (plan.apiFamily === "CLAUDE") return "PhĂ¹ há»£p viáº¿t ná»™i dung, phĂ¢n tĂ­ch vĂ  xá»­ lĂ½ vÄƒn báº£n.";
+  if (plan.apiFamily === "GEMINI") return "PhĂ¹ há»£p Ä‘a nhiá»‡m, tá»‘c Ä‘á»™ tá»‘t vĂ  chi phĂ­ cĂ¢n báº±ng.";
+  if (plan.apiFamily === "DEEPSEEK") return "PhĂ¹ há»£p tá»‘i Æ°u chi phĂ­ khi dĂ¹ng thÆ°á»ng xuyĂªn.";
+  return "PhĂ¹ há»£p nhiá»u nhu cáº§u sá»­ dá»¥ng khĂ¡c nhau.";
 }
 
 function getDurationLabel(plan: ApiPlan) {
-  if (plan.durationDays && plan.durationDays > 0) return `${plan.durationDays} ngày`;
-  return "Dùng đến khi hết credits";
+  if (plan.durationDays && plan.durationDays > 0) return `${plan.durationDays} ngĂ y`;
+  return "DĂ¹ng Ä‘áº¿n khi háº¿t credits";
 }
 
-const tierTabs = [
-  { label: "Tất cả", value: "Tất cả" },
-  { label: "Trial", value: "Trial" },
-  { label: "Mini", value: "Mini" },
-  { label: "Plus", value: "Plus" },
-  { label: "Pro", value: "Pro" },
-  { label: "Max", value: "Max" },
-  { label: "Ultra", value: "Ultra" },
-  { label: "Enterprise", value: "Enterprise" },
+const durationTabs = [
+  { label: "Táº¥t cáº£", value: "all" },
+  { label: "7 ngĂ y", value: "7" },
+  { label: "30 ngĂ y", value: "30" },
+  { label: "90 ngĂ y", value: "90" },
+  { label: "365 ngĂ y", value: "365" },
 ];
 
-const durationTabs = [
-  { label: "Tất cả", value: "Tất cả" },
-  { label: "Gói chính", value: "Gói chính" },
-  { label: "Gói dài hạn", value: "Gói dài hạn" },
+const packageTypeTabs = [
+  { label: "Táº¥t cáº£", value: "all" },
+  { label: "Trial 7 ngĂ y", value: "trial" },
+  { label: "1 thĂ¡ng", value: "monthly" },
+  { label: "3 thĂ¡ng", value: "quarterly" },
+  { label: "1 nÄƒm", value: "yearly" },
 ];
 
 const sortOptions = [
-  { label: "Giá thấp", value: "price-asc" },
-  { label: "Giá cao", value: "price-desc" },
-  { label: "Credits", value: "credits-desc" },
-  { label: "Thời hạn", value: "duration-desc" },
-  { label: "Gói liên hệ", value: "contact" },
+  { label: "GiĂ¡ tháº¥p", value: "price-asc" },
+  { label: "GiĂ¡ cao", value: "price-desc" },
+  { label: "Credits tháº¥p", value: "credits-asc" },
+  { label: "Credits cao", value: "credits-desc" },
+  { label: "Thá»i háº¡n ngáº¯n", value: "duration-asc" },
+  { label: "Thá»i háº¡n dĂ i", value: "duration-desc" },
 ];
 
 const ITEMS_PER_PAGE = 6;
-const MAX_VISIBLE_MODELS = 3;
+const MAX_VISIBLE_MODELS = 2;
 
 const aiFamilies: Array<{
-  id: ApiFamily;
+  id: AiLine;
   name: string;
   description: string;
   logoSrc: string;
 }> = [
   {
+    id: "ALL_MODELS",
+    name: "All Models",
+    description: "DĂ¹ng chung toĂ n bá»™ model trong má»™t gĂ³i.",
+    logoSrc: "/logos/gemini.svg",
+  },
+  {
     id: "CODEXAI",
     name: "CodexAI",
-    description: "Phù hợp lập trình, IDE và extension.",
+    description: "PhĂ¹ há»£p láº­p trĂ¬nh, IDE vĂ  extension.",
     logoSrc: "/logos/codexai.svg",
   },
   {
     id: "CLAUDE",
     name: "Claude",
-    description: "Phù hợp viết nội dung, phân tích và xử lý văn bản.",
+    description: "PhĂ¹ há»£p viáº¿t ná»™i dung, phĂ¢n tĂ­ch vĂ  xá»­ lĂ½ vÄƒn báº£n.",
     logoSrc: "/logos/claude.svg",
   },
   {
     id: "GEMINI",
     name: "Gemini",
-    description: "Phù hợp đa nhiệm, tốc độ tốt và chi phí cân bằng.",
+    description: "PhĂ¹ há»£p Ä‘a nhiá»‡m, tá»‘c Ä‘á»™ tá»‘t vĂ  chi phĂ­ cĂ¢n báº±ng.",
     logoSrc: "/logos/gemini.svg",
   },
   {
     id: "DEEPSEEK",
     name: "DeepSeek",
-    description: "Phù hợp tối ưu chi phí khi dùng thường xuyên.",
+    description: "PhĂ¹ há»£p tá»‘i Æ°u chi phĂ­ khi dĂ¹ng thÆ°á»ng xuyĂªn.",
     logoSrc: "/logos/deepseek.svg",
   },
 ];
@@ -226,14 +235,13 @@ function PlansPageContent() {
   const [plansError, setPlansError] = useState("");
   const { toast, showToast, clearToast } = useToast(3000);
 
-  const [selectedFamily, setSelectedFamily] = useState<ApiFamily | null>(null);
+  const [selectedFamily, setSelectedFamily] = useState<AiLine>("ALL_MODELS");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTier, setSelectedTier] = useState("Tất cả");
-  const [selectedPlanType, setSelectedPlanType] = useState("Tất cả");
+  const [selectedDuration, setSelectedDuration] = useState("all");
+  const [selectedPackageType, setSelectedPackageType] = useState("all");
   const [selectedPlanToBuy, setSelectedPlanToBuy] = useState<ApiPlan | null>(null);
   const [isConfirmBuyOpen, setIsConfirmBuyOpen] = useState(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [expandedModelPlans, setExpandedModelPlans] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("price-asc");
   const [hasHandledProductQuery, setHasHandledProductQuery] = useState(false);
 
@@ -279,7 +287,7 @@ function PlansPageContent() {
     const targetPlan = plans.find((p) => p.id === productIdFromPricing);
     if (!targetPlan) return;
     const timer = window.setTimeout(() => {
-      setSelectedFamily(targetPlan.apiFamily);
+      setSelectedFamily(getAiLineFromProductSlug(targetPlan.slug) ?? "ALL_MODELS");
       setCurrentPage(1);
       setSelectedPlanToBuy(targetPlan);
       setIsConfirmBuyOpen(true);
@@ -288,38 +296,36 @@ function PlansPageContent() {
     return () => window.clearTimeout(timer);
   }, [hasHandledProductQuery, isLoadingPlans, plans, searchParams]);
 
-  const filteredPlans = useMemo(() => {
+    const filteredPlans = useMemo(() => {
     return plans.filter((plan) => {
-      const isLongTerm = plan.slug.match(/-(3m|6m|year|enterprise)$/);
-      const matchesFamily = selectedFamily ? plan.apiFamily === selectedFamily : true;
-      const matchesTier = selectedTier === "Tất cả" || plan.tier === selectedTier;
-      const matchesPlanType =
-        selectedPlanType === "Tất cả" ||
-        (selectedPlanType === "Gói chính" && !isLongTerm) ||
-        (selectedPlanType === "Gói dài hạn" && isLongTerm);
-      return matchesFamily && matchesTier && matchesPlanType;
+      const line = getAiLineFromProductSlug(plan.slug);
+      const matchesFamily = line === selectedFamily;
+      const matchesDuration = selectedDuration === "all" || Number(plan.durationDays ?? 0) === Number(selectedDuration);
+      const matchesPackageType =
+        selectedPackageType === "all" ||
+        (selectedPackageType === "trial" && plan.slug.endsWith("_trial")) ||
+        (selectedPackageType === "monthly" && plan.slug.endsWith("_monthly")) ||
+        (selectedPackageType === "quarterly" && plan.slug.endsWith("_quarterly")) ||
+        (selectedPackageType === "yearly" && plan.slug.endsWith("_yearly"));
+
+      return matchesFamily && matchesDuration && matchesPackageType;
     });
-  }, [plans, selectedFamily, selectedTier, selectedPlanType]);
+  }, [plans, selectedFamily, selectedDuration, selectedPackageType]);
 
-  const sortedPlans = useMemo(() => {
-    let plansCopy = [...filteredPlans];
-    if (sortBy === "contact") plansCopy = plansCopy.filter(isContactPlan);
-
-    if (sortBy === "price-asc") {
-      return plansCopy.sort((a, b) => {
-        const priceA = Number(a.priceVnd ?? 0);
-        const priceB = Number(b.priceVnd ?? 0);
-        if (priceA === 0 && priceB !== 0) return 1;
-        if (priceA !== 0 && priceB === 0) return -1;
-        return priceA - priceB;
-      });
-    }
+    const sortedPlans = useMemo(() => {
+    const plansCopy = [...filteredPlans];
 
     switch (sortBy) {
+      case "price-asc":
+        return plansCopy.sort((a, b) => Number(a.priceVnd ?? 0) - Number(b.priceVnd ?? 0));
       case "price-desc":
         return plansCopy.sort((a, b) => Number(b.priceVnd ?? 0) - Number(a.priceVnd ?? 0));
+      case "credits-asc":
+        return plansCopy.sort((a, b) => getPlanCredits(a) - getPlanCredits(b));
       case "credits-desc":
         return plansCopy.sort((a, b) => getPlanCredits(b) - getPlanCredits(a));
+      case "duration-asc":
+        return plansCopy.sort((a, b) => (a.durationDays ?? 0) - (b.durationDays ?? 0));
       case "duration-desc":
         return plansCopy.sort((a, b) => (b.durationDays ?? 0) - (a.durationDays ?? 0));
       default:
@@ -362,10 +368,10 @@ function PlansPageContent() {
         message: result.message,
         code: result.code,
       });
-      if (result.valid) showToast("Áp dụng mã giảm giá thành công!", "success");
-      else showToast(result.message || "Mã giảm giá không hợp lệ.", "error");
+      if (result.valid) showToast("Ăp dá»¥ng mÄ‚Â£ giáº£m giÄ‚Â¡ thÄ‚Â nh cÄ‚Â´ng!", "success");
+      else showToast(result.message || "MÄ‚Â£ giáº£m giÄ‚Â¡ khÄ‚Â´ng há»£p lá»‡.", "error");
     } catch {
-      showToast("Lỗi kiểm tra mã giảm giá.", "error");
+      showToast("LĂ¡Â»â€”i kiá»ƒm tra mÄ‚Â£ giáº£m giÄ‚Â¡.", "error");
     } finally {
       setIsValidatingCoupon(false);
     }
@@ -378,7 +384,7 @@ function PlansPageContent() {
       const result = await res.json();
       if (result.success) setMyCoupons(result.data.available);
     } catch {
-      showToast("Không thể tải kho mã.", "error");
+      showToast("KhÄ‚Â´ng thá»ƒ táº£i kho mÄ‚Â£.", "error");
     } finally {
       setIsLoadingCoupons(false);
     }
@@ -410,22 +416,22 @@ function PlansPageContent() {
         }),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result?.error?.message ?? "Cannot create order");
+      if (!response.ok) throw new Error(result?.error?.message ?? "Không thể tạo đơn hàng.");
       if (result.data?.freeOrder) {
-        showToast("Mua gói thành công! Gói đã được kích hoạt.", "success");
+        showToast("Mua gÄ‚Â³i thÄ‚Â nh cÄ‚Â´ng! GÄ‚Â³i Ă„'Ä‚Â£ Ä‘Æ°á»£c kÄ‚Â­ch hoáº¡t.", "success");
         setIsConfirmBuyOpen(false);
         setSelectedPlanToBuy(null);
         if (result.data.creditBucketId) router.push(`/api-keys?bucketId=${result.data.creditBucketId}`);
         else router.push("/my-plans");
         return;
       }
-      showToast("Đơn hàng đã được tạo.", "success");
+      showToast("ÄÆ¡n hÄ‚Â ng Ă„'Ä‚Â£ Ä‘Æ°á»£c táº¡o.", "success");
       setIsConfirmBuyOpen(false);
       setSelectedPlanToBuy(null);
       router.push("/billing");
     } catch (error) {
       console.error(error);
-      showToast("Không thể tạo đơn hàng.", "error");
+      showToast("KhÄ‚Â´ng thá»ƒ táº¡o Ä‘Æ¡n hÄ‚Â ng.", "error");
     } finally {
       setIsCreatingOrder(false);
     }
@@ -438,16 +444,16 @@ function PlansPageContent() {
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
-              <ShoppingCart className="h-4 w-4" /> Cửa hàng credits
+              <ShoppingCart className="h-4 w-4" /> CĂ¡Â»Â­a hÄ‚Â ng credits
             </div>
             <TextFadeInUp as="h1" className="text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">Mua credits</TextFadeInUp>
             <p className="text-sm leading-7 text-slate-600 md:text-base">
-              Chọn gói phù hợp với nhu cầu sử dụng AI của bạn. Credits được quản lý rõ ràng trong tài khoản.
+              Chá»n gÄ‚Â³i phÄ‚Â¹ há»£p vĂ¡Â»â€ºi nhu cáº§u sĂ¡Â»Â­ dá»¥ng AI cĂ¡Â»Â§a báº¡n. Credits Ä‘Æ°á»£c quáº£n lÄ‚Â½ rĂµ rÄ‚Â ng trong tÄ‚Â i khoáº£n.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <CosmicButton href="/my-plans">Gói của tôi</CosmicButton>
-            <CosmicButton href="/billing" variant="secondary">Lịch sử thanh toán</CosmicButton>
+            <CosmicButton href="/my-plans">GÄ‚Â³i cĂ¡Â»Â§a tÄ‚Â´i</CosmicButton>
+            <CosmicButton href="/billing" variant="secondary">Lá»‹ch sĂ¡Â»Â­ thanh toÄ‚Â¡n</CosmicButton>
           </div>
         </div>
       </section>
@@ -456,51 +462,48 @@ function PlansPageContent() {
         <PlansPageSkeleton />
       ) : plansError ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-          <h3 className="text-xl font-bold text-slate-950">Không thể tải danh sách gói</h3>
-          <p className="mt-2 text-sm text-slate-600">Vui lòng thử lại sau ít phút.</p>
+          <h3 className="text-xl font-bold text-slate-950">KhÄ‚Â´ng thá»ƒ táº£i danh sÄ‚Â¡ch gÄ‚Â³i</h3>
+          <p className="mt-2 text-sm text-slate-600">Vui lÄ‚Â²ng thĂ¡Â»Â­ láº¡i sau Ä‚Â­t phÄ‚Âºt.</p>
           <button onClick={loadPlans} className={`${secondaryBtnClass} mt-6`}>
-            <RefreshCw className="mr-2 h-4 w-4" />Thử lại
+            <RefreshCw className="mr-2 h-4 w-4" />Thá»­ láº¡i
           </button>
         </div>
       ) : (
         <div className="space-y-6">
           <section className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
             <div className="flex gap-2 overflow-x-auto">
-              <FilterChip active={selectedFamily === null} onClick={() => { setSelectedFamily(null); setCurrentPage(1); }}>
-                Tất cả
-              </FilterChip>
               {aiFamilies.map((family) => (
                 <FilterChip key={family.id} active={selectedFamily === family.id} onClick={() => { setSelectedFamily(family.id); setCurrentPage(1); }}>
                   {family.name}
                 </FilterChip>
               ))}
             </div>
-          </section>
+</section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
             <div className="grid gap-4 lg:grid-cols-3">
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Hiệu lực</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Hiá»‡u lá»±c</p>
                 <div className="flex flex-wrap gap-2">
                   {durationTabs.map((tab) => (
-                    <FilterChip key={tab.value} active={selectedPlanType === tab.value} onClick={() => { setSelectedPlanType(tab.value); setCurrentPage(1); }}>
+                    <FilterChip key={tab.value} active={selectedDuration === tab.value} onClick={() => { setSelectedDuration(tab.value); setCurrentPage(1); }}>
                       {tab.label}
                     </FilterChip>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Cấp độ</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Loáº¡i gĂ³i</p>
                 <div className="flex flex-wrap gap-2">
-                  {tierTabs.map((tab) => (
-                    <FilterChip key={tab.value} active={selectedTier === tab.value} onClick={() => { setSelectedTier(tab.value); setCurrentPage(1); }}>
+                  {packageTypeTabs.map((tab) => (
+                    <FilterChip key={tab.value} active={selectedPackageType === tab.value} onClick={() => { setSelectedPackageType(tab.value); setCurrentPage(1); }}>
                       {tab.label}
                     </FilterChip>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Sắp xếp</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Sáº¯p xáº¿p</p>
                 <div className="flex flex-wrap gap-2">
                   {sortOptions.map((opt) => (
                     <FilterChip key={opt.value} active={sortBy === opt.value} onClick={() => { setSortBy(opt.value); setCurrentPage(1); }}>
@@ -516,10 +519,10 @@ function PlansPageContent() {
             <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
               {filteredPlans.length === 0 ? (
                 <>
-                  <TextFadeInUp as="h3" className="text-xl font-bold text-slate-950">Chưa có gói credits phù hợp</TextFadeInUp>
-                  <p className="mt-2 text-sm text-slate-600">Bạn có thể đổi bộ lọc hoặc quay lại sau khi TzoShop cập nhật thêm gói mới.</p>
-                  <button type="button" onClick={() => { setSelectedFamily(null); setCurrentPage(1); }} className={`${secondaryBtnClass} mt-6`}>
-                    Xem tất cả dòng AI
+                  <TextFadeInUp as="h3" className="text-xl font-bold text-slate-950">ChÆ°a cÄ‚Â³ gÄ‚Â³i credits phÄ‚Â¹ há»£p</TextFadeInUp>
+                  <p className="mt-2 text-sm text-slate-600">Báº¡n cÄ‚Â³ thá»ƒ Ä‘á»•i bĂ¡Â»â„¢ lá»c hoáº·c quay láº¡i sau khi TzoShop cáº­p nháº­t thÄ‚Âªm gÄ‚Â³i mĂ¡Â»â€ºi.</p>
+                  <button type="button" onClick={() => { setSelectedFamily("ALL_MODELS"); setSelectedDuration("all"); setSelectedPackageType("all"); setCurrentPage(1); }} className={`${secondaryBtnClass} mt-6`}>
+                    Quay vá» All Models
                   </button>
                 </>
               ) : (
@@ -527,8 +530,8 @@ function PlansPageContent() {
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
                     <Search className="h-7 w-7" />
                   </div>
-                  <TextFadeInUp as="h3" className="text-xl font-bold text-slate-950">Không tìm thấy gói phù hợp</TextFadeInUp>
-                  <p className="mt-2 text-sm text-slate-600">Hãy thử đổi bộ lọc để tìm gói phù hợp hơn.</p>
+                  <TextFadeInUp as="h3" className="text-xl font-bold text-slate-950">KhÄ‚Â´ng tĂ¬m tháº¥y gÄ‚Â³i phÄ‚Â¹ há»£p</TextFadeInUp>
+                  <p className="mt-2 text-sm text-slate-600">HÄ‚Â£y thĂ¡Â»Â­ Ä‘á»•i bĂ¡Â»â„¢ lá»c Ä‘á»ƒ tĂ¬m gÄ‚Â³i phÄ‚Â¹ há»£p hĂ†Â¡n.</p>
                 </>
               )}
             </div>
@@ -536,27 +539,32 @@ function PlansPageContent() {
             <>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {paginatedPlans.map((plan) => {
-                  const isExpandedModel = expandedModelPlans.includes(plan.id);
                   const modelCount = plan.allowedModels.length;
-                  const visibleModels = isExpandedModel
-                    ? plan.allowedModels
-                    : plan.allowedModels.slice(0, MAX_VISIBLE_MODELS);
+                  const visibleModels = plan.allowedModels.slice(0, MAX_VISIBLE_MODELS);
                   const hiddenCount = Math.max(0, modelCount - MAX_VISIBLE_MODELS);
 
                   return (
                     <article key={plan.id} className={cardClass}>
                       <div className="flex items-start justify-between gap-3">
                         <span className="inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-                          {getFamilyLabel(plan.apiFamily)}
+                          {getPlanFamilyLabel(plan)}
                         </span>
                         <div className="flex items-center gap-2">
                           {plan.isPopular && (
                             <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                              <Star className="h-3.5 w-3.5" /> Phổ biến
+                              <Star className="h-3.5 w-3.5" /> Phá»• biáº¿n
                             </span>
                           )}
                           <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                            {plan.tier}
+                            {plan.slug.endsWith("_trial")
+                              ? "Trial 7 ngĂ y"
+                              : plan.slug.endsWith("_monthly")
+                                ? "1 thĂ¡ng"
+                                : plan.slug.endsWith("_quarterly")
+                                  ? "3 thĂ¡ng"
+                                  : plan.slug.endsWith("_yearly")
+                                    ? "1 nÄƒm"
+                                    : "GĂ³i credits"}
                           </span>
                         </div>
                       </div>
@@ -566,12 +574,12 @@ function PlansPageContent() {
 
                       <div className="mt-5 rounded-2xl bg-slate-50 p-4">
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Credits</p>
-                        <p className="mt-1 text-3xl font-extrabold text-slate-950">{formatCreditAmount(plan.credits)}</p>
+                        <p className="mt-1 text-3xl font-extrabold text-slate-950">{formatCreditsWithUnit(plan.credits)}</p>
                       </div>
 
                       <div className="mt-4 grid gap-2 text-sm text-slate-600">
                         <p className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2">
-                          <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-indigo-500" /> Thời hạn</span>
+                          <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-indigo-500" /> Thá»i háº¡n</span>
                           <span className="font-semibold text-slate-900">{getDurationLabel(plan)}</span>
                         </p>
                         <p className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2">
@@ -581,41 +589,29 @@ function PlansPageContent() {
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Models hỗ trợ</p>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            hiddenCount > 0 &&
-                            setExpandedModelPlans((prev) => (prev.includes(plan.id) ? prev.filter((id) => id !== plan.id) : [...prev, plan.id]))
-                          }
-                          className={cn(
-                            "mt-2 w-full rounded-xl border border-transparent p-1 text-left transition-colors",
-                            hiddenCount > 0
-                              ? "cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30"
-                              : "cursor-default"
-                          )}
-                        >
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Models há»— trá»£</p>
+                        <div className="mt-2 w-full rounded-xl border border-transparent p-1 text-left">
                           <div className="flex flex-wrap gap-2">
                             {visibleModels.map((m) => (
                               <span key={m} className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
-                                {m}
+                                {formatModelName(m)}
                               </span>
                             ))}
-                            {!isExpandedModel && hiddenCount > 0 && (
+                            {hiddenCount > 0 && (
                               <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">+{hiddenCount} model</span>
                             )}
                           </div>
-                        </button>
+                        </div>
                       </div>
 
-                      <p className="mt-6 text-3xl font-extrabold text-slate-950">{isContactPlan(plan) ? "Liên hệ" : formatCurrency(plan.priceVnd)}</p>
+                      <p className="mt-6 text-3xl font-extrabold text-slate-950">{isContactPlan(plan) ? "LiÄ‚Âªn há»‡" : formatCurrency(plan.priceVnd)}</p>
 
                       <CosmicButton
                         onClick={() => handleChoosePlan(plan)}
                         disabled={plan.allowedModels.length === 0 && !isContactPlan(plan)}
                         className={cn("mt-4 w-full", plan.allowedModels.length === 0 && !isContactPlan(plan) && "grayscale")}
                       >
-                        {isContactPlan(plan) ? "Liên hệ tư vấn" : "Mua gói"}
+                        {isContactPlan(plan) ? "LiÄ‚Âªn há»‡ tÆ° váº¥n" : "Mua gÄ‚Â³i"}
                       </CosmicButton>
                     </article>
                   );
@@ -631,7 +627,7 @@ function PlansPageContent() {
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       className={`${secondaryBtnClass} disabled:cursor-not-allowed disabled:opacity-50`}
                     >
-                      Trước
+                      TrÆ°á»›c
                     </button>
                     <button
                       type="button"
@@ -653,30 +649,30 @@ function PlansPageContent() {
       {isConfirmBuyOpen && selectedPlanToBuy && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-[2px]">
           <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_-28px_rgba(79,70,229,0.35)] sm:p-8">
-            <h2 className="text-xl font-extrabold text-slate-950">Xác nhận mua gói</h2>
+            <h2 className="text-xl font-extrabold text-slate-950">XÄ‚Â¡c nháº­n mua gÄ‚Â³i</h2>
             <p className="mt-2 text-sm text-slate-600">
               {couponData?.valid && couponData.finalAmount === 0
-                ? "Bạn đang sử dụng mã giảm giá 100%. Gói credits sẽ được kích hoạt ngay lập tức."
-                : "Sau khi xác nhận, hệ thống sẽ tạo đơn hàng chờ thanh toán."}
+                ? "Báº¡n Ă„'ang sĂ¡Â»Â­ dá»¥ng mÄ‚Â£ giáº£m giÄ‚Â¡ 100%. GÄ‚Â³i credits sáº½ Ä‘Æ°á»£c kÄ‚Â­ch hoáº¡t ngay láº­p tá»©c."
+                : "Sau khi xÄ‚Â¡c nháº­n, há»‡ thá»‘ng sáº½ táº¡o Ä‘Æ¡n hÄ‚Â ng chá» thanh toÄ‚Â¡n."}
             </p>
 
             <div className="mt-5 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-              <p>Gói: <b>{selectedPlanToBuy.name}</b></p>
-              <p>Dòng AI: <b>{getFamilyLabel(selectedPlanToBuy.apiFamily)}</b></p>
-              <p>Credits: <b>{formatCreditAmount(selectedPlanToBuy.credits)}</b></p>
-              <p>Hiệu lực: <b>{selectedPlanToBuy.durationDays && selectedPlanToBuy.durationDays > 0 ? `${selectedPlanToBuy.durationDays} ngày` : "Không giới hạn"}</b></p>
+              <p>GÄ‚Â³i: <b>{selectedPlanToBuy.name}</b></p>
+              <p>DÄ‚Â²ng AI: <b>{getPlanFamilyLabel(selectedPlanToBuy)}</b></p>
+              <p>Credits: <b>{formatCreditsWithUnit(selectedPlanToBuy.credits)}</b></p>
+              <p>Hiá»‡u lĂ¡Â»Â±c: <b>{selectedPlanToBuy.durationDays && selectedPlanToBuy.durationDays > 0 ? `${selectedPlanToBuy.durationDays} ngÄ‚Â y` : "KhÄ‚Â´ng giĂ¡Â»â€ºi háº¡n"}</b></p>
               <p>API key: <b>{selectedPlanToBuy.apiKeyLimit} key</b></p>
-              <p>Giá gốc: <b>{formatCurrency(selectedPlanToBuy.priceVnd)}</b></p>
-              {couponData?.valid && <p>Giảm giá: <b>-{formatCurrency(couponData.discountAmount)}</b></p>}
-              <p className="text-base">Tổng thanh toán: <b>{couponData?.valid ? formatCurrency(couponData.finalAmount) : formatCurrency(selectedPlanToBuy.priceVnd)}</b></p>
+              <p>GiÄ‚Â¡ gá»‘c: <b>{formatCurrency(selectedPlanToBuy.priceVnd)}</b></p>
+              {couponData?.valid && <p>Giáº£m giÄ‚Â¡: <b>-{formatCurrency(couponData.discountAmount)}</b></p>}
+              <p className="text-base">Tá»•ng thanh toÄ‚Â¡n: <b>{couponData?.valid ? formatCurrency(couponData.finalAmount) : formatCurrency(selectedPlanToBuy.priceVnd)}</b></p>
             </div>
 
             <div className="mt-4 space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Mã giảm giá (nếu có)</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">MÄ‚Â£ giáº£m giÄ‚Â¡ (náº¿u cÄ‚Â³)</label>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   type="text"
-                  placeholder="Nhập mã ưu đãi..."
+                  placeholder="Nháº­p mÄ‚Â£ Æ°u Ă„'Ä‚Â£i..."
                   value={couponCode}
                   onChange={(e) => {
                     setCouponCode(e.target.value.toUpperCase());
@@ -690,7 +686,7 @@ function PlansPageContent() {
                   disabled={!couponCode || isValidatingCoupon}
                   className={`${secondaryBtnClass} h-11 px-4 text-xs disabled:opacity-50`}
                 >
-                  {isValidatingCoupon ? "..." : "Áp dụng"}
+                  {isValidatingCoupon ? "..." : "Ăp dá»¥ng"}
                 </button>
               </div>
               <button
@@ -701,7 +697,7 @@ function PlansPageContent() {
                 }}
                 className="text-xs font-semibold text-indigo-600 underline transition-colors hover:text-indigo-700"
               >
-                Chọn từ kho mã giảm giá của tôi
+                Chá»n tá»« kho mÄ‚Â£ giáº£m giÄ‚Â¡ cĂ¡Â»Â§a tÄ‚Â´i
               </button>
             </div>
 
@@ -715,10 +711,10 @@ function PlansPageContent() {
                 }}
                 className={`${secondaryBtnClass} w-full sm:w-auto`}
               >
-                Hủy
+                HĂ¡Â»Â§y
               </button>
               <CosmicButton type="button" onClick={handleConfirmBuyPlan} disabled={isCreatingOrder} className="w-full sm:w-auto">
-                {isCreatingOrder ? "Đang xử lý..." : "Tiếp tục thanh toán"}
+                {isCreatingOrder ? "Äang xĂ¡Â»Â­ lÄ‚Â½..." : "Tiáº¿p tá»¥c thanh toÄ‚Â¡n"}
               </CosmicButton>
             </div>
           </div>
@@ -729,7 +725,7 @@ function PlansPageContent() {
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-[2px]">
           <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_-28px_rgba(79,70,229,0.35)] sm:p-8">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-extrabold text-slate-950">Mã giảm giá của tôi</h2>
+              <h2 className="text-xl font-extrabold text-slate-950">MÄ‚Â£ giáº£m giÄ‚Â¡ cĂ¡Â»Â§a tÄ‚Â´i</h2>
               <button onClick={() => setIsCouponModalOpen(false)} className="text-slate-500 hover:text-slate-700"><XCircle className="h-5 w-5" /></button>
             </div>
 
@@ -737,7 +733,7 @@ function PlansPageContent() {
               {isLoadingCoupons ? (
                 [1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)
               ) : myCoupons.length === 0 ? (
-                <p className="py-10 text-center text-sm text-slate-600">Bạn chưa có mã giảm giá nào.</p>
+                <p className="py-10 text-center text-sm text-slate-600">Báº¡n chÆ°a cÄ‚Â³ mÄ‚Â£ giáº£m giÄ‚Â¡ nÄ‚Â o.</p>
               ) : (
                 myCoupons.map((c) => (
                   <button
@@ -752,7 +748,7 @@ function PlansPageContent() {
                       </div>
                       <p className="text-lg font-extrabold text-indigo-600">-{c.discountPercent}%</p>
                     </div>
-                    <p className="mt-2 text-xs text-slate-500">Đơn từ {formatCurrency(c.minOrderAmount)}</p>
+                    <p className="mt-2 text-xs text-slate-500">ÄÆ¡n tá»« {formatCurrency(c.minOrderAmount)}</p>
                   </button>
                 ))
               )}
@@ -773,6 +769,17 @@ export default function PlansPage() {
     </Suspense>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

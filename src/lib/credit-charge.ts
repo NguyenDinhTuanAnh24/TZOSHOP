@@ -22,10 +22,10 @@ export async function calculateChargedCredits(params: {
   const outputCredits = (params.outputTokens / 1000) * Number(model.outputCreditRate);
 
   // We don't have cache rate in the new schema yet, but if we did, it would go here
-  const chargedCredits = Math.ceil(inputCredits + outputCredits);
+  const chargedCreditsOld = Math.ceil(inputCredits + outputCredits);
 
   return {
     model,
-    chargedCredits: Math.max(chargedCredits, 1),
+    chargedCredits: Math.max(chargedCreditsOld / 500000, 0.000001),
   };
 }

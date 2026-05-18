@@ -13,7 +13,12 @@ export async function completePaidOrder(orderId: string, paidAt: Date = new Date
 
   // 2. Check if already paid (idempotency)
   if (order.status === "PAID") {
-    return { success: true, alreadyPaid: true, order };
+    const existingBucket = await prisma.creditBucket.findFirst({
+      where: { userId: order.userId, productId: order.productId }
+    });
+    if (existingBucket) {
+      return { success: true, alreadyPaid: true, order };
+    }
   }
 
   // 3. Process completion in transaction

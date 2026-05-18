@@ -32,6 +32,11 @@ import {
   generatePythonExample,
 } from "@/lib/integration-config";
 
+const isCodexModel = (model: string) => model.toLowerCase().startsWith("codex/");
+const isClaudeModel = (model: string) => model.toLowerCase().startsWith("claude/");
+const isGeminiModel = (model: string) => model.toLowerCase().startsWith("gemini/");
+const isDeepSeekModel = (model: string) => model.toLowerCase().startsWith("deepseek/");
+
 export interface AllowedModel {
   publicName: string;
   upstreamModel?: string | null;
@@ -93,8 +98,50 @@ export function PlanSetupInstructions({
 
   const recommendedModel = useMemo(() => {
     if (allowedModelNames.length === 0) return "";
-    return selectedModel || allowedModelNames[0];
+    if (selectedModel && allowedModelNames.includes(selectedModel)) {
+      return selectedModel;
+    }
+    const claude = allowedModelNames.find(isClaudeModel);
+    if (claude) return claude;
+    const gemini = allowedModelNames.find(isGeminiModel);
+    if (gemini) return gemini;
+    const deepseek = allowedModelNames.find(isDeepSeekModel);
+    if (deepseek) return deepseek;
+    return allowedModelNames[0];
   }, [allowedModelNames, selectedModel]);
+
+  const codexModel = useMemo(() => {
+    return allowedModelNames.find(isCodexModel) || "";
+  }, [allowedModelNames]);
+
+  const hasCodexModel = useMemo(() => allowedModelNames.some(isCodexModel), [allowedModelNames]);
+
+  const tabs = useMemo(() => {
+    const list = [
+      { id: "quick", label: "Cấu hình nhanh", icon: Zap },
+      { id: "continue", label: "Continue", icon: FileCode },
+    ];
+
+    if (hasCodexModel) {
+      list.push({ id: "codex", label: "Codex", icon: Cpu });
+    }
+
+    list.push(
+      { id: "cline", label: "Cline", icon: Code2 },
+      { id: "roocode", label: "Roo Code", icon: LayoutGrid },
+      { id: "api", label: "API mẫu", icon: Terminal }
+    );
+
+    return list;
+  }, [hasCodexModel]);
+
+  useEffect(() => {
+    const tabExists = tabs.some(t => t.id === activeTab);
+    if (!tabExists) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveTab("quick");
+    }
+  }, [tabs, activeTab]);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -135,15 +182,6 @@ export function PlanSetupInstructions({
       </div>
     );
   }
-
-  const tabs = [
-    { id: "quick", label: "Cấu hình nhanh", icon: Zap },
-    { id: "continue", label: "Continue", icon: FileCode },
-    { id: "codex", label: "Codex", icon: Cpu },
-    { id: "cline", label: "Cline", icon: Code2 },
-    { id: "roocode", label: "Roo Code", icon: LayoutGrid },
-    { id: "api", label: "API mẫu", icon: Terminal },
-  ];
 
   const API_KEY = selectedKey?.key || selectedKey?.maskedKey || "YOUR_API_KEY";
   const hiddenModelCount = Math.max(allowedModels.length - MAX_VISIBLE_MODELS, 0);
@@ -334,8 +372,8 @@ export function PlanSetupInstructions({
           <CodeTab
             title="Cấu hình Codex"
             subtitle="$HOME/.codex/config.toml"
-            code={generateCodexConfig({ model: recommendedModel })}
-            onCopy={() => handleCopy(generateCodexConfig({ model: recommendedModel }), "cấu hình Codex")}
+            code={generateCodexConfig({ model: codexModel })}
+            onCopy={() => handleCopy(generateCodexConfig({ model: codexModel }), "cấu hình Codex")}
           />
         )}
 

@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { CosmicButton } from "@/components/ui/cosmic-button";
 import { TextFadeInUp } from "@/components/animations/text-fade-in-up";
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import { getAiLineFromProductSlug, getAiLineLabelFromApiFamily, getAiLineLabelFromSlug, type AiLine } from "@/lib/ai-line";
 
 type ApiFamily = "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
 type StatusFilter = "all" | "active" | "revoked";
@@ -28,7 +29,7 @@ type StatusFilter = "all" | "active" | "revoked";
 type ApiKeyItem = {
   id: string;
   name: string;
-  apiFamily: ApiFamily;
+  apiFamily: "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
   keyPrefix: string;
   maskedKey?: string;
   key?: string | null;
@@ -40,6 +41,7 @@ type ApiKeyItem = {
   creditBucket: {
     id: string;
     productName: string;
+    productSlug?: string | null;
     creditsTotal: string;
     creditsRemaining: string;
   } | null;
@@ -47,7 +49,7 @@ type ApiKeyItem = {
 
 type MyPlanItem = {
   id: string;
-  apiFamily: ApiFamily;
+  apiFamily: "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
   creditsTotal: string;
   creditsRemaining: string;
   usedCredits: string;
@@ -65,19 +67,22 @@ type MyPlanItem = {
   } | null;
 };
 
-function getFamilyLabel(apiFamily: ApiFamily) {
-  const familyMap: Record<ApiFamily, string> = {
-    CODEXAI: "CodexAI",
-    CLAUDE: "Claude",
-    GEMINI: "Gemini",
-    DEEPSEEK: "DeepSeek",
-  };
-  return familyMap[apiFamily];
+function getDisplayAiFamily(apiKey: { apiFamily: ApiFamily; creditBucket?: { productSlug?: string | null } | null }) {
+  if (apiKey.creditBucket?.productSlug) return getAiLineLabelFromSlug(apiKey.creditBucket.productSlug);
+  return getAiLineLabelFromApiFamily(apiKey.apiFamily);
+}
+
+function getBucketDisplayAiFamily(bucket: { apiFamily: ApiFamily; product?: { slug?: string } | null }) {
+  if (bucket.product?.slug) return getAiLineLabelFromSlug(bucket.product.slug);
+  return getAiLineLabelFromApiFamily(bucket.apiFamily);
 }
 
 function formatCredits(value: string | number) {
   const num = typeof value === "string" ? Number(value) : value;
-  return new Intl.NumberFormat("vi-VN").format(num);
+  if (Number.isInteger(num)) {
+    return new Intl.NumberFormat("en-US").format(num);
+  }
+  return num.toFixed(6).replace(/\.?0+$/, "");
 }
 
 function FilterChip({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
@@ -143,10 +148,11 @@ function ApiKeysPageContent() {
 
   const [newKeyData, setNewKeyData] = useState<{ id: string; fullKey: string; name: string } | null>(null);
   const [visibleKeyIds, setVisibleKeyIds] = useState<string[]>([]);
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, string>>({});
   const [isCopiedNewKey, setIsCopiedNewKey] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [familyFilter, setFamilyFilter] = useState<ApiFamily | "all">("all");
+  const [familyFilter, setFamilyFilter] = useState<AiLine | "all">("all");
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(9);
@@ -260,20 +266,57 @@ function ApiKeysPageContent() {
     }
   };
 
-  const toggleVisibility = (id: string) => {
-    setVisibleKeyIds((prev) => (prev.includes(id) ? prev.filter((kid) => kid !== id) : [...prev, id]));
-  };
-
-  const handleCopy = async (textToCopy: string | null | undefined) => {
-    if (!textToCopy) {
-      showToast("Không thể sao chép key này.", "error");
+  const toggleVisibility = async (apiKey: ApiKeyItem) => {
+    const id = apiKey.id;
+    if (visibleKeyIds.includes(id)) {
+      setVisibleKeyIds((prev) => prev.filter((kid) => kid !== id));
       return;
     }
+
+    if (!apiKey.isActive) {
+      showToast("Key đã thu hồi, không thể xem.", "error");
+      return;
+    }
+
     try {
-      await navigator.clipboard.writeText(textToCopy);
+      if (!revealedKeys[id]) {
+        const response = await fetch(`/api/api-keys/${id}/reveal`, { cache: "no-store" });
+        const resData = await response.json();
+        if (!response.ok || !resData.data?.fullKey) {
+          throw new Error(resData?.error?.message ?? "Không thể hiển thị key");
+        }
+        const fullKey = resData.data.fullKey;
+        setRevealedKeys((prev) => ({ ...prev, [id]: fullKey }));
+      }
+      setVisibleKeyIds((prev) => [...prev, id]);
+    } catch {
+      showToast("Không thể hiển thị key này.", "error");
+    }
+  };
+
+  const handleCopy = async (apiKey: ApiKeyItem) => {
+    if (!apiKey.isActive) {
+      showToast("Key đã thu hồi, không thể sao chép.", "error");
+      return;
+    }
+
+    try {
+      let fullKey = revealedKeys[apiKey.id];
+
+      if (!fullKey) {
+        const response = await fetch(`/api/api-keys/${apiKey.id}/reveal`, { cache: "no-store" });
+        const resData = await response.json();
+        if (!response.ok || !resData.data?.fullKey) {
+          throw new Error(resData?.error?.message ?? "Không thể hiển thị key");
+        }
+        fullKey = resData.data.fullKey;
+        setRevealedKeys((prev) => ({ ...prev, [apiKey.id]: fullKey }));
+      }
+
+      await navigator.clipboard.writeText(fullKey);
       showToast("Đã sao chép API key", "success");
     } catch {
-      showToast("Không thể sao chép API key", "error");
+      showToast("Không thể sao chép key này.", "error");
     }
   };
 
@@ -284,12 +327,23 @@ function ApiKeysPageContent() {
     showToast("Đã sao chép API key", "success");
   };
 
-  const families = useMemo(() => Array.from(new Set(apiKeys.map((k) => k.apiFamily))), [apiKeys]);
+  const families = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          apiKeys
+            .map((k) => (k.creditBucket?.productSlug ? getAiLineFromProductSlug(k.creditBucket.productSlug) : null))
+            .filter((v): v is AiLine => Boolean(v)),
+        ),
+      ),
+    [apiKeys],
+  );
 
   const filteredKeys = useMemo(() => {
     return apiKeys.filter((k) => {
       const statusMatch = statusFilter === "all" ? true : statusFilter === "active" ? k.isActive : !k.isActive;
-      const familyMatch = familyFilter === "all" ? true : k.apiFamily === familyFilter;
+      const line = k.creditBucket?.productSlug ? getAiLineFromProductSlug(k.creditBucket.productSlug) : null;
+      const familyMatch = familyFilter === "all" ? true : line === familyFilter;
       const text = searchText.trim().toLowerCase();
       const searchMatch = !text
         ? true
@@ -411,7 +465,7 @@ function ApiKeysPageContent() {
             <FilterChip active={familyFilter === "all"} onClick={() => { setFamilyFilter("all"); setPage(1); }}>Tất cả dòng AI</FilterChip>
             {families.map((family) => (
               <FilterChip key={family} active={familyFilter === family} onClick={() => { setFamilyFilter(family); setPage(1); }}>
-                {getFamilyLabel(family)}
+                {family === "ALL_MODELS" ? "All Models" : getAiLineLabelFromApiFamily(family)}
               </FilterChip>
             ))}
           </div>
@@ -451,7 +505,8 @@ function ApiKeysPageContent() {
         <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           {paginatedKeys.map((apiKey) => {
             const isVisible = visibleKeyIds.includes(apiKey.id);
-            const displayKey = isVisible && apiKey.key ? apiKey.key : apiKey.maskedKey ?? apiKey.keyPrefix;
+            const revealedKey = revealedKeys[apiKey.id];
+            const displayKey = isVisible && revealedKey ? revealedKey : apiKey.maskedKey ?? apiKey.keyPrefix;
             return (
               <article
                 key={apiKey.id}
@@ -460,7 +515,7 @@ function ApiKeysPageContent() {
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-xl font-extrabold tracking-tight text-slate-950">{apiKey.name}</h3>
                   <span className="inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-                    {getFamilyLabel(apiKey.apiFamily)}
+                    {getDisplayAiFamily(apiKey)}
                   </span>
                   <span
                     className={cn(
@@ -479,17 +534,15 @@ function ApiKeysPageContent() {
                     <code className="min-w-0 flex-1 overflow-x-auto break-all font-mono text-sm text-slate-700">{displayKey}</code>
                     <button
                       type="button"
-                      onClick={() => toggleVisibility(apiKey.id)}
-                      disabled={!apiKey.key || !apiKey.isActive}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 active:scale-[0.98] disabled:opacity-50"
+                      onClick={() => void toggleVisibility(apiKey)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 active:scale-[0.98]"
                     >
                       {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                     <button
                       type="button"
-                      onClick={() => void handleCopy(apiKey.key)}
-                      disabled={!apiKey.isActive}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 active:scale-[0.98] disabled:opacity-50"
+                      onClick={() => void handleCopy(apiKey)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 active:scale-[0.98]"
                     >
                       <Copy className="h-4 w-4" />
                     </button>
@@ -560,7 +613,7 @@ function ApiKeysPageContent() {
                   <option value="">Chọn gói credits đang dùng</option>
                   {activePlans.map((plan) => (
                     <option key={plan.id} value={plan.id} disabled={plan.activeApiKeys >= plan.apiKeyLimit}>
-                      {plan.product?.name ?? getFamilyLabel(plan.apiFamily)} ({plan.activeApiKeys}/{plan.apiKeyLimit} keys)
+                      {plan.product?.name ?? getAiLineLabelFromApiFamily(plan.apiFamily)} ({plan.activeApiKeys}/{plan.apiKeyLimit} keys)
                     </option>
                   ))}
                 </select>
@@ -568,7 +621,7 @@ function ApiKeysPageContent() {
 
               {selectedBucket ? (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                  <p>Dòng AI: <span className="font-semibold text-slate-900">{getFamilyLabel(selectedBucket.apiFamily)}</span></p>
+                  <p>Dòng AI: <span className="font-semibold text-slate-900">{getBucketDisplayAiFamily(selectedBucket)}</span></p>
                   <p className="mt-1">Credits còn lại: <span className="font-semibold text-slate-900">{formatCredits(selectedBucket.creditsRemaining)}</span></p>
                   <p className="mt-1">Giới hạn key: <span className="font-semibold text-slate-900">{selectedBucket.activeApiKeys}/{selectedBucket.apiKeyLimit}</span></p>
                 </div>

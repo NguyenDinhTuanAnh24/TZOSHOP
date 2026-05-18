@@ -8,6 +8,7 @@ import { Activity, AlertCircle, Cpu, History, Key, Search, Users, Zap } from "lu
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextFadeInUp } from "@/components/animations/text-fade-in-up";
+import { formatTokenCount } from "@/lib/format";
 
 type UsageLog = {
   id: string;
@@ -80,7 +81,11 @@ function statusInfo(status: string) {
 }
 
 function formatCredits(value: string) {
-  return Math.abs(Number(value || 0)).toLocaleString("vi-VN");
+  const num = Math.abs(Number(value || 0));
+  if (Number.isInteger(num)) {
+    return new Intl.NumberFormat("en-US").format(num);
+  }
+  return num.toFixed(6).replace(/\.?0+$/, "");
 }
 
 function UsageSkeleton() {
@@ -240,7 +245,7 @@ export default function AdminUsagePage() {
         {[
           { label: "Tổng request", value: (stats?.totalRequests || 0).toLocaleString("vi-VN"), desc: "Tổng lượt gọi API", icon: Activity, cls: "bg-indigo-50 text-indigo-700" },
           { label: "Credits đã dùng", value: Number(stats?.totalCredits || 0).toLocaleString("vi-VN"), desc: "Credits đã trừ", icon: Zap, cls: "bg-violet-50 text-violet-700" },
-          { label: "Token đã dùng", value: (stats?.totalTokens || 0).toLocaleString("vi-VN"), desc: "Prompt + completion tokens", icon: Cpu, cls: "bg-emerald-50 text-emerald-700" },
+          { label: "Token đã dùng", value: formatTokenCount(stats?.totalTokens || 0), desc: "Prompt + completion tokens", icon: Cpu, cls: "bg-emerald-50 text-emerald-700" },
           { label: "Người dùng hoạt động", value: activeUsers.toLocaleString("vi-VN"), desc: "User có phát sinh request", icon: Users, cls: "bg-sky-50 text-sky-700" },
         ].map((item, index) => (
           <TextFadeInUp key={item.label} delay={Math.min(index * 0.05, 0.25)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-200">
@@ -376,8 +381,8 @@ export default function AdminUsagePage() {
                       <td className="px-4 py-4"><code className="inline-flex max-w-[220px] truncate rounded-lg bg-slate-50 px-2.5 py-1 font-mono text-xs text-slate-700" title={log.model}>{log.model}</code></td>
                       <td className="px-4 py-4"><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", familyBadgeClass(log.apiFamily))}>{familyLabel(log.apiFamily)}</span></td>
                       <td className="px-4 py-4"><code className="inline-flex max-w-[220px] truncate rounded-lg bg-slate-50 px-2.5 py-1 font-mono text-xs text-slate-700" title={log.endpoint}>{log.endpoint}</code></td>
-                      <td className="px-4 py-4 text-sm font-semibold text-slate-800">{log.inputTokens.toLocaleString("vi-VN")}</td>
-                      <td className="px-4 py-4 text-sm font-semibold text-slate-800">{log.outputTokens.toLocaleString("vi-VN")}</td>
+                      <td className="px-4 py-4 text-sm font-semibold text-slate-800">{formatTokenCount(log.inputTokens)}</td>
+                      <td className="px-4 py-4 text-sm font-semibold text-slate-800">{formatTokenCount(log.outputTokens)}</td>
                       <td className="px-4 py-4"><span className="inline-flex rounded-lg bg-violet-50 px-2.5 py-1 text-sm font-semibold text-violet-700">{formatCredits(log.creditsCharged)}</span></td>
                       <td className="px-4 py-4"><div className="space-y-1"><span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold", status.className)}>{status.label}</span>{log.errorMessage ? <p className="max-w-[180px] truncate text-xs text-rose-600" title={log.errorMessage}>{log.errorMessage}</p> : null}</div></td>
                     </tr>
@@ -429,7 +434,7 @@ export default function AdminUsagePage() {
                   <p className="truncate text-slate-700"><span className="font-semibold text-slate-900">API key:</span> {log.apiKey ? `${log.apiKey.name} (${log.apiKey.keyPrefix}••••)` : "—"}</p>
                   <p className="truncate text-slate-700"><span className="font-semibold text-slate-900">Dòng AI:</span> {familyLabel(log.apiFamily)}</p>
                   <p className="truncate text-slate-700" title={log.endpoint}><span className="font-semibold text-slate-900">Endpoint:</span> {log.endpoint}</p>
-                  <p className="text-slate-700"><span className="font-semibold text-slate-900">Tokens:</span> P {log.inputTokens.toLocaleString("vi-VN")} · C {log.outputTokens.toLocaleString("vi-VN")} · T {log.totalTokens.toLocaleString("vi-VN")}</p>
+                  <p className="text-slate-700"><span className="font-semibold text-slate-900">Tokens:</span> P {formatTokenCount(log.inputTokens)} · C {formatTokenCount(log.outputTokens)} · T {formatTokenCount(log.totalTokens)}</p>
                   <p className="text-slate-700"><span className="font-semibold text-slate-900">Credits:</span> {formatCredits(log.creditsCharged)}</p>
                   <p className="text-slate-500">{format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: vi })}</p>
                 </div>

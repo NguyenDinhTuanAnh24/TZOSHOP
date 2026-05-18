@@ -17,9 +17,10 @@ export function calculateCreditsUsed(params: {
   const outputBags = (params.completionTokens / 1_000_000) * params.outputRate;
   
   const totalBags = inputBags + outputBags;
-  const chargedCredits = Math.max(1, Math.ceil(totalBags * creditPerBag));
+  const chargedCreditsOld = Math.max(1, Math.ceil(totalBags * creditPerBag));
 
-  return chargedCredits;
+  // Quy đổi sang credit mới bằng cách chia cho 500,000 (OLD_INTERNAL_CREDITS_PER_NEW_CREDIT)
+  return chargedCreditsOld / 500000;
 }
 
 type ConsumeCreditsParams = {
@@ -47,14 +48,16 @@ export async function consumeCredits(params: ConsumeCreditsParams) {
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      const dbCreditsUsed = BigInt(Math.ceil(creditsUsed));
+
       // 1. Kiểm tra và cập nhật số dư (Atomic update với điều kiện gte)
       const updatedBucket = await tx.creditBucket.update({
         where: { 
           id: creditBucketId,
-          creditsRemaining: { gte: BigInt(creditsUsed) }
+          creditsRemaining: { gte: dbCreditsUsed }
         },
         data: { 
-          creditsRemaining: { decrement: BigInt(creditsUsed) } 
+          creditsRemaining: { decrement: dbCreditsUsed } 
         },
       });
 
@@ -70,8 +73,8 @@ export async function consumeCredits(params: ConsumeCreditsParams) {
           inputTokens: usageData.inputTokens,
           outputTokens: usageData.outputTokens,
           totalTokens: usageData.totalTokens,
-          creditsCharged: BigInt(creditsUsed),
-          creditsUsed: creditsUsed,
+          creditsCharged: dbCreditsUsed,
+          creditsUsed: Math.ceil(creditsUsed),
           status: "SUCCESS",
           httpStatus: usageData.httpStatus || 200,
         },
@@ -84,7 +87,7 @@ export async function consumeCredits(params: ConsumeCreditsParams) {
           creditBucketId,
           apiFamily: usageData.apiFamily,
           type: "USAGE",
-          amount: BigInt(-creditsUsed),
+          amount: -dbCreditsUsed,
           balanceAfter: updatedBucket.creditsRemaining,
           reason: `API Usage: ${usageData.model}`,
           referenceId: usageLog.id,

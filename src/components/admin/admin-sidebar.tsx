@@ -13,7 +13,6 @@ import {
   LayoutDashboard,
   LifeBuoy,
   LogOut,
-  Server,
   ShoppingCart,
   TicketPercent,
   TrendingUp,
@@ -54,9 +53,7 @@ const adminNavGroups: NavGroup[] = [
   {
     label: "Hệ thống API",
     items: [
-      { href: "/admin/models", label: "Models", icon: Boxes },
-      { href: "/admin/providers", label: "Providers", icon: Server },
-      { href: "/admin/usage", label: "Lịch sử dùng", icon: Activity },
+            { href: "/admin/usage", label: "Lịch sử dùng", icon: Activity },
     ],
   },
   {

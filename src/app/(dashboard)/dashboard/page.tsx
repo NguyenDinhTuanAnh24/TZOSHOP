@@ -56,7 +56,10 @@ type DashboardData = {
 
 function formatCreditsValue(value: string | number) {
   const num = typeof value === "string" ? Number(value) : value;
-  return new Intl.NumberFormat("vi-VN").format(num);
+  if (Number.isInteger(num)) {
+    return new Intl.NumberFormat("en-US").format(num);
+  }
+  return num.toFixed(6).replace(/\.?0+$/, "");
 }
 
 function formatCurrency(value: number) {

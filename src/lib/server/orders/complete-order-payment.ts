@@ -33,15 +33,20 @@ export async function completeOrderPayment(orderId: string) {
 
   // 2. Kiểm tra nếu đơn hàng đã được xử lý (idempotency)
   if (order.status === "PAID") {
-    // Find existing bucket via ledger
+    // Find existing bucket via ledger or directly by userId and productId
     const ledger = await prisma.creditLedger.findFirst({
       where: { referenceId: order.id, type: "PURCHASE" }
     });
+    const existingBucket = await prisma.creditBucket.findFirst({
+      where: { userId: order.userId, productId: order.productId }
+    });
     
-    return { 
-      order, 
-      creditBucketId: ledger?.creditBucketId || null 
-    };
+    if (ledger?.creditBucketId || existingBucket) {
+      return { 
+        order, 
+        creditBucketId: ledger?.creditBucketId || existingBucket?.id || null 
+      };
+    }
   }
 
   // 3. Tính toán ngày hết hạn

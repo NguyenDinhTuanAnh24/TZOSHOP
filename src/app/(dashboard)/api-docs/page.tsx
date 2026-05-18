@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useMemo, useState } from "react";
 import {
   BookOpenText,
@@ -21,21 +22,19 @@ export default function ApiDocsPage() {
   const [requestTab, setRequestTab] = useState<CodeTab>("curl");
   const { toast, showToast, clearToast } = useToast(3000);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tzoshop.io.vn";
-  const apiBaseUrl = `${appUrl}/api/v1`;
+  const chatUrl = "https://api.tzoshop.io.vn/v1/chat/completions";
   const chatPath = "/chat/completions";
-  const chatUrl = `${apiBaseUrl}${chatPath}`;
 
   const requestCode = useMemo(() => {
     const curl = `curl ${chatUrl} \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "codexai/gpt-5.3-codex",
+    "model": "deepseek/deepseek-v4-flash",
     "messages": [
       {
         "role": "user",
-        "content": "Xin chào, hãy giải thích ngắn gọn về TzoShop."
+        "content": "Hello"
       }
     ]
   }'`;
@@ -47,11 +46,11 @@ export default function ApiDocsPage() {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    model: "codexai/gpt-5.3-codex",
+    model: "deepseek/deepseek-v4-flash",
     messages: [
       {
         role: "user",
-        content: "Xin chào, hãy giải thích ngắn gọn về TzoShop.",
+        content: "Hello",
       },
     ],
   }),
@@ -69,11 +68,11 @@ response = requests.post(
         "Content-Type": "application/json",
     },
     json={
-        "model": "codexai/gpt-5.3-codex",
+        "model": "deepseek/deepseek-v4-flash",
         "messages": [
             {
                 "role": "user",
-                "content": "Xin chào, hãy giải thích ngắn gọn về TzoShop.",
+                "content": "Hello",
             }
         ],
     },
@@ -84,26 +83,26 @@ print(response.json())`;
     if (requestTab === "javascript") return js;
     if (requestTab === "python") return py;
     return curl;
-  }, [chatUrl, requestTab]);
+  }, [requestTab]);
 
   const responseCode = `{
   "id": "chatcmpl_xxx",
   "object": "chat.completion",
-  "model": "codexai/gpt-5.3-codex",
+  "model": "deepseek/deepseek-v4-flash",
   "choices": [
     {
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "TzoShop giúp bạn mua credits, tạo API key và sử dụng AI linh hoạt hơn."
+        "content": "Hello! How can I assist you today?"
       },
       "finish_reason": "stop"
     }
   ],
   "usage": {
-    "prompt_tokens": 24,
-    "completion_tokens": 18,
-    "total_tokens": 42
+    "prompt_tokens": 9,
+    "completion_tokens": 12,
+    "total_tokens": 21
   }
 }`;
 
@@ -124,7 +123,7 @@ print(response.json())`;
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">Tài liệu API</h1>
             <p className="max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
-              Hướng dẫn cấu hình endpoint, API key và request mẫu để sử dụng TzoShop trong công cụ AI quen thuộc.
+              Tài liệu này hướng dẫn bạn cách sử dụng API key được cấp bởi TzoShop trong IDE, extension hoặc ứng dụng riêng. API tương thích với chuẩn OpenAI, nên có thể dùng với nhiều công cụ hỗ trợ custom Base URL.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -136,7 +135,12 @@ print(response.json())`;
         </div>
       </TextFadeInUp>
 
-      <TextFadeInUp as="section" delay={0.05} className="grid grid-cols-1 gap-5 md:grid-cols-3">
+      <section className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 text-indigo-900 leading-relaxed shadow-sm">
+        <p className="text-sm font-medium">
+          <strong>💡 Hướng dẫn sử dụng:</strong> Khách hàng chỉ cần mua gói credits tại TzoShop, lấy API key tại trang API Keys, cấu hình Base URL và chọn đúng model thuộc gói đã mua để bắt đầu sử dụng hệ thống xử lý AI của TzoShop.
+        </p>
+      </section>
+<TextFadeInUp as="section" delay={0.05} className="grid grid-cols-1 gap-5 md:grid-cols-3">
         {[
           {
             step: "1",
@@ -178,23 +182,22 @@ print(response.json())`;
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold text-slate-950">Base URL</h2>
           <div className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <code className="min-w-0 flex-1 break-all font-mono text-sm text-slate-700">{apiBaseUrl}</code>
+            <code className="min-w-0 flex-1 break-all font-mono text-sm text-slate-700">https://api.tzoshop.io.vn/v1</code>
             <button
               type="button"
-              onClick={() => void copyText(apiBaseUrl)}
+              onClick={() => void copyText("https://api.tzoshop.io.vn/v1")}
               className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-indigo-50 hover:text-indigo-700"
             >
               <Copy className="h-4 w-4" />
             </button>
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            Trên môi trường local, thay domain bằng domain dev của bạn nếu cần.
+            Sử dụng địa chỉ duy nhất này làm Base URL trong cấu hình API của bạn.
           </p>
         </article>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold text-slate-950">Xác thực</h2>
-          <p className="mt-1 text-sm text-slate-600">Gửi API key trong Authorization header.</p>
           <div className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
             <code className="min-w-0 flex-1 break-all font-mono text-sm text-slate-700">Authorization: Bearer YOUR_API_KEY</code>
             <button
@@ -266,10 +269,10 @@ print(response.json())`;
             </thead>
             <tbody>
               {[
-                ["model", "Bắt buộc", "Model bạn muốn dùng, ví dụ codexai/gpt-5.3-codex"],
+                ["model", "Bắt buộc", "Model bạn muốn dùng, ví dụ deepseek/deepseek-v4-flash"],
                 ["messages", "Bắt buộc", "Danh sách hội thoại gồm role và content"],
                 ["temperature", "Tùy chọn", "Điều chỉnh độ sáng tạo của phản hồi"],
-                ["max_tokens", "Tùy chọn", "Giới hạn số token phản hồi nếu endpoint hỗ trợ"],
+                ["max_tokens", "Tùy chọn", "Giới hạn số token phản hồi nếu model hỗ trợ"],
               ].map(([name, required, desc]) => (
                 <tr key={name} className="border-t border-slate-100 hover:bg-indigo-50/30">
                   <td className="px-4 py-3 font-mono font-semibold text-slate-900">{name}</td>
@@ -283,10 +286,10 @@ print(response.json())`;
 
         <div className="grid grid-cols-1 gap-3 md:hidden">
           {[
-            ["model", "Bắt buộc", "Model bạn muốn dùng, ví dụ codexai/gpt-5.3-codex"],
+            ["model", "Bắt buộc", "Model bạn muốn dùng, ví dụ deepseek/deepseek-v4-flash"],
             ["messages", "Bắt buộc", "Danh sách hội thoại gồm role và content"],
             ["temperature", "Tùy chọn", "Điều chỉnh độ sáng tạo của phản hồi"],
-            ["max_tokens", "Tùy chọn", "Giới hạn số token phản hồi nếu endpoint hỗ trợ"],
+            ["max_tokens", "Tùy chọn", "Giới hạn số token phản hồi nếu model hỗ trợ"],
           ].map(([name, required, desc]) => (
             <article key={name} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="font-mono text-sm font-semibold text-slate-900">{name}</p>
@@ -315,16 +318,43 @@ print(response.json())`;
         <p className="mt-3 text-sm text-slate-600">Bạn chỉ có thể dùng model thuộc gói credits/API key đang hoạt động.</p>
       </section>
 
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-2xl font-extrabold text-slate-950">Cấu hình IDE / Extension</h2>
+        <p className="mt-1 text-sm text-slate-600 font-medium">
+          Bạn có thể tích hợp API Key của TzoShop vào các công cụ như VS Code Continue, Cursor, Cline, Copilot...
+        </p>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h4 className="font-bold text-sm text-slate-900 mb-1">Base URL</h4>
+            <code className="text-xs text-indigo-600 font-bold break-all">https://api.tzoshop.io.vn/v1</code>
+            <p className="text-xs text-slate-500 mt-2">Địa chỉ API chính thức của TzoShop.</p>
+          </div>
+          
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h4 className="font-bold text-sm text-slate-900 mb-1">API Key</h4>
+            <code className="text-xs text-indigo-600 font-bold break-all">API key lấy tại /api-keys</code>
+            <p className="text-xs text-slate-500 mt-2">API key của bạn được bảo mật an toàn.</p>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h4 className="font-bold text-sm text-slate-900 mb-1">Model</h4>
+            <code className="text-xs text-indigo-600 font-bold break-all">deepseek/deepseek-v4-flash</code>
+            <p className="text-xs text-slate-500 mt-2">Chọn model thuộc gói đã mua.</p>
+          </div>
+        </div>
+      </section>
+
       <section className="space-y-4">
         <h2 className="text-2xl font-extrabold text-slate-950">Lỗi thường gặp</h2>
         <div className="grid grid-cols-1 gap-3">
           {[
-            ["401 Unauthorized", "API key thiếu hoặc không hợp lệ.", "amber"],
-            ["403 Forbidden", "Key không có quyền dùng model hoặc gói đã hết hạn.", "amber"],
-            ["402 Payment Required", "Credits không đủ hoặc gói không còn khả dụng.", "amber"],
-            ["404 Not Found", "Endpoint hoặc model không tồn tại.", "amber"],
-            ["429 Too Many Requests", "Gửi quá nhiều request trong thời gian ngắn.", "amber"],
-            ["500 Server Error", "Lỗi hệ thống, thử lại sau.", "rose"],
+            ["401 Unauthorized", "API key thiếu, sai hoặc đã bị thu hồi.", "amber"],
+            ["403 Forbidden", "API key không có quyền dùng model này. Hãy kiểm tra model có thuộc gói đã mua không.", "amber"],
+            ["402 Payment Required", "Credits không đủ hoặc gói đã hết hạn.", "amber"],
+            ["404 Not Found", "Endpoint hoặc model không tồn tại. Hãy kiểm tra lại tên model.", "amber"],
+            ["429 Too Many Requests", "Bạn gửi quá nhiều request trong thời gian ngắn. Vui lòng thử lại sau.", "amber"],
+            ["500 Server Error", "Hệ thống xử lý AI đang gặp lỗi tạm thời. Vui lòng thử lại sau.", "rose"],
+            ["503 Service Unavailable", "Model hiện chưa khả dụng. Vui lòng thử model khác trong gói hoặc liên hệ hỗ trợ.", "rose"],
           ].map(([code, desc, tone]) => (
             <article key={code} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-start gap-3">

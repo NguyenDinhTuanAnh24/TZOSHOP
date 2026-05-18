@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
           product: {
             select: {
               name: true,
+              slug: true,
               apiFamily: true,
             },
           },
@@ -114,10 +115,17 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
-      data: { status },
-    });
+    let updatedOrder;
+    if (status === "PAID") {
+      const { completeOrderPayment } = await import("@/lib/server/orders/complete-order-payment");
+      const result = await completeOrderPayment(orderId);
+      updatedOrder = result.order;
+    } else {
+      updatedOrder = await prisma.order.update({
+        where: { id: orderId },
+        data: { status },
+      });
+    }
 
     const { createAuditLog } = await import("@/lib/server/audit-log");
     await createAuditLog({

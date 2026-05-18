@@ -25,36 +25,33 @@ export default function ApiDocsPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [copyState, setCopyState] = useState<Record<string, boolean>>({});
 
-  const baseUrl = {
-    production: "https://your-domain.com/api/v1",
-    local: "http://localhost:3004/api/v1"
-  };
+  const baseUrl = "https://api.tzoshop.io.vn/v1";
 
-  const curlExample = `curl -X POST "http://localhost:3004/api/v1/chat/completions" \\
+  const curlExample = `curl https://api.tzoshop.io.vn/v1/chat/completions \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "codexai/gpt-5.3-codex",
+    "model": "deepseek/deepseek-v4-flash",
     "messages": [
       {
         "role": "user",
-        "content": "Hello, can you help me?"
+        "content": "Hello"
       }
     ]
   }'`;
 
-  const jsExample = `const response = await fetch("http://localhost:3004/api/v1/chat/completions", {
+  const jsExample = `const response = await fetch("https://api.tzoshop.io.vn/v1/chat/completions", {
   method: "POST",
   headers: {
     "Authorization": "Bearer YOUR_API_KEY",
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    model: "codexai/gpt-5.3-codex",
+    model: "deepseek/deepseek-v4-flash",
     messages: [
       {
         role: "user",
-        content: "Hello, can you help me?",
+        content: "Hello",
       },
     ],
   }),
@@ -67,13 +64,13 @@ console.log(data);`;
   "id": "chatcmpl-123",
   "object": "chat.completion",
   "created": 1677652288,
-  "model": "codexai/gpt-5.3-codex",
+  "model": "deepseek/deepseek-v4-flash",
   "choices": [
     {
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "Chào bạn! Tôi là CodexAI, tôi có thể giúp gì cho bạn hôm nay?"
+        "content": "Hello! How can I assist you today?"
       },
       "finish_reason": "stop"
     }
@@ -110,11 +107,10 @@ console.log(data);`;
               Tài liệu API
             </h1>
             <p className={cn(ui.pMuted, "text-lg max-w-2xl leading-relaxed")}>
-              Tích hợp API theo chuẩn OpenAI-compatible để sử dụng trong extension, IDE hoặc công cụ API client. 
-              Sử dụng hệ thống credits linh hoạt để truy cập nhiều dòng AI mạnh mẽ nhất hiện nay.
+              Tài liệu này hướng dẫn bạn cách sử dụng API key được cấp bởi TzoShop trong IDE, extension hoặc ứng dụng riêng. API tương thích với chuẩn OpenAI, nên có thể dùng với nhiều công cụ hỗ trợ custom Base URL.
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
-              <Link href="/pricing">
+              <Link href="/plans">
                 <AppButton variant="accent">
                   Mua credits
                   <ChevronRight className="h-4 w-4 ml-2" />
@@ -122,6 +118,15 @@ console.log(data);`;
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+
+      <section className="border-b border-indigo-100 bg-indigo-50">
+        <div className="mx-auto max-w-[1200px] px-6 py-5">
+          <p className="text-sm font-medium text-indigo-900 leading-relaxed">
+            <strong>💡 Hướng dẫn sử dụng:</strong> Khách hàng chỉ cần mua gói credits tại TzoShop, lấy API key tại trang API Keys, cấu hình Base URL và chọn đúng model thuộc gói đã mua để bắt đầu sử dụng hệ thống xử lý AI của TzoShop.
+          </p>
         </div>
       </section>
 
@@ -135,34 +140,18 @@ console.log(data);`;
               </div>
               <h2 className={ui.h3}>Base URL</h2>
             </div>
-            
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-1">
               <AppCard className="p-6">
-                <p className={ui.label}>Production</p>
+                <p className={ui.label}>Địa chỉ Base URL</p>
                 <div className="flex items-center justify-between gap-3 mt-2">
-                  <code className="text-sm font-black text-[#00d4a4] break-all">{baseUrl.production}</code>
+                  <code className="text-sm font-black text-[#00d4a4] break-all">{baseUrl}</code>
                   <AppButton 
-                    onClick={() => handleCopy(baseUrl.production, "prod-url")}
+                    onClick={() => handleCopy(baseUrl, "base-url-copy")}
                     variant="secondary"
                     size="sm"
                     className="h-10 w-10 p-0"
                   >
-                    {copyState["prod-url"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4 text-[#8a9690]" />}
-                  </AppButton>
-                </div>
-              </AppCard>
-              
-              <AppCard className="p-6">
-                <p className={ui.label}>Local Development</p>
-                <div className="flex items-center justify-between gap-3 mt-2">
-                  <code className="text-sm font-black text-[#00d4a4] break-all">{baseUrl.local}</code>
-                  <AppButton 
-                    onClick={() => handleCopy(baseUrl.local, "local-url")}
-                    variant="secondary"
-                    size="sm"
-                    className="h-10 w-10 p-0"
-                  >
-                    {copyState["local-url"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4 text-[#8a9690]" />}
+                    {copyState["base-url-copy"] ? <CheckCircle2 className="h-4 w-4 text-[#00d4a4]" /> : <Copy className="h-4 w-4 text-[#8a9690]" />}
                   </AppButton>
                 </div>
               </AppCard>
@@ -309,11 +298,13 @@ console.log(data);`;
                 </thead>
                 <tbody className="divide-y divide-[#edf1ee]">
                   {[
-                    { code: "401", desc: "Thiếu hoặc sai API key" },
-                    { code: "403", desc: "Model không nằm trong gói đã mua" },
-                    { code: "402", desc: "Không đủ credits để thực hiện yêu cầu" },
-                    { code: "429", desc: "Vượt giới hạn tốc độ (Rate limit exceeded)" },
-                    { code: "500", desc: "Lỗi hệ thống phía Gateway" },
+                    { code: "401", desc: "API key thiếu, sai hoặc đã bị thu hồi." },
+                    { code: "403", desc: "API key không có quyền dùng model này. Hãy kiểm tra model có thuộc gói đã mua không." },
+                    { code: "402", desc: "Credits không đủ hoặc gói đã hết hạn." },
+                    { code: "404", desc: "Endpoint hoặc model không tồn tại. Hãy kiểm tra lại tên model." },
+                    { code: "429", desc: "Bạn gửi quá nhiều request trong thời gian ngắn. Vui lòng thử lại sau." },
+                    { code: "500", desc: "Hệ thống xử lý AI đang gặp lỗi tạm thời. Vui lòng thử lại sau." },
+                    { code: "503", desc: "Model hiện chưa khả dụng. Vui lòng thử model khác trong gói hoặc liên hệ hỗ trợ." },
                   ].map((error) => (
                     <tr key={error.code} className="hover:bg-[#fbfbf8] transition-colors">
                       <td className="px-8 py-5">
@@ -324,6 +315,42 @@ console.log(data);`;
                   ))}
                 </tbody>
               </table>
+            </AppCard>
+          </section>
+
+          {/* Section 7.5: Cấu hình IDE */}
+          <section id="ide-config" className="scroll-mt-24">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e7fff7] text-[#00d4a4] ring-1 ring-[#00d4a4]/20 shadow-sm">
+                <Code2 className="h-6 w-6" />
+              </div>
+              <h2 className={ui.h3}>Cấu hình IDE / Extension</h2>
+            </div>
+            
+            <AppCard className="p-8 space-y-6">
+              <p className={cn(ui.p, "mb-4")}>
+                Bạn có thể tích hợp API Key của TzoShop vào bất kỳ công cụ lập trình, IDE hoặc extension hỗ trợ chuẩn kết nối OpenAI (như VS Code Continue, Cursor, Cline, Copilot...).
+              </p>
+              
+              <div className="grid gap-6 sm:grid-cols-3">
+                <div className="p-5 bg-[#fbfbf8] rounded-2xl border border-[#edf1ee]">
+                  <h4 className="font-black text-sm text-[#0b0f0d] mb-1">Base URL</h4>
+                  <code className="text-xs text-[#00d4a4] font-black break-all">https://api.tzoshop.io.vn/v1</code>
+                  <p className="text-xs text-[#8a9690] mt-2">Địa chỉ API chính thức của TzoShop.</p>
+                </div>
+                
+                <div className="p-5 bg-[#fbfbf8] rounded-2xl border border-[#edf1ee]">
+                  <h4 className="font-black text-sm text-[#0b0f0d] mb-1">API Key</h4>
+                  <code className="text-xs text-indigo-600 font-bold break-all font-mono">API key lấy tại /api-keys</code>
+                  <p className="text-xs text-[#8a9690] mt-2">API Key bạn sao chép tại mục /api-keys.</p>
+                </div>
+
+                <div className="p-5 bg-[#fbfbf8] rounded-2xl border border-[#edf1ee]">
+                  <h4 className="font-black text-sm text-[#0b0f0d] mb-1">Model Name</h4>
+                  <code className="text-xs text-[#00d4a4] font-black break-all">deepseek/deepseek-v4-flash</code>
+                  <p className="text-xs text-[#8a9690] mt-2">Hoặc model bất kỳ thuộc gói bạn đã mua.</p>
+                </div>
+              </div>
             </AppCard>
           </section>
 
@@ -367,6 +394,7 @@ console.log(data);`;
                   { id: "chat-completions", label: "Chat Completions" },
                   { id: "response", label: "Response mẫu" },
                   { id: "errors", label: "Lỗi thường gặp" },
+                  { id: "ide-config", label: "Cấu hình IDE" },
                   { id: "notes", label: "Lưu ý quan trọng" },
                 ].map((item) => (
                   <a 

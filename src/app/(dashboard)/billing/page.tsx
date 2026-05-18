@@ -23,6 +23,7 @@ import { TextFadeInUp } from "@/components/animations/text-fade-in-up";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getAiLineLabelFromApiFamily, getAiLineLabelFromSlug } from "@/lib/ai-line";
 
 type ApiOrderStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED";
 type BillingFilter = "all" | "pending" | "paid" | "cancelled" | "expired";
@@ -84,10 +85,10 @@ function formatCurrency(value: number) {
 
 function formatCredits(value: string) {
   const amount = Number(value);
-  if (amount >= 1_000_000_000) return `${amount / 1_000_000_000}B`;
-  if (amount >= 1_000_000) return `${amount / 1_000_000}M`;
-  if (amount >= 1_000) return `${amount / 1_000}K`;
-  return amount.toLocaleString("vi-VN");
+  if (Number.isInteger(amount)) {
+    return new Intl.NumberFormat("en-US").format(amount);
+  }
+  return amount.toFixed(6).replace(/\.?0+$/, "");
 }
 
 function getStatusLabel(status: ApiOrderStatus) {
@@ -95,6 +96,11 @@ function getStatusLabel(status: ApiOrderStatus) {
   if (status === "PENDING") return "Chờ thanh toán";
   if (status === "CANCELLED") return "Đã hủy";
   return "Hết hạn";
+}
+
+function getDisplayAiFamily(product: { slug?: string; apiFamily: string }) {
+  if (product.slug) return getAiLineLabelFromSlug(product.slug);
+  return getAiLineLabelFromApiFamily(product.apiFamily);
 }
 
 function getStatusClass(status: ApiOrderStatus) {
@@ -406,7 +412,7 @@ export default function BillingPage() {
                             <td className="px-4 py-4 text-sm">
                               <p className="font-semibold text-slate-900">{order.product.name}</p>
                               <div className="mt-1 inline-flex rounded-full border border-indigo-100 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
-                                {order.product.apiFamily}
+                                {getDisplayAiFamily(order.product)}
                               </div>
                             </td>
                             <td className="whitespace-nowrap px-4 py-4 text-sm font-bold text-slate-950">{formatCurrency(order.amountVnd)}</td>
@@ -531,7 +537,7 @@ export default function BillingPage() {
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">Mã đơn hàng</p><p className="mt-1 font-semibold text-slate-900">#{selectedOrder.orderCode}</p></div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">Trạng thái</p><p className="mt-1"><span className={cn("inline-flex rounded-full px-2.5 py-1 text-xs font-semibold", getStatusClass(selectedOrder.status))}>{getStatusLabel(selectedOrder.status)}</span></p></div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">Tên gói</p><p className="mt-1 font-semibold text-slate-900">{selectedOrder.product.name}</p></div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">Dòng AI</p><p className="mt-1 font-semibold text-slate-900">{selectedOrder.product.apiFamily}</p></div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">Dòng AI</p><p className="mt-1 font-semibold text-slate-900">{getDisplayAiFamily(selectedOrder.product)}</p></div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">Credits</p><p className="mt-1 font-semibold text-slate-900">{formatCredits(selectedOrder.product.credits)}</p></div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">Thời hạn</p><p className="mt-1 font-semibold text-slate-900">{selectedOrder.product.durationDays > 0 ? `${selectedOrder.product.durationDays} ngày` : "Dùng đến khi hết credits"}</p></div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">Số tiền</p><p className="mt-1 font-semibold text-slate-900">{formatCurrency(selectedOrder.amountVnd)}</p></div>

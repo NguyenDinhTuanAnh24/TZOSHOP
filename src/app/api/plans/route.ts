@@ -62,7 +62,11 @@ export async function GET() {
     const activeModelNames = new Set(activeModels.map(m => m.publicName));
 
     const data = products.map((product: ProductItem) => {
-      const activeAllowedModels = product.allowedModels.filter(m => activeModelNames.has(m));
+      // Nếu không có model nào được kích hoạt trong DB (hoặc DB đã được dọn sạch),
+      // sử dụng danh sách allowedModels gốc của Product để hiển thị đầy đủ tính năng.
+      const activeAllowedModels = activeModelNames.size > 0
+        ? product.allowedModels.filter(m => activeModelNames.has(m))
+        : product.allowedModels;
       
       return {
         ...product,

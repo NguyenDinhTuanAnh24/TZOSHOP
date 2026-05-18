@@ -419,6 +419,8 @@ async function handleStreamingChatCompletion(params: {
           let completionTokens = 0;
           let assistantText = "";
           let hasToolCalls = false;
+          let isFallbackTextStream = false;
+          let bufferedChunks: Uint8Array[] = [];
 
           let firstByteTime = 0;
 
@@ -430,9 +432,11 @@ async function handleStreamingChatCompletion(params: {
 
               if (firstByteTime === 0) firstByteTime = Date.now();
 
-              // 1. Pass-through immediately for non-fallback
-              if (!isAgentFallbackMode) {
+              // 1. Pass-through immediately for non-fallback or if we detected text
+              if (!isAgentFallbackMode || isFallbackTextStream) {
                 controller.enqueue(value);
+              } else {
+                bufferedChunks.push(value);
               }
 
               const chunkText = decoder.decode(value, { stream: true });
@@ -467,15 +471,24 @@ async function handleStreamingChatCompletion(params: {
                       const deltaContent = choices?.[0]?.delta?.content;
                       if (typeof deltaContent === "string") assistantText += deltaContent;
                     }
+
+                    if (isAgentFallbackMode && !isFallbackTextStream) {
+                      const trimmedAss = assistantText.trimStart();
+                      if (trimmedAss.length > 5 && !trimmedAss.startsWith("{") && !trimmedAss.startsWith("<") && !trimmedAss.startsWith("[")) {
+                        isFallbackTextStream = true;
+                        for (const chunk of bufferedChunks) {
+                          controller.enqueue(chunk);
+                        }
+                        bufferedChunks = [];
+                      }
+                    }
                   } catch {}
                 }
               }
             }
 
-            if (isAgentFallbackMode) {
+            if (isAgentFallbackMode && !isFallbackTextStream) {
               const parsedToolCall = tryParseToolCallFromText(assistantText);
-              console.log("[AGENT_FALLBACK_UPSTREAM_TEXT]", assistantText.slice(0, 2000));
-              console.log("[AGENT_FALLBACK_PARSED_TOOL_CALL]", parsedToolCall);
 
               if (parsedToolCall) {
                 const created = Math.floor(Date.now() / 1000);
@@ -518,17 +531,9 @@ async function handleStreamingChatCompletion(params: {
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(finishChunk)}\n\n`));
                 controller.enqueue(encoder.encode("data: [DONE]\n\n"));
               } else {
-                const created = Math.floor(Date.now() / 1000);
-                const chunkId = `chatcmpl-${Date.now()}`;
-                const contentChunk = {
-                  id: chunkId,
-                  object: "chat.completion.chunk",
-                  created,
-                  model: modelName,
-                  choices: [{ index: 0, delta: { content: assistantText }, finish_reason: "stop" }],
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentChunk)}\n\n`));
-                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+                for (const chunk of bufferedChunks) {
+                  controller.enqueue(chunk);
+                }
               }
             }
 
@@ -693,21 +698,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json().catch(() => ({}))) as IncomingBody;
-    console.log("[INCOMING_BODY_KEYS]", Object.keys(body ?? {}));
 
-    console.log("[TZOSHOP_INCOMING_DEBUG]", {
+    console.log("[INCOMING]", {
       model: body?.model,
       stream: body?.stream,
       messagesCount: Array.isArray(body?.messages) ? body.messages.length : 0,
       hasTools: Array.isArray(body?.tools),
       toolsCount: Array.isArray(body?.tools) ? body.tools.length : 0,
-      toolChoice: body?.tool_choice,
-      parallelToolCalls: body?.parallel_tool_calls,
-      responseFormat: body?.response_format,
-      maxTokens: body?.max_tokens,
-      temperature: body?.temperature,
-      userAgent: request.headers.get("user-agent"),
-      hasAuthorization: Boolean(request.headers.get("authorization")),
+      toolNames: Array.isArray(body?.tools)
+        ? body.tools
+            .filter((tool): tool is { name?: string; function?: { name?: string } } => {
+              return typeof tool === "object" && tool !== null;
+            })
+            .map((tool) => tool.name ?? tool.function?.name)
+            .filter((name): name is string => typeof name === "string")
+        : [],
     });
 
     const modelName = body.model;
@@ -759,23 +764,6 @@ export async function POST(request: NextRequest) {
     const requestHasTools = Array.isArray(body.tools) && body.tools.length > 0;
     const supportsTools = aiModel.supportsTools === true;
     const supportsAgent = aiModel.supportsAgent === true;
-
-    console.log("[TOOLS_GUARD_DEBUG]", {
-      model: body.model,
-      requestHasTools,
-      supportsTools,
-      supportsAgent,
-      toolsType: typeof body.tools,
-      toolsCount: Array.isArray(body.tools) ? body.tools.length : 0,
-      toolChoice: body.tool_choice,
-    });
-
-    console.log("[AGENT_FALLBACK_ENABLED]", {
-      model: body.model,
-      requestHasTools,
-      supportsTools,
-      supportsAgent,
-    });
 
     if (requestHasTools && !supportsTools && !supportsAgent) {
       return NextResponse.json(

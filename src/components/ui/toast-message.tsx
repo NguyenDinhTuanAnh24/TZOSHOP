@@ -49,7 +49,7 @@ export function ToastMessage({ message, type = "success", onClose }: ToastMessag
 
   const toast = (
     <div
-      className="fixed right-4 top-20 z-[200] w-[calc(100vw-2rem)] max-w-[360px] animate-in fade-in slide-in-from-top-2 duration-200 sm:right-6 sm:top-24"
+      className="fixed right-4 top-20 z-[12000] w-[calc(100vw-2rem)] max-w-[360px] animate-in fade-in slide-in-from-top-2 duration-200 sm:right-6 sm:top-24"
       role="status"
       aria-live="polite"
     >

@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { formatVnd } from "@/lib/format";
 import { PageLoader } from "@/components/ui/app-loader";
+import { getAiLineLabelFromApiFamily, getAiLineLabelFromSlug } from "@/lib/ai-line";
 
 type OrderDetail = {
   id: string;
@@ -43,6 +44,7 @@ type OrderDetail = {
   product: {
     id: string;
     name: string;
+    slug?: string;
     apiFamily: string;
     credits: string;
     durationDays: number;
@@ -56,6 +58,12 @@ type OrderDetail = {
     expiresAt: string;
   } | null;
 };
+
+function getDisplayAiFamily(product?: { slug?: string; apiFamily: string }) {
+  if (!product) return "N/A";
+  if (product.slug) return getAiLineLabelFromSlug(product.slug);
+  return getAiLineLabelFromApiFamily(product.apiFamily);
+}
 
 export default function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -307,7 +315,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tn sản phẩm</p>
                        <p className="text-lg font-black text-slate-900">{order.product.name}</p>
                        <span className="inline-flex mt-2 rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-black text-slate-600 tracking-widest uppercase">
-                          {order.product.apiFamily}
+                          {getDisplayAiFamily(order.product)}
                        </span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">

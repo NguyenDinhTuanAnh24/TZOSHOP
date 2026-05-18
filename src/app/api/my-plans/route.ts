@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { requireCurrentUser } from "@/lib/server/current-user";
+import { getAiLineFromProductSlug, getAiLineLabelFromSlug } from "@/lib/ai-line";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,7 @@ export async function GET() {
             priceVnd: true,
             apiKeyLimit: true,
             allowedModels: true,
+            allowedReasoning: true,
           },
         },
         apiKeys: {
@@ -64,17 +66,43 @@ export async function GET() {
     
     const activeModelsMap = new Map(activeModels.map(m => [m.publicName, m]));
 
-    const data = buckets.map((bucket) => {
+    const data = await Promise.all(buckets.map(async (bucket) => {
       const usedCredits = bucket.creditsTotal - bucket.creditsRemaining;
 
-      // Use product's allowedModels if available to reflect admin changes, fallback to bucket's own allowedModels
-      const baseAllowedModels = bucket.product?.allowedModels || bucket.allowedModels;
+      // Determine allowedModels list with fallback & automatic database self-healing backfill
+      let baseAllowedModels = bucket.allowedModels;
+      if ((!baseAllowedModels || baseAllowedModels.length === 0) && bucket.product?.allowedModels) {
+        baseAllowedModels = bucket.product.allowedModels;
+        
+        // Trigger asynchronous backfill in the database
+        prisma.creditBucket.update({
+          where: { id: bucket.id },
+          data: {
+            allowedModels: bucket.product.allowedModels,
+            allowedReasoning: bucket.product.allowedReasoning || [],
+          }
+        }).catch(err => console.error(`[backfill] Failed to update CreditBucket ${bucket.id}:`, err));
+      } else if (!baseAllowedModels || baseAllowedModels.length === 0) {
+        baseAllowedModels = bucket.product?.allowedModels || [];
+      }
 
       // Filter and map active models for the bucket
       const activeAllowedModels = baseAllowedModels
         .map(name => {
           const model = activeModelsMap.get(name);
-          if (!model) return null;
+          if (!model) {
+            // Fallback: If AiModel is not registered in the database, return a default presentation object
+            const parts = name.split("/");
+            const publicNameOnly = parts[parts.length - 1] || name;
+            return {
+              publicName: name,
+              upstreamModel: publicNameOnly,
+              apiFamily: bucket.apiFamily,
+              inputCreditRate: 1,
+              outputCreditRate: 1,
+              isActive: true,
+            };
+          }
           return {
             ...model,
             inputCreditRate: model.inputCreditRate.toNumber(),
@@ -103,12 +131,52 @@ export async function GET() {
         };
       });
 
+      let newApiQuotaRemaining = null;
+      let newApiQuotaTotal = null;
+      let newApiQuotaUsed = null;
+      let quotaSource = "DB";
+
+      if (apiKeys.length > 0) {
+        let totalRemain = 0;
+        let totalUsed = 0;
+        let successFetchCount = 0;
+
+        for (const ak of apiKeys) {
+          if (ak.key && ak.isActive) {
+            try {
+              const { getNewApiTokenByKey } = await import("@/lib/newapi");
+              const tokenDetails = await getNewApiTokenByKey(ak.key);
+              if (tokenDetails) {
+                totalRemain += tokenDetails.remainQuota;
+                totalUsed += tokenDetails.usedQuota;
+                successFetchCount++;
+              }
+            } catch (e) {
+              console.error(`Failed to fetch NewAPI token for keyPrefix ${ak.keyPrefix}:`, e);
+            }
+          }
+        }
+
+        if (successFetchCount > 0) {
+          newApiQuotaRemaining = totalRemain.toString();
+          newApiQuotaUsed = totalUsed.toString();
+          newApiQuotaTotal = (totalRemain + totalUsed).toString();
+          quotaSource = "NEWAPI";
+        }
+      }
+
       return {
         id: bucket.id,
         apiFamily: bucket.apiFamily,
+        aiLine: bucket.product?.slug ? getAiLineFromProductSlug(bucket.product.slug) : null,
+        aiLineLabel: bucket.product?.slug ? getAiLineLabelFromSlug(bucket.product.slug) : null,
         creditsTotal: bucket.creditsTotal.toString(),
         creditsRemaining: bucket.creditsRemaining.toString(),
         usedCredits: usedCredits.toString(),
+        newApiQuotaRemaining,
+        newApiQuotaTotal,
+        newApiQuotaUsed,
+        quotaSource,
         apiKeyLimit: bucket.apiKeyLimit,
         activeApiKeys: apiKeys.length,
         apiKeys: apiKeys,
@@ -122,11 +190,11 @@ export async function GET() {
           ? {
               ...bucket.product,
               credits: bucket.product.credits.toString(),
-              allowedModels: bucket.product.allowedModels.filter(m => activeModelsMap.has(m)),
+              allowedModels: bucket.product.allowedModels,
             }
           : null,
       };
-    });
+    }));
 
     return NextResponse.json({
       data,
