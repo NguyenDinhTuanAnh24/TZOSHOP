@@ -101,7 +101,14 @@ export async function GET() {
       creditBuckets.map(async (bucket: CreditBucketItem) => {
         const usageAgg = await prisma.usageLog.aggregate({
           where: {
-            creditBucketId: bucket.id,
+            OR: [
+              { creditBucketId: bucket.id },
+              {
+                apiKey: {
+                  creditBucketId: bucket.id,
+                },
+              },
+            ],
           },
           _sum: {
             inputTokens: true,

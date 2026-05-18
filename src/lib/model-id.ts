@@ -56,11 +56,32 @@ const LEGACY_TO_NEW: Record<string, NewApiModelId> = {
 
 const NEW_SET = new Set<string>(NEWAPI_MODEL_IDS);
 
+const BANNED_LOWERCASE = new Set([
+  "gpt-5.2-pro",
+  "gpt-5.5-pro",
+  "gpt 5.2 pro",
+  "gpt 5.5 pro",
+  "gpt-5.2 pro",
+  "gpt-5.5 pro",
+  "codexai/gpt-5.2-pro",
+  "codexai/gpt-5.5-pro",
+  "codexai/gpt 5.2 pro",
+  "codexai/gpt 5.5 pro",
+]);
+
+export function isBannedModel(modelName: string): boolean {
+  const lower = modelName.toLowerCase().trim();
+  return BANNED_LOWERCASE.has(lower);
+}
+
 export function normalizeModelId(model: unknown): string {
   const cleaned = String(model || "").trim();
   if (!cleaned) return cleaned;
+  if (isBannedModel(cleaned)) return "";
   if (NEW_SET.has(cleaned)) return cleaned;
-  return LEGACY_TO_NEW[cleaned.toLowerCase()] ?? cleaned;
+  const legacy = LEGACY_TO_NEW[cleaned.toLowerCase()] ?? cleaned;
+  if (isBannedModel(legacy)) return "";
+  return legacy;
 }
 
 export function normalizeModelIds(models: string[]): string[] {

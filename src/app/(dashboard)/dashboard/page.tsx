@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { translateStatus } from "@/lib/format";
+import { formatCredits } from "@/lib/credits";
 import { ToastMessage } from "@/components/ui/toast-message";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,10 +60,7 @@ type DashboardData = {
 
 function formatCreditsValue(value: string | number) {
   const num = typeof value === "string" ? Number(value) : value;
-  if (Number.isInteger(num)) {
-    return new Intl.NumberFormat("en-US").format(num);
-  }
-  return num.toFixed(6).replace(/\.?0+$/, "");
+  return formatCredits(num);
 }
 
 function formatCurrency(value: number) {
@@ -79,7 +77,6 @@ function getUsagePercent(remaining: string, total: string) {
 
 const cardClass =
   "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_45px_-22px_rgba(79,70,229,0.28)]";
-
 const primaryBtnClass =
   "inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-semibold !text-white shadow-[0_4px_14px_0_rgba(79,70,229,0.30)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-12px_rgba(79,70,229,0.45)] active:scale-[0.98]";
 
