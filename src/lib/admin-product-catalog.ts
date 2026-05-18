@@ -1,4 +1,4 @@
-﻿export type AdminAiFamilyKey = "all_models" | "codex" | "claude" | "gemini" | "deepseek";
+export type AdminAiFamilyKey = "all_models" | "codex" | "claude" | "gemini" | "deepseek";
 export type AdminPlanTypeKey = "trial" | "monthly" | "quarterly" | "yearly";
 
 export const ADMIN_PLAN_TYPES: Array<{ key: AdminPlanTypeKey; label: string; durationDays: number }> = [

@@ -1,1 +1,1 @@
-﻿export { default } from "../status/page";
+export { default } from "../status/page";

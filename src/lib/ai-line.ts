@@ -1,4 +1,4 @@
-﻿export type AiLine = "ALL_MODELS" | "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
+export type AiLine = "ALL_MODELS" | "CODEXAI" | "CLAUDE" | "GEMINI" | "DEEPSEEK";
 
 export function getAiLineFromProductSlug(slug: string): AiLine | null {
   if (slug.startsWith("all_models_")) return "ALL_MODELS";

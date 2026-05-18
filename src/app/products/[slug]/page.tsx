@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { LandingPublicFooter, LandingPublicNavbar } from "@/components/layout/landing-public-chrome";

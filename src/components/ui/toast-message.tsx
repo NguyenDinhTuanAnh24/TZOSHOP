@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";

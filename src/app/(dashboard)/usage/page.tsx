@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, ChartNoAxesColumnIncreasing, Clock3, Search, Zap } from "lucide-react";

@@ -193,66 +193,76 @@ const testimonials = [
 
 const pricingPreview = [
   {
-    name: "Trial",
+    name: "API All Models Trial 7 ngày",
+    badge: "Dùng thử",
+    subtitle: "Trải nghiệm nhanh",
+    desc: "Trải nghiệm nhiều dòng model trong cùng một API key.",
+    credits: "8 credits",
+    validity: "7 ngày sử dụng - 1 API key",
+    bullets: ["Dùng thử nhanh", "Hỗ trợ nhiều dòng model", "Phù hợp để kiểm tra trước khi mua dài hạn"],
+  },
+  {
+    name: "API All Models 1 tháng",
+    badge: "Pho bien",
+    subtitle: "Dùng hằng ngày",
+    desc: "Gói tổng hợp cho nhu cầu sử dụng nhiều model hằng ngày.",
+    credits: "40 credits",
+    validity: "30 ngày sử dụng - 1 API key",
+    bullets: ["Dùng nhiều dòng model", "Theo dõi credits trong dashboard", "Phù hợp cho công việc thường xuyên"],
+  },
+  {
+    name: "API CodexAI 1 tháng",
+    badge: "Lập trình",
+    subtitle: "Cho IDE, extension",
+    desc: "Phù hợp cho IDE, extension và các tác vụ xử lý code.",
+    credits: "40 credits",
+    validity: "30 ngày sử dụng - 1 API key",
+    bullets: ["Tối ưu cho lập trình", "Dùng trong công cụ hỗ trợ custom Base URL", "Quản lý key riêng"],
+  },
+  {
+    name: "API Claude 1 tháng",
+    badge: "Phan tich",
+    subtitle: "Nội dung và tài liệu",
+    desc: "Phù hợp cho viết nội dung, phân tích tài liệu và xử lý ngữ cảnh dài.",
+    credits: "40 credits",
+    validity: "30 ngày sử dụng - 1 API key",
+    bullets: ["Hỗ trợ tác vụ nội dung", "Phù hợp phân tích tài liệu", "Theo dõi lịch sử sử dụng"],
+  },
+  {
+    name: "API Gemini 1 tháng",
+    badge: "Đa nhiệm",
+    subtitle: "Nhanh và linh hoạt",
+    desc: "Phù hợp cho nhu cầu đa nhiệm, tốc độ nhanh và sử dụng hằng ngày.",
+    credits: "40 credits",
+    validity: "30 ngày sử dụng - 1 API key",
+    bullets: ["Dùng linh hoạt hằng ngày", "Phù hợp nhiều tác vụ phổ thông", "Quản lý credits dễ dàng"],
+  },
+  {
+    name: "API DeepSeek 1 tháng",
     badge: "Tiết kiệm",
-    subtitle: "Cho trải nghiệm nhanh",
-    desc: "Dùng thử workflow cơ bản, phù hợp để làm quen và kiểm tra nhu cầu thực tế.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Thời hạn ngắn để bắt đầu nhanh",
-    bullets: ["Kích hoạt nhanh", "Phù hợp người mới", "Thiết lập đơn giản"],
+    subtitle: "Tối ưu chi phí",
+    desc: "Phù hợp khi cần tối ưu chi phí cho các tác vụ AI thường xuyên.",
+    credits: "40 credits",
+    validity: "30 ngày sử dụng - 1 API key",
+    bullets: ["Chi phí dễ tiếp cận", "Phù hợp dùng thường xuyên", "Hỗ trợ tạo API key riêng"],
   },
   {
-    name: "Mini",
-    badge: "Tiết kiệm",
-    subtitle: "Cho cá nhân",
-    desc: "Bắt đầu nhanh với mức chi phí thấp và khả năng mở rộng khi cần.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Thời hạn linh hoạt theo gói",
-    bullets: ["Bắt đầu nhanh", "Phù hợp cá nhân", "Theo dõi usage cơ bản"],
+    name: "API All Models 3 tháng",
+    badge: "Tiết kiệm hơn",
+    subtitle: "Dùng ổn định",
+    desc: "Lựa chọn dài hạn hơn cho người dùng ổn định.",
+    credits: "130 credits",
+    validity: "90 ngày sử dụng - 1 API key",
+    bullets: ["Tiết kiệm hơn theo thời hạn", "Dùng được nhiều dòng model", "Phù hợp làm việc liên tục"],
   },
   {
-    name: "Plus",
-    badge: "Phổ biến",
-    subtitle: "Cho sử dụng thường xuyên",
-    desc: "Cân bằng tốt giữa chi phí và hiệu quả để duy trì công việc hằng ngày.",
-    credits: "Credits tối ưu cho workflow hằng ngày",
-    validity: "Chu kỳ ổn định cho công việc liên tục",
-    bullets: ["Cân bằng chi phí", "Ưu tiên ổn định", "Quản lý key linh hoạt"],
-  },
-  {
-    name: "Pro",
-    badge: "Cho team",
-    subtitle: "Cho workflow nặng hơn",
-    desc: "Nhiều credits hơn để chạy tác vụ chuyên sâu và yêu cầu vận hành ổn định.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Dành cho cường độ sử dụng cao",
-    bullets: ["Dung lượng lớn hơn", "Phù hợp người dùng chuyên sâu", "Mở rộng linh hoạt"],
-  },
-  {
-    name: "Max",
-    badge: "Cho team",
-    subtitle: "Cho nhóm nhỏ",
-    desc: "Dung lượng cao hơn cho nhóm cộng tác và theo dõi usage chi tiết.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Chu kỳ dài hơn theo gói",
-    bullets: ["Phù hợp nhóm nhỏ", "Theo dõi sâu hơn", "Ưu tiên độ ổn định"],
-  },
-  {
-    name: "Ultra",
-    subtitle: "Cho nhu cầu rất cao",
-    desc: "Tối ưu cho workload lớn, ưu tiên hiệu năng và khả năng mở rộng liên tục.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Dành cho vận hành cường độ lớn",
-    bullets: ["Khối lượng xử lý lớn", "Ưu tiên hiệu năng", "Đáp ứng workload cao"],
-  },
-  {
-    name: "Enterprise",
-    badge: "Liên hệ",
-    subtitle: "Cho team/doanh nghiệp",
-    desc: "Gói tùy chỉnh theo quy mô tổ chức với nhu cầu tư vấn và hỗ trợ riêng.",
-    credits: "Credits theo từng dòng AI",
-    validity: "Thiết kế theo nhu cầu doanh nghiệp",
-    bullets: ["Tư vấn chuyên biệt", "Hỗ trợ riêng", "Tùy chỉnh theo quy mô"],
+    name: "API All Models 1 năm",
+    badge: "Dài hạn",
+    subtitle: "Tối ưu lâu dài",
+    desc: "Tối ưu cho nhu cầu sử dụng lâu dài.",
+    credits: "600 credits",
+    validity: "365 ngày sử dụng - 1 API key",
+    bullets: ["Tối ưu chi phí dài hạn", "Hạn dùng lâu", "Quản lý tất cả trong dashboard"],
   },
 ];
 
@@ -1028,11 +1038,11 @@ function FeatureSection() {
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs text-slate-500">Requests</p>
-              <p className="mt-1 font-semibold text-slate-900">12.480</p>
+              <p className="mt-1 font-semibold text-slate-900">248</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs text-slate-500">Credits còn lại</p>
-              <p className="mt-1 font-semibold text-slate-900">410.000</p>
+              <p className="mt-1 font-semibold text-slate-900">13 credits</p>
             </div>
           </div>
         </>
@@ -1154,10 +1164,10 @@ function PricingPreviewSection() {
     <section id="pricing" className="border-y border-slate-200 bg-white py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <p className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700">
-          Gói credits
+          GOI API PHO BIEN
         </p>
-        <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Preview các lựa chọn phổ biến</h2>
-        <p className="mt-3 text-slate-600">Chọn gói phù hợp trước, sau đó xem chi tiết đầy đủ trong trang bảng giá.</p>
+        <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Các gói API phổ biến</h2>
+        <p className="mt-3 text-slate-600">Chọn nhanh gói API theo dòng model, thời hạn và số credits phù hợp với nhu cầu sử dụng.</p>
 
         <div className="mt-14 min-h-[520px] pb-24">
           <Swiper
@@ -1269,13 +1279,13 @@ function WhyChooseSection() {
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
                     <p className="text-xs text-white/75">Gói đang dùng</p>
-                    <p className="mt-1 text-xl font-bold text-white">Plus</p>
-                    <p className="mt-1 text-xs text-white/70">Chu kỳ còn 24 ngày</p>
+                    <p className="mt-1 text-xl font-bold text-white">API All Models 1 tháng</p>
+                    <p className="mt-1 text-xs text-white/70">Còn hạn 30 ngày sử dụng</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
                     <p className="text-xs text-white/75">Credits còn lại</p>
-                    <p className="mt-1 text-xl font-bold text-white">1.250.000</p>
-                    <p className="mt-1 text-xs text-white/70">67% ngân sách tuần này</p>
+                    <p className="mt-1 text-xl font-bold text-white">13 credits</p>
+                    <p className="mt-1 text-xs text-white/70">Đã dùng 67% gói hiện tại</p>
                   </div>
                 </div>
 
@@ -1283,7 +1293,7 @@ function WhyChooseSection() {
                   <div className="h-2 rounded-full bg-white/20">
                     <div className="h-2 w-2/3 rounded-full bg-gradient-to-r from-white/90 to-emerald-300/85" />
                   </div>
-                  <p className="mt-2 text-xs text-white/75">Mức sử dụng ổn định</p>
+                  <p className="mt-2 text-xs text-white/75">Mức sử dụng gói hiện tại</p>
                 </div>
 
                 <div className="mt-4 rounded-xl border border-white/10 bg-white/12 p-3">
@@ -1300,15 +1310,15 @@ function WhyChooseSection() {
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
                     <p className="text-xs text-white/70">API keys</p>
-                    <p className="mt-1 text-sm font-semibold text-white">4 API keys</p>
+                    <p className="mt-1 text-sm font-semibold text-white">1 API key</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
                     <p className="text-xs text-white/70">Đơn hàng</p>
-                    <p className="mt-1 text-sm font-semibold text-white">12 đơn hàng</p>
+                    <p className="mt-1 text-sm font-semibold text-white">3 đơn đã thanh toán</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/12 p-3">
-                    <p className="text-xs text-white/70">Uptime</p>
-                    <p className="mt-1 text-sm font-semibold text-white">99.9% ổn định</p>
+                    <p className="text-xs text-white/70">Trạng thái</p>
+                    <p className="mt-1 text-sm font-semibold text-white">Đang hoạt động</p>
                   </div>
                 </div>
               </div>
@@ -1480,10 +1490,6 @@ export default function HomePage() {
     </div>
   );
 }
-
-
-
-
 
 
 

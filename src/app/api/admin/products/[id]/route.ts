@@ -1,4 +1,4 @@
-﻿import { ApiFamily, Prisma } from "@prisma/client";
+import { ApiFamily, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/server/current-user";

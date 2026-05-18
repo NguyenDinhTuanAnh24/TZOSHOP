@@ -1,4 +1,4 @@
-﻿import { buildBaseEmail, escapeHtml, renderTextEmail } from "./base-email";
+import { buildBaseEmail, escapeHtml, renderTextEmail } from "./base-email";
 
 type SupportTicketUpdatedEmailProps = {
   name?: string | null;

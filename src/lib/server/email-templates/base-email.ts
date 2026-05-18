@@ -1,4 +1,4 @@
-﻿export type BaseEmailProps = {
+export type BaseEmailProps = {
   title: string;
   preview?: string;
   children: string;
