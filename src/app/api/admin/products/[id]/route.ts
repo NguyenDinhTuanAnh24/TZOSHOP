@@ -12,13 +12,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { id } = await params;
     if (!id) {
-      return NextResponse.json({ error: { message: "Thi?u ID." } }, { status: 400 });
+      return NextResponse.json({ error: { message: "Thiếu ID." } }, { status: 400 });
     }
 
     const body = await request.json();
     const current = await prisma.product.findUnique({ where: { id } });
     if (!current) {
-      return NextResponse.json({ success: false, message: "Không t?m th?y gói." }, { status: 404 });
+      return NextResponse.json({ success: false, message: "Không tìm thấy gói." }, { status: 404 });
     }
 
     const nextSlug = body.slug !== undefined ? String(body.slug).trim() : current.slug;
@@ -32,16 +32,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const nextIsContactOnly = body.isContactOnly !== undefined ? Boolean(body.isContactOnly) : current.isContactOnly;
 
     if (nextCredits <= 0) {
-      return NextResponse.json({ success: false, message: "Credits ph?i l?n hơn 0." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Credits phải lớn hơn 0." }, { status: 400 });
     }
     if (nextDurationDays === null || Number.isNaN(nextDurationDays) || Number(nextDurationDays) <= 0) {
-      return NextResponse.json({ success: false, message: "Th?i h?n ngày ph?i l?n hơn 0." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Thời hạn ngày phải lớn hơn 0." }, { status: 400 });
     }
     if (!nextIsContactOnly && nextPriceVnd < 0) {
-      return NextResponse.json({ success: false, message: "Giá bán không h?p l?." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Giá bán không hợp lệ." }, { status: 400 });
     }
     if (nextApiKeyLimit < 1) {
-      return NextResponse.json({ success: false, message: "Gi?i h?n API key ph?i t? 1 tr? lên." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Giới hạn API key phải từ 1 trở lên." }, { status: 400 });
     }
 
     const modelValidationError = validateAllowedModelsBySlug(nextSlug, nextAllowedModels);
@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (nextSlug !== current.slug) {
       const existingSlug = await prisma.product.findUnique({ where: { slug: nextSlug }, select: { id: true } });
       if (existingSlug && existingSlug.id !== id) {
-        return NextResponse.json({ success: false, message: "Slug đ? t?n t?i." }, { status: 400 });
+        return NextResponse.json({ success: false, message: "Slug đã tồn tại." }, { status: 400 });
       }
     }
 
@@ -91,14 +91,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "UNAUTHORIZED") {
-        return NextResponse.json({ error: { message: "Vui l?ng đăng nh?p." } }, { status: 401 });
+        return NextResponse.json({ error: { message: "Vui lòng đăng nhập." } }, { status: 401 });
       }
       if (error.message === "FORBIDDEN") {
-        return NextResponse.json({ error: { message: "Không có quy?n truy c?p." } }, { status: 403 });
+        return NextResponse.json({ error: { message: "Không có quyền truy cập." } }, { status: 403 });
       }
     }
     console.error("PATCH /api/admin/products/[id] failed:", error);
-    return NextResponse.json({ success: false, message: "L?i h? th?ng khi c?p nh?t gói." }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Lỗi hệ thống khi cập nhật gói." }, { status: 500 });
   }
 }
 

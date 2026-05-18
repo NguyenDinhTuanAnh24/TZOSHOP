@@ -125,14 +125,14 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "UNAUTHORIZED") {
-        return NextResponse.json({ error: { message: "Vui l?ng đăng nh?p đ? ti?p t?c." } }, { status: 401 });
+        return NextResponse.json({ error: { message: "Vui lòng đăng nhập để tiếp tục." } }, { status: 401 });
       }
       if (error.message === "FORBIDDEN") {
-        return NextResponse.json({ error: { message: "Không có quy?n truy c?p." } }, { status: 403 });
+        return NextResponse.json({ error: { message: "Không có quyền truy cập." } }, { status: 403 });
       }
     }
     console.error("GET /api/admin/products failed:", error);
-    return NextResponse.json({ success: false, message: "L?i h? th?ng khi t?i danh sách gói." }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Lỗi hệ thống khi tải danh sách gói." }, { status: 500 });
   }
 }
 
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     const normalizedDurationDays = durationDays === null || durationDays === undefined || durationDays === "" ? null : Number(durationDays);
 
     if (!name || !apiFamily) {
-      return NextResponse.json({ success: false, message: "Thi?u thông tin b?t bu?c." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Thiếu thông tin bắt buộc." }, { status: 400 });
     }
 
     let slug = (providedSlug ? String(providedSlug) : "").trim();
@@ -175,20 +175,20 @@ export async function POST(request: NextRequest) {
 
     const existingSlug = await prisma.product.findUnique({ where: { slug }, select: { id: true } });
     if (existingSlug) {
-      return NextResponse.json({ success: false, message: "Slug đ? t?n t?i." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Slug đã tồn tại." }, { status: 400 });
     }
 
     if (Number(credits) <= 0) {
-      return NextResponse.json({ success: false, message: "Credits ph?i l?n hơn 0." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Credits phải lớn hơn 0." }, { status: 400 });
     }
     if (normalizedDurationDays === null || Number.isNaN(normalizedDurationDays) || Number(normalizedDurationDays) <= 0) {
-      return NextResponse.json({ success: false, message: "Th?i h?n ngày ph?i l?n hơn 0." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Thời hạn ngày phải lớn hơn 0." }, { status: 400 });
     }
     if (!isContactOnly && Number(priceVnd) < 0) {
-      return NextResponse.json({ success: false, message: "Giá bán không h?p l?." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Giá bán không hợp lệ." }, { status: 400 });
     }
     if (Number(apiKeyLimit) < 1) {
-      return NextResponse.json({ success: false, message: "Gi?i h?n API key ph?i t? 1 tr? lên." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Giới hạn API key phải từ 1 trở lên." }, { status: 400 });
     }
 
     const modelValidationError = validateAllowedModelsBySlug(slug, normalizedAllowedModels);
@@ -226,14 +226,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "UNAUTHORIZED") {
-        return NextResponse.json({ error: { message: "Vui l?ng đăng nh?p." } }, { status: 401 });
+        return NextResponse.json({ error: { message: "Vui lòng đăng nhập." } }, { status: 401 });
       }
       if (error.message === "FORBIDDEN") {
-        return NextResponse.json({ error: { message: "Không có quy?n truy c?p." } }, { status: 403 });
+        return NextResponse.json({ error: { message: "Không có quyền truy cập." } }, { status: 403 });
       }
     }
     console.error("POST /api/admin/products failed:", error);
-    return NextResponse.json({ success: false, message: "L?i h? th?ng khi t?o gói." }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Lỗi hệ thống khi tạo gói." }, { status: 500 });
   }
 }
 
