@@ -31,6 +31,7 @@ export async function GET(
                 select: {
                   name: true,
                   tier: true,
+                  slug: true,
                 }
               }
             },
@@ -40,7 +41,12 @@ export async function GET(
             orderBy: { createdAt: "desc" }
           },
           orders: {
-            include: {
+            select: {
+              id: true,
+              orderCode: true,
+              amountVnd: true,
+              status: true,
+              createdAt: true,
               product: {
                 select: {
                   name: true

@@ -8,6 +8,7 @@ import { syncCreditsFromNewApi } from "@/lib/server/credit-sync";
 import { tokensToCredits } from "@/lib/credits";
 
 export const runtime = "nodejs";
+const roundCredits = (value: number) => Math.round(value * 1000) / 1000;
 
 export async function GET() {
   try {
@@ -16,7 +17,6 @@ export async function GET() {
     const buckets = await prisma.creditBucket.findMany({
       where: {
         userId: user.id,
-        isActive: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -157,6 +157,20 @@ export async function GET() {
       const creditsUsed = tokensToCredits(totalTokens);
       const creditsTotal = Number(bucket.creditsTotal);
       const creditsRemaining = Math.max(creditsTotal - creditsUsed, 0);
+      const synced = await syncCreditsFromNewApi({
+        activeKeys: bucket.apiKeys.map((k) => ({
+          encryptedKey: k.encryptedKey,
+          isActive: k.isActive,
+        })),
+        dbCreditsTotal: creditsTotal,
+        dbCreditsRemaining: creditsRemaining,
+      });
+      const hasSyncedQuota = synced.creditsSource === "NEWAPI" && synced.creditsTotalSynced > 0;
+      const remainingRatio = hasSyncedQuota
+        ? synced.creditsRemainingSynced / synced.creditsTotalSynced
+        : creditsRemaining / Math.max(creditsTotal, 1);
+      const normalizedRemaining = roundCredits(Math.max(0, Math.min(creditsTotal, creditsTotal * remainingRatio)));
+      const normalizedUsed = roundCredits(Math.max(creditsTotal - normalizedRemaining, 0));
 
       return {
         id: bucket.id,
@@ -164,12 +178,12 @@ export async function GET() {
         aiLine: bucket.product?.slug ? getAiLineFromProductSlug(bucket.product.slug) : null,
         aiLineLabel: bucket.product?.slug ? getAiLineLabelFromSlug(bucket.product.slug) : null,
         creditsTotal: creditsTotal.toString(),
-        creditsRemaining: creditsRemaining.toString(),
-        usedCredits: creditsUsed.toString(),
-        newApiQuotaRemaining: creditsRemaining.toString(),
+        creditsRemaining: normalizedRemaining.toString(),
+        usedCredits: normalizedUsed.toString(),
+        newApiQuotaRemaining: normalizedRemaining.toString(),
         newApiQuotaTotal: creditsTotal.toString(),
-        newApiQuotaUsed: creditsUsed.toString(),
-        quotaSource: "USAGE_LOG",
+        newApiQuotaUsed: normalizedUsed.toString(),
+        quotaSource: synced.creditsSource,
         apiKeyLimit: bucket.apiKeyLimit,
         activeApiKeys: apiKeys.length,
         apiKeys: apiKeys,

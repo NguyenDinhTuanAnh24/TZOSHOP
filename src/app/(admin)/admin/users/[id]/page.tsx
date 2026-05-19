@@ -41,7 +41,7 @@ type UserDetail = {
     apiFamily: string;
     isActive: boolean;
     expiresAt: string | null;
-    product: { name: string } | null;
+    product: { name: string; slug?: string } | null;
   }[];
   apiKeys: {
     id: string;
@@ -206,7 +206,9 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h4 className="text-sm font-black text-slate-900">{bucket.product?.name || 'Gói Credits'}</h4>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{bucket.apiFamily}</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                        {bucket.product?.slug?.startsWith("all_models_") ? "All Models" : bucket.apiFamily}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-black text-emerald-600">

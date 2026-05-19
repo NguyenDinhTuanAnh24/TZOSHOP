@@ -8,10 +8,8 @@ import {
   Info,
   Search,
   SearchCheck,
-  ShoppingCart,
   Wallet,
   AlertTriangle,
-  Package,
   XCircle,
 } from "lucide-react";
 
@@ -272,25 +270,6 @@ export default function BillingPage() {
   return (
     <main className="bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 px-5 py-6 lg:px-8 lg:py-8" aria-busy={isLoading}>
       <div className="space-y-8 lg:space-y-10">
-        <TextFadeInUp as="section" className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-28px_rgba(79,70,229,0.25)] sm:p-8">
-          <div className="pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full bg-indigo-500/10 blur-3xl" />
-          <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">Thanh toán</h1>
-              <p className="text-sm leading-7 text-slate-600 md:text-base">
-                Theo dõi đơn hàng, trạng thái thanh toán và lịch sử mua credits của bạn.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <CosmicButton href="/plans">
-                <ShoppingCart className="h-4 w-4" /> Mua credits
-              </CosmicButton>
-              <CosmicButton href="/my-plans" variant="secondary">
-                <Package className="h-4 w-4" /> Gói của tôi
-              </CosmicButton>
-            </div>
-          </div>
-        </TextFadeInUp>
 
         {isLoading ? (
           <BillingSkeleton />

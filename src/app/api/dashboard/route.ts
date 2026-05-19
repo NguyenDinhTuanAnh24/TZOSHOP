@@ -7,6 +7,7 @@ import { getAiLineLabelFromSlug } from "@/lib/ai-line";
 import { tokensToCredits } from "@/lib/credits";
 
 export const runtime = "nodejs";
+const roundCredits = (value: number) => Math.round(value * 1000) / 1000;
 
 export async function GET() {
   try {
@@ -97,7 +98,7 @@ export async function GET() {
     type OrderItem = (typeof orders)[number];
     type RecentUsageLogItem = (typeof recentUsageLogs)[number];
 
-    const syncedPlans = await Promise.all(
+    const syncedPlansRaw = await Promise.all(
       creditBuckets.map(async (bucket: CreditBucketItem) => {
         const usageAgg = await prisma.usageLog.aggregate({
           where: {
@@ -123,25 +124,43 @@ export async function GET() {
         const creditsUsed = tokensToCredits(totalTokens);
         const creditsTotal = Number(bucket.creditsTotal);
         const creditsRemaining = Math.max(creditsTotal - creditsUsed, 0);
+        const synced = await syncCreditsFromNewApi({
+          activeKeys: bucket.apiKeys,
+          dbCreditsTotal: creditsTotal,
+          dbCreditsRemaining: creditsRemaining,
+        });
+        const hasSyncedQuota = synced.creditsSource === "NEWAPI" && synced.creditsTotalSynced > 0;
+        const remainingRatio = hasSyncedQuota
+          ? synced.creditsRemainingSynced / synced.creditsTotalSynced
+          : creditsRemaining / Math.max(creditsTotal, 1);
+        const normalizedRemaining = roundCredits(Math.max(0, Math.min(creditsTotal, creditsTotal * remainingRatio)));
+        const normalizedUsed = roundCredits(Math.max(creditsTotal - normalizedRemaining, 0));
+
+        const expiresAtTs = bucket.expiresAt ? new Date(bucket.expiresAt).getTime() : null;
+        const isExpiredByTime = expiresAtTs !== null && expiresAtTs <= Date.now();
+        const isDepleted = normalizedRemaining <= 0;
+        const isEffectivelyActive = bucket.isActive && !isExpiredByTime && !isDepleted;
 
         return {
           id: bucket.id,
           apiFamily: bucket.apiFamily,
           aiLineLabel: bucket.product?.slug ? getAiLineLabelFromSlug(bucket.product.slug) : bucket.apiFamily,
           creditsTotal: creditsTotal.toString(),
-          creditsRemaining: creditsRemaining.toString(),
-          creditsUsed: creditsUsed.toString(),
-          creditsSource: "USAGE_LOG",
+          creditsRemaining: normalizedRemaining.toString(),
+          creditsUsed: normalizedUsed.toString(),
+          creditsSource: synced.creditsSource,
+          isActive: isEffectivelyActive,
           startsAt: bucket.startsAt,
           expiresAt: bucket.expiresAt,
           product: bucket.product,
         };
       }),
     );
+    const syncedPlans = syncedPlansRaw.filter((plan) => plan.isActive);
 
-    const totalCredits = syncedPlans.reduce((sum, p) => sum + Number(p.creditsTotal), 0);
-    const remainingCredits = syncedPlans.reduce((sum, p) => sum + Number(p.creditsRemaining), 0);
-    const usedCredits = Math.max(totalCredits - remainingCredits, 0);
+    const totalCredits = roundCredits(syncedPlans.reduce((sum, p) => sum + Number(p.creditsTotal), 0));
+    const remainingCredits = roundCredits(syncedPlans.reduce((sum, p) => sum + Number(p.creditsRemaining), 0));
+    const usedCredits = roundCredits(syncedPlans.reduce((sum, p) => sum + Number(p.creditsUsed), 0));
 
     const activeApiKeys = apiKeys.filter((key: ApiKeyItem) => key.isActive);
     const revokedApiKeys = apiKeys.filter((key: ApiKeyItem) => !key.isActive);

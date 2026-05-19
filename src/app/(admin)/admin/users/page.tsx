@@ -262,7 +262,7 @@ export default function AdminUsersPage() {
     });
   };
 
-  const handleGrantCredits = async (userId: string, data: { credits: number; durationDays: number; note: string }) => {
+  const handleGrantCredits = async (userId: string, data: { note: string; productId: string }) => {
     const res = await fetch(`/api/admin/users/${userId}/grant-credits`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
     const result = await res.json();
     if (res.ok && result.success) {
@@ -314,7 +314,7 @@ export default function AdminUsersPage() {
           { label: "Tổng người dùng", value: formatNum(summary.total), desc: "Tổng tài khoản hiện có", icon: Users, iconClassName: "bg-indigo-50 text-indigo-700" },
           { label: "Người dùng mới", value: formatNum(summary.newUsers), desc: "Đăng ký trong 30 ngày", icon: UserPlus, iconClassName: "bg-emerald-50 text-emerald-700" },
           { label: "Admin", value: formatNum(summary.admins), desc: "Tài khoản quản trị", icon: ShieldCheck, iconClassName: "bg-violet-50 text-violet-700" },
-          { label: "Tài khoản hoạt động", value: formatNum(summary.active), desc: `Đang mở khóa • Khóa: ${formatNum(summary.locked)}`, icon: Wallet, iconClassName: "bg-sky-50 text-sky-700" },
+          { label: "Tài khoản hoạt động", value: formatNum(summary.active), desc: `Đang mở khóa - Khóa: ${formatNum(summary.locked)}`, icon: Wallet, iconClassName: "bg-sky-50 text-sky-700" },
         ].map((card, i) => (
           <TextFadeInUp key={card.label} delay={Math.min(i * 0.05, 0.25)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-200">
             <div className={cn("flex h-11 w-11 items-center justify-center rounded-2xl", card.iconClassName)}><card.icon className="h-5 w-5" /></div>
@@ -435,7 +435,7 @@ function AccountManagementModal({ user, onClose, onUpdateRole, onUpdateStatus, o
       <div className="grid gap-3">
         <button type="button" onClick={() => onUpdateRole(user.id, isAdmin ? "USER" : "ADMIN")} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"><Shield className="h-4 w-4" />{isAdmin ? "Gỡ quyền admin" : "Đặt làm admin"}</button>
         <button type="button" onClick={() => onUpdateStatus(user.id, isLocked ? "UNLOCK" : "LOCK")} className={cn("inline-flex h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition", isLocked ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100")}>{isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}{isLocked ? "Mở khóa tài khoản" : "Khóa tài khoản"}</button>
-        <button type="button" onClick={onOpenGrant} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"><Package className="h-4 w-4" />Cấp credits thủ công</button>
+        <button type="button" onClick={onOpenGrant} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"><Package className="h-4 w-4" />Cập nhật credits thủ công</button>
         <button type="button" onClick={onOpenNotify} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"><Bell className="h-4 w-4" />Gửi thông báo</button>
         <div className="grid grid-cols-2 gap-3"><Link href={`/admin/orders?userId=${user.id}`} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"><Package className="h-4 w-4" />Xem đơn hàng</Link><Link href={`/admin/api-keys?userId=${user.id}`} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"><KeyRound className="h-4 w-4" />Xem API keys</Link></div>
       </div>
@@ -443,17 +443,64 @@ function AccountManagementModal({ user, onClose, onUpdateRole, onUpdateStatus, o
   );
 }
 
-function GrantCreditsModal({ user, onClose, onConfirm }: { user: UserItem; onClose: () => void; onConfirm: (userId: string, data: { credits: number; durationDays: number; note: string }) => void; }) {
-  const [credits, setCredits] = useState(100000);
-  const [durationDays, setDurationDays] = useState(30);
+type GrantPlanOption = { id: string; name: string; slug: string; apiFamily: string; credits: string; durationDays: number | null };
+
+function GrantCreditsModal({ user, onClose, onConfirm }: { user: UserItem; onClose: () => void; onConfirm: (userId: string, data: { note: string; productId: string }) => void; }) {
   const [note, setNote] = useState("");
+  const [productId, setProductId] = useState("");
+  const [plans, setPlans] = useState<GrantPlanOption[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const isValid = Boolean(productId);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setIsLoadingPlans(true);
+        const res = await fetch('/api/plans', { cache: 'no-store' });
+        const json = await res.json();
+        if (!res.ok) return;
+        const activePlans = ((json?.data ?? []) as GrantPlanOption[]).filter((p) => Boolean(p?.id));
+        setPlans(activePlans);
+        if (activePlans.length > 0) {
+          setProductId(activePlans[0].id);
+        }
+      } catch {
+        setPlans([]);
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+    const timer = window.setTimeout(() => void fetchPlans(), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
-    <Modal open onClose={onClose} title="Cấp credits thủ công" description={`Tài khoản: ${user.name || user.email}`} maxWidthClassName="max-w-lg">
+    <Modal open onClose={onClose} title="Cập nhật credits thủ công" description={`Tài khoản: ${user.name || user.email}`} maxWidthClassName="max-w-lg">
       <div className="space-y-4">
-        <input type="number" value={credits} onChange={(e) => setCredits(Number(e.target.value))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-        <input type="number" value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-        <textarea value={note} onChange={(e) => setNote(e.target.value)} className="min-h-[120px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-        <CosmicButton onClick={() => onConfirm(user.id, { credits, durationDays, note })} className="w-full justify-center">Xác nhận cấp credits</CosmicButton>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Gói nguồn</label>
+          <select value={productId} onChange={(e) => setProductId(e.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+            {isLoadingPlans && <option value="">Đang tải danh sách gói...</option>}
+            {!isLoadingPlans && plans.length === 0 && <option value="">Không có gói nào khả dụng</option>}
+            {plans.map((plan) => {
+              const familyText = plan.slug.startsWith("all_models_") ? "All Models" : plan.apiFamily;
+              const creditsText = new Intl.NumberFormat('vi-VN').format(Number(plan.credits));
+              const daysText = plan.durationDays ? `${plan.durationDays} ngày` : "vĩnh viễn";
+              return (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} ({familyText} - {creditsText} Credits - {daysText})
+                </option>
+              );
+            })}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ghi chú nội bộ</label>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ví dụ: bù credits theo ticket #123..." className="min-h-[120px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+
+        <CosmicButton onClick={() => onConfirm(user.id, { note, productId })} disabled={!isValid} className="w-full justify-center">Xác nhận cấp credits</CosmicButton>
       </div>
     </Modal>
   );
@@ -472,3 +519,4 @@ function NotifyUserModal({ user, onClose, onConfirm }: { user: UserItem; onClose
     </Modal>
   );
 }
+

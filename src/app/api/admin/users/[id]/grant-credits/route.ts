@@ -13,23 +13,36 @@ export async function POST(
   try {
     const admin = await requireAdminUser();
 
-    const { productId, credits, durationDays, note } = await request.json();
+    const { productId, note } = await request.json();
 
-    if (!credits || credits <= 0) {
+    if (!productId) {
       return NextResponse.json(
-        { success: false, message: "Số credits không hợp lệ." },
+        { success: false, message: "Vui lòng chọn gói nguồn." },
         { status: 400 }
       );
     }
 
-    // Fetch product or use default
-    let apiFamily: import("@prisma/client").ApiFamily = "CODEXAI";
-    if (productId) {
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        select: { apiFamily: true }
-      });
-      if (product) apiFamily = product.apiFamily;
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { apiFamily: true, credits: true, durationDays: true }
+    });
+
+    if (!product) {
+      return NextResponse.json(
+        { success: false, message: "Gói nguồn không hợp lệ." },
+        { status: 400 }
+      );
+    }
+
+    const apiFamily = product.apiFamily;
+    const credits = Number(product.credits);
+    const durationDays = product.durationDays;
+
+    if (!credits || credits <= 0) {
+      return NextResponse.json(
+        { success: false, message: "Số credits của gói nguồn không hợp lệ." },
+        { status: 400 }
+      );
     }
 
     const expiresAt = (durationDays && durationDays > 0)

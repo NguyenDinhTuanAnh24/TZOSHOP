@@ -6,7 +6,6 @@ import {
   Clock3,
   History,
   KeyRound,
-  LayoutDashboard,
   Package,
   ShoppingCart,
   Wallet,
@@ -215,23 +214,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 overflow-x-hidden">
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-28px_rgba(79,70,229,0.25)] sm:p-8">
-        <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
-              <LayoutDashboard className="h-4 w-4" /> Tổng quan
-            </div>
-            <TextFadeInUp as="h2" className="text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">Tổng quan</TextFadeInUp>
-            <TextFadeInUp as="p" delay={0.08} className="text-sm text-slate-600 md:text-base">Theo dõi credits, API key, đơn hàng và mức sử dụng của bạn.</TextFadeInUp>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <CosmicButton href="/plans">Mua credits</CosmicButton>
-            <CosmicButton href="/api-keys" variant="secondary">Tạo API key</CosmicButton>
-          </div>
-        </div>
-      </section>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {[

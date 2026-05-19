@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAiLineFromProductSlug, getAiLineLabelFromSlug, getAiLineLabelFromApiFamily, type AiLine } from "@/lib/ai-line";
-import { TextFadeInUp } from "@/components/ui/text-fade-in-up";
 import { CosmicButton } from "@/components/ui/cosmic-button";
 import {
   FilterBarSkeleton,
@@ -211,7 +210,7 @@ export default function MyPlansPage() {
   const filteredBuckets = useMemo(() => {
     return buckets.filter((bucket) => {
       const status = getPlanStatus(bucket, nowTs);
-      const statusMatched = statusFilter === "all" ? true : status === statusFilter;
+      const statusMatched = statusFilter === "all" ? status !== "expired" : status === statusFilter;
       const line = bucket.product?.slug ? getAiLineFromProductSlug(bucket.product.slug) : null;
       const familyMatched = familyFilter === "all" ? true : line === familyFilter;
       return statusMatched && familyMatched;
@@ -228,26 +227,6 @@ export default function MyPlansPage() {
 
   return (
     <div className="space-y-8 overflow-x-hidden" aria-busy={isLoading}>
-      <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-28px_rgba(79,70,229,0.25)] sm:p-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <TextFadeInUp as="h1" className="text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">
-              Gói của tôi
-            </TextFadeInUp>
-            <TextFadeInUp as="p" delay={0.08} className="text-sm leading-7 text-slate-600 md:text-base">
-              Theo dõi credits, thời hạn sử dụng và các key đang gắn với từng gói.
-            </TextFadeInUp>
-</div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <CosmicButton href="/plans">
-              <Plus className="h-4 w-4" /> Mua thêm credits
-            </CosmicButton>
-            <CosmicButton href="/billing" variant="secondary">
-              Lịch sử thanh toán
-            </CosmicButton>
-          </div>
-        </div>
-      </section>
 
       {isLoading ? (
         <MyPlansPageSkeleton />

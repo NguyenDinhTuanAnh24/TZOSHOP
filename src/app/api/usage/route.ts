@@ -6,6 +6,7 @@ import { getAiLineFromModel } from "@/lib/ai-family-from-model";
 import { tokensToCredits } from "@/lib/credits";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type UsageRow = {
   id: string;

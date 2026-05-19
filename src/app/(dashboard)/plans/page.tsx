@@ -10,7 +10,6 @@ import {
   KeyRound,
   RefreshCw,
   Search,
-  ShoppingCart,
   Star,
   XCircle,
 } from "lucide-react";
@@ -439,24 +438,6 @@ function PlansPageContent() {
 
   return (
     <div className="space-y-8 overflow-x-hidden" aria-busy={isLoadingPlans}>
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-28px_rgba(79,70,229,0.25)] sm:p-8">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
-              <ShoppingCart className="h-4 w-4" /> Cửa hàng credits
-            </div>
-            <TextFadeInUp as="h1" className="text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">Mua credits</TextFadeInUp>
-            <p className="text-sm leading-7 text-slate-600 md:text-base">
-              Chọn gói phù hợp với nhu cầu sử dụng AI của bạn. Credits được quản lý rõ ràng trong tài khoản.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <CosmicButton href="/my-plans">Gói của tôi</CosmicButton>
-            <CosmicButton href="/billing" variant="secondary">Lịch sử thanh toán</CosmicButton>
-          </div>
-        </div>
-      </section>
 
       {isLoadingPlans ? (
         <PlansPageSkeleton />
